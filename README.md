@@ -13,6 +13,26 @@ if an example stops working, the badge above goes red.
 
 📖 **Browsable docs site: <https://xudipta.github.io/cookbook/>**
 
+## About this project
+
+I kept hitting the same two problems with my own notes on these tools: the examples
+rotted the moment the underlying tool changed, and reference material scattered across
+separate files/gists/wikis with no good way to check I hadn't quietly broken one. This
+repo is my answer — every topic pairs prose with a runnable example, and every example
+is wired into CI, not just linted but actually built, applied, or deployed against a
+real target (`kind`, a real Postgres, a live Terraform apply). If an example breaks, the
+badge above goes red; nothing here can go stale without me noticing.
+
+Beyond the reference content itself, it's also where I practice the engineering habits
+I care about on real infrastructure code: path-filtered CI so a docs-only change doesn't
+spin up a cluster, small reviewable PRs with their own test plan, docs-as-code (the
+GitHub Pages site is generated from the same files you're reading), and treating "the
+example actually runs" as a release gate rather than a nice-to-have.
+
+It's written for two readers at once: someone new to a topic, who should be able to go
+from the Quickstart to a working example in a couple of minutes; and future me, who
+mostly just needs the one command I forgot.
+
 ## What's here
 
 ```mermaid
