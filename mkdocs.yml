@@ -14,19 +14,19 @@ theme:
   name: material
   icon:
     repo: fontawesome/brands/github
-    logo: material/chef-hat
+    logo: material/book-open-variant
   palette:
     - media: "(prefers-color-scheme: light)"
       scheme: default
-      primary: teal
-      accent: deep orange
+      primary: indigo
+      accent: indigo
       toggle:
         icon: material/brightness-7
         name: Switch to dark mode
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
-      primary: teal
-      accent: deep orange
+      primary: indigo
+      accent: indigo
       toggle:
         icon: material/brightness-4
         name: Switch to light mode
@@ -40,6 +40,7 @@ theme:
     - navigation.tabs
     - navigation.tabs.sticky
     - navigation.sections
+    - navigation.indexes
     - navigation.top
     - navigation.footer
     - toc.follow
@@ -85,57 +86,66 @@ extra:
 
 nav:
   - Home: README.md
-  - Contributing: CONTRIBUTING.md
-  - Kubernetes:
-      - Overview: topics/kubernetes/README.md
-      - kubectl commands: topics/kubernetes/notes/01-kubectl-commands.md
-      - Pods and workloads: topics/kubernetes/notes/02-pods-and-workloads.md
-      - Config and secrets: topics/kubernetes/notes/03-config-and-secrets.md
-      - Services and networking: topics/kubernetes/notes/04-services-and-networking.md
-      - SecurityContext: topics/kubernetes/notes/05-security-context.md
-      - Helm and Kustomize: topics/kubernetes/notes/06-helm-and-kustomize.md
-  - Docker:
-      - Overview: topics/docker/README.md
-      - Images and Dockerfiles: topics/docker/notes/01-images-and-dockerfiles.md
-      - Multi-stage builds and caching: topics/docker/notes/02-multi-stage-builds-and-caching.md
-      - Compose and networking: topics/docker/notes/03-compose-and-networking.md
-  - Linux:
-      - Overview: topics/linux/README.md
-      - Shell fundamentals: topics/linux/notes/01-shell-fundamentals.md
-      - Text processing: topics/linux/notes/02-text-processing.md
-      - systemd and networking: topics/linux/notes/03-systemd-and-networking.md
-  - Terraform:
-      - Overview: topics/terraform/README.md
-      - Core workflow: topics/terraform/notes/01-core-workflow.md
-      - Variables and modules: topics/terraform/notes/02-variables-and-modules.md
-      - State and workspaces: topics/terraform/notes/03-state-and-workspaces.md
-  - CI/CD:
-      - Overview: topics/cicd/README.md
-      - GitHub Actions basics: topics/cicd/notes/01-github-actions-basics.md
-      - Workflow patterns: topics/cicd/notes/02-workflow-patterns.md
-      - Deployment strategies: topics/cicd/notes/03-deployment-strategies.md
-  - GitHub:
-      - Overview: topics/github/README.md
-      - Git fundamentals: topics/github/notes/01-git-fundamentals.md
-      - GitHub CLI and PRs: topics/github/notes/02-github-cli-and-prs.md
-      - Repo configuration: topics/github/notes/03-repo-configuration.md
-  - Agent Skills:
-      - Overview: topics/skills/README.md
-      - What are Agent Skills: topics/skills/notes/01-what-are-agent-skills.md
-      - Authoring a skill: topics/skills/notes/02-authoring-skills.md
-      - Skills in Claude Code: topics/skills/notes/03-skills-in-claude-code.md
-  - MCP:
-      - Overview: topics/mcp/README.md
-      - Protocol overview: topics/mcp/notes/01-mcp-overview.md
-      - MCP in Claude Code: topics/mcp/notes/02-mcp-in-claude-code.md
-      - Building a server: topics/mcp/notes/03-building-a-server.md
-  - Observability:
-      - Overview: topics/observability/README.md
-      - Prometheus basics: topics/observability/notes/01-prometheus-basics.md
-      - Alerting and rules: topics/observability/notes/02-alerting-and-rules.md
-      - Grafana and dashboards: topics/observability/notes/03-grafana-and-dashboards.md
-  - Database:
-      - Overview: topics/database/README.md
-      - Schema design and normalization: topics/database/notes/01-schema-design-and-normalization.md
-      - Migrations: topics/database/notes/02-migrations.md
-      - Queries and indexing: topics/database/notes/03-queries-and-indexing.md
+  - Project:
+      - Contributing: CONTRIBUTING.md
+  - Infrastructure:
+      - docs/infrastructure.md
+      - Kubernetes:
+          - Overview: topics/kubernetes/README.md
+          - kubectl commands: topics/kubernetes/notes/01-kubectl-commands.md
+          - Pods and workloads: topics/kubernetes/notes/02-pods-and-workloads.md
+          - Config and secrets: topics/kubernetes/notes/03-config-and-secrets.md
+          - Services and networking: topics/kubernetes/notes/04-services-and-networking.md
+          - SecurityContext: topics/kubernetes/notes/05-security-context.md
+          - Helm and Kustomize: topics/kubernetes/notes/06-helm-and-kustomize.md
+      - Docker:
+          - Overview: topics/docker/README.md
+          - Images and Dockerfiles: topics/docker/notes/01-images-and-dockerfiles.md
+          - Multi-stage builds and caching: topics/docker/notes/02-multi-stage-builds-and-caching.md
+          - Compose and networking: topics/docker/notes/03-compose-and-networking.md
+      - Terraform:
+          - Overview: topics/terraform/README.md
+          - Core workflow: topics/terraform/notes/01-core-workflow.md
+          - Variables and modules: topics/terraform/notes/02-variables-and-modules.md
+          - State and workspaces: topics/terraform/notes/03-state-and-workspaces.md
+      - Linux:
+          - Overview: topics/linux/README.md
+          - Shell fundamentals: topics/linux/notes/01-shell-fundamentals.md
+          - Text processing: topics/linux/notes/02-text-processing.md
+          - systemd and networking: topics/linux/notes/03-systemd-and-networking.md
+  - Delivery:
+      - docs/delivery.md
+      - CI/CD:
+          - Overview: topics/cicd/README.md
+          - GitHub Actions basics: topics/cicd/notes/01-github-actions-basics.md
+          - Workflow patterns: topics/cicd/notes/02-workflow-patterns.md
+          - Deployment strategies: topics/cicd/notes/03-deployment-strategies.md
+      - GitHub:
+          - Overview: topics/github/README.md
+          - Git fundamentals: topics/github/notes/01-git-fundamentals.md
+          - GitHub CLI and PRs: topics/github/notes/02-github-cli-and-prs.md
+          - Repo configuration: topics/github/notes/03-repo-configuration.md
+  - Operations:
+      - docs/operations.md
+      - Observability:
+          - Overview: topics/observability/README.md
+          - Prometheus basics: topics/observability/notes/01-prometheus-basics.md
+          - Alerting and rules: topics/observability/notes/02-alerting-and-rules.md
+          - Grafana and dashboards: topics/observability/notes/03-grafana-and-dashboards.md
+      - Database:
+          - Overview: topics/database/README.md
+          - Schema design and normalization: topics/database/notes/01-schema-design-and-normalization.md
+          - Migrations: topics/database/notes/02-migrations.md
+          - Queries and indexing: topics/database/notes/03-queries-and-indexing.md
+  - AI Tooling:
+      - docs/ai-tooling.md
+      - Agent Skills:
+          - Overview: topics/skills/README.md
+          - What are Agent Skills: topics/skills/notes/01-what-are-agent-skills.md
+          - Authoring a skill: topics/skills/notes/02-authoring-skills.md
+          - Skills in Claude Code: topics/skills/notes/03-skills-in-claude-code.md
+      - MCP:
+          - Overview: topics/mcp/README.md
+          - Protocol overview: topics/mcp/notes/01-mcp-overview.md
+          - MCP in Claude Code: topics/mcp/notes/02-mcp-in-claude-code.md
+          - Building a server: topics/mcp/notes/03-building-a-server.md

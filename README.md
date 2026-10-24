@@ -63,6 +63,7 @@ topics/<topic>/
   README.md              # what the topic covers, a diagram, a quickstart, and how it's validated
   notes/NN-*.md          # prose notes, numbered in reading order
   examples/<name>/       # runnable files (manifests, Dockerfiles, scripts, .tf, ...)
+docs/<category>.md       # a landing page for a group of topics (Infrastructure, Delivery, ...) in the docs site nav
 ```
 
 ## How validation works
