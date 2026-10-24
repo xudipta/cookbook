@@ -61,3 +61,5 @@ Terraform examples use the `local`/`random`/`null` providers, not real clouds).
 - Branch from `main`; don't push to `main` directly.
 - Fill in the PR template (topic + which validator covers the change).
 - CI must be green before merge. `@xudipta` owns review (see [`.github/CODEOWNERS`](https://github.com/xudipta/cookbook/blob/main/.github/CODEOWNERS)).
+- `CHANGELOG.md` doesn't need updating on every PR — it's regenerated periodically with
+  `topics/skills/examples/release-notes/`, not maintained by hand per change.

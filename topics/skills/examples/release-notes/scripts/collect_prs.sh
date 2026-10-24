@@ -12,7 +12,7 @@ if [[ -z $since ]]; then
   since=$(git describe --tags --abbrev=0 2>/dev/null || true)
 fi
 
-log_args=(--merges --pretty=%s)
+log_args=(--pretty=%s)
 if [[ -n $since ]]; then
   log_args+=("$since..HEAD")
   echo "collecting merged PRs in $since..HEAD" >&2
@@ -20,9 +20,12 @@ else
   echo "no tags found; collecting all merged PRs" >&2
 fi
 
-# Merge-commit subjects look like: "Merge pull request #123 from ..."
+# A PR number shows up in a commit subject either way a GitHub merge can happen:
+# a merge commit ("Merge pull request #123 from ...") or a squash merge (the PR's own
+# title, with GitHub appending " (#123)" to it) — not filtering to --merges catches both,
+# since a squash merge leaves no merge commit at all.
 mapfile -t numbers < <(
-  git log "${log_args[@]}" | grep -oE '#[0-9]+' | tr -d '#' | sort -u
+  git log "${log_args[@]}" | grep -oE '#[0-9]+' | tr -d '#' | sort -un
 )
 
 if [[ ${#numbers[@]} -eq 0 ]]; then

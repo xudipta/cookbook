@@ -93,3 +93,8 @@ make docs-serve # preview the docs site at http://localhost:8000
 ## Adding a topic
 
 See [`CONTRIBUTING.md`](CONTRIBUTING.md).
+
+## Changelog
+
+See [`CHANGELOG.md`](CHANGELOG.md) — generated from this repo's own merged PR history,
+a real usage example of `topics/skills/examples/release-notes/`.
