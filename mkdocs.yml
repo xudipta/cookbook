@@ -139,3 +139,6 @@ nav:
       - Schema design and normalization: topics/database/notes/01-schema-design-and-normalization.md
       - Migrations: topics/database/notes/02-migrations.md
       - Queries and indexing: topics/database/notes/03-queries-and-indexing.md
+  - Capstone:
+      - Overview: topics/capstone/README.md
+      - Ship a monitored service: topics/capstone/notes/01-ship-a-monitored-service.md

@@ -50,6 +50,9 @@ of that yourself.
 New here? Start with `notes/01-kubectl-commands.md`, then `notes/02-pods-and-workloads.md`
 alongside `examples/pod/sample-pod.yaml`.
 
+See a Deployment like these wired up to real monitoring and a deploy pipeline in
+[`topics/capstone/`](../capstone/README.md).
+
 ## Quickstart
 
 Needs any cluster — `kind create cluster` for a disposable local one (exactly what this
