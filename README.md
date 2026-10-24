@@ -93,3 +93,7 @@ make docs-serve # preview the docs site at http://localhost:8000
 ## Adding a topic
 
 See [`CONTRIBUTING.md`](CONTRIBUTING.md).
+
+## License
+
+[MIT](LICENSE) — copy, adapt, and reuse any note, manifest, or script here.
