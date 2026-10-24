@@ -1,5 +1,13 @@
 # Contributing
 
+## Found something wrong, or have a suggestion?
+
+[Open an issue](https://github.com/xudipta/cookbook/issues/new/choose) — there's a
+**Bug report** template for something that's wrong, outdated, or fails to validate, and a
+**Content suggestion** template for a note/example/topic worth adding. (The form under
+`topics/github/examples/ISSUE_TEMPLATE/` is a *teaching example* of this same pattern,
+not this repo's own template — these two are.)
+
 ## Adding a note to an existing topic
 
 1. Create `topics/<topic>/notes/NN-short-title.md` (next free `NN`).
