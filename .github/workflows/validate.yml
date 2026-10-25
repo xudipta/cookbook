@@ -64,9 +64,11 @@ jobs:
               - 'topics/database/**'
             docs:
               - '**/*.md'
+              - 'docs/**'
               - 'mkdocs.yml'
               - 'requirements-docs.txt'
               - 'scripts/build_docs.sh'
+              - 'scripts/check_site_assets.py'
             games:
               - 'docs/games/**'
               - 'scripts/check_games.py'
@@ -447,6 +449,8 @@ jobs:
       - run: bash scripts/build_docs.sh
       - name: Build site (strict)
         run: mkdocs build --strict --site-dir _site
+      - name: Check every local asset the pages reference was published
+        run: python3 scripts/check_site_assets.py _site
 
   games-smoke:
     needs: changes
