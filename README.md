@@ -64,7 +64,7 @@ flowchart TD
 | Kubernetes | [`topics/kubernetes/`](topics/kubernetes/README.md) | `yamllint`, `kubeconform`, `helm lint`, `kubectl kustomize`, `kind` deploy + Service curl test |
 | Docker / Containers | [`topics/docker/`](topics/docker/README.md) | `hadolint`, live build + run + curl smoke test |
 | Terraform / IaC | [`topics/terraform/`](topics/terraform/README.md) | `terraform fmt -check`, `tflint`, live `init`/`apply`/`destroy` |
-| Linux / Shell | [`topics/linux/`](topics/linux/README.md) | `shellcheck` on every `*.sh` |
+| Linux / Shell | [`topics/linux/`](topics/linux/README.md) | `shellcheck`, live `backup.sh` smoke test |
 | CI/CD | [`topics/cicd/`](topics/cicd/README.md) | `actionlint` on example workflows |
 | GitHub / Git | [`topics/github/`](topics/github/README.md) | `yamllint` on the issue form, `shellcheck` on the `gh` script |
 | Observability | [`topics/observability/`](topics/observability/README.md) | `promtool check config`/`rules`, `jq` on the Grafana dashboard |

@@ -40,7 +40,9 @@ tar -tzf /tmp/demo/dest/src-*.tar.gz    # -> src/, src/file.txt
 
 ## Validation
 
-`shellcheck` lints every `*.sh` file under `topics/` and `scripts/` on change.
+- `shellcheck` lints every `*.sh` file under `topics/` and `scripts/` on change.
+- A live smoke test runs the exact Quickstart above against a real tarball, not just
+  that the script lints clean.
 
 ```bash
 shellcheck examples/scripts/backup.sh

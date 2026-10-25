@@ -53,6 +53,7 @@ Terraform examples use the `local`/`random`/`null` providers, not real clouds).
 | docker | hadolint | `docker run --rm -i hadolint/hadolint < path/to/Dockerfile` |
 | docker | live smoke test | see `validate.yml` `docker-smoke` job (build, run, curl) |
 | linux | shellcheck | `shellcheck topics/linux/examples/scripts/*.sh` |
+| linux | live smoke test | see `validate.yml` `linux-smoke` job (runs `backup.sh` against a real tarball) |
 | terraform | terraform / tflint | `terraform fmt -check -recursive topics/terraform && tflint --recursive` |
 | terraform | live apply | see `validate.yml` `terraform-apply` job (`init`/`apply`/`destroy`) |
 | cicd | actionlint | `actionlint topics/cicd/examples/workflows/*.yml` |
