@@ -28,6 +28,7 @@ jobs:
       observability: ${{ steps.filter.outputs.observability }}
       database: ${{ steps.filter.outputs.database }}
       docs: ${{ steps.filter.outputs.docs }}
+      games: ${{ steps.filter.outputs.games }}
     steps:
       - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v3
@@ -66,6 +67,15 @@ jobs:
               - 'mkdocs.yml'
               - 'requirements-docs.txt'
               - 'scripts/build_docs.sh'
+            games:
+              - 'docs/games/**'
+              - 'scripts/check_games.py'
+              - 'scripts/games_smoke.cjs'
+              - 'scripts/build_docs.sh'
+              - 'mkdocs.yml'
+              - 'requirements-docs.txt'
+              # Every game links into the notes by heading; renaming one must be caught here.
+              - 'topics/**/*.md'
 
   markdownlint:
     needs: changes
@@ -437,3 +447,37 @@ jobs:
       - run: bash scripts/build_docs.sh
       - name: Build site (strict)
         run: mkdocs build --strict --site-dir _site
+
+  games-smoke:
+    needs: changes
+    if: needs.changes.outputs.games == 'true'
+    runs-on: ubuntu-latest
+    env:
+      DISABLE_MKDOCS_2_WARNING: "true"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Validate game scenarios
+        run: python3 scripts/check_games.py
+      - run: pip install -r requirements-docs.txt
+      - name: Build the docs site
+        run: |
+          bash scripts/build_docs.sh
+          mkdocs build --strict --site-dir _site
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install Playwright and Chromium
+        run: |
+          npm install --prefix "$RUNNER_TEMP/pw" playwright@1.49.1
+          "$RUNNER_TEMP/pw/node_modules/.bin/playwright" install --with-deps chromium
+      - name: Play every game against the built site
+        env:
+          NODE_PATH: ${{ runner.temp }}/pw/node_modules
+          SITE_URL: http://localhost:8000/
+        run: |
+          python3 -m http.server 8000 --directory _site >/dev/null 2>&1 &
+          timeout 30 sh -c 'until curl -sf http://localhost:8000/ >/dev/null; do sleep 1; done'
+          node scripts/games_smoke.cjs

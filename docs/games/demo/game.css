@@ -1,0 +1,32 @@
+.cg .demo-pods {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.cg .demo-pod {
+  display: flex;
+  flex-direction: column;
+  min-width: 5.5rem;
+  padding: 0.4rem 0.6rem;
+  border: 2px solid var(--cg-border);
+  border-radius: 0.3rem;
+}
+
+.cg .demo-pod-running {
+  border-color: var(--cg-ok);
+}
+
+.cg .demo-pod-starting {
+  border-color: var(--cg-warn);
+  border-style: dashed;
+}
+
+.cg .demo-pod-dead {
+  border-color: var(--cg-bad);
+  opacity: 0.8;
+}
+
+.cg .demo-summary {
+  margin-top: 0;
+}

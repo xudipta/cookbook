@@ -78,6 +78,14 @@ markdown_extensions:
 plugins:
   - search
 
+# Shared shell for the browser games under docs/games/ (see CONTRIBUTING.md, "Adding a game").
+extra_css:
+  - docs/games/shared/shell.css
+
+extra_javascript:
+  - path: docs/games/shared/boot.js
+    type: module
+
 extra:
   social:
     - icon: fontawesome/brands/github
@@ -154,3 +162,6 @@ nav:
   - Capstone:
       - Overview: topics/capstone/README.md
       - Ship a monitored service: topics/capstone/notes/01-ship-a-monitored-service.md
+  - Play:
+      - docs/games/index.md
+      - Replica Rescue (demo): docs/games/demo/index.md

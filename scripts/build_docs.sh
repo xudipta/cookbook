@@ -26,4 +26,10 @@ while IFS= read -r f; do
   cp "$f" "$dest/$f"
 done < <(find topics docs -type f -name '*.md' -not -path '*/examples/*')
 
+# The browser games under docs/games/ ship scripts, styles and scenario data alongside their pages.
+while IFS= read -r f; do
+  mkdir -p "$dest/$(dirname "$f")"
+  cp "$f" "$dest/$f"
+done < <(find docs -type f \( -name '*.js' -o -name '*.css' -o -name '*.json' \))
+
 echo "assembled $(find "$dest" -name '*.md' | wc -l | tr -d ' ') pages into $dest/"

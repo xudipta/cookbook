@@ -1,0 +1,30 @@
+{
+  "id": "demo",
+  "title": "Replica Rescue (demo)",
+  "healthLabel": "Error budget",
+  "seed": 7,
+  "tickMs": 1000,
+  "winTicks": 20,
+  "minHealth": 70,
+  "killChance": 0.25,
+  "nodeDownTick": 8,
+  "events": [
+    {
+      "id": "pod-killed",
+      "title": "Chaos monkey killed a pod",
+      "fix": "A Deployment's ReplicaSet notices the missing pod and starts a replacement on its own; spare replicas just cover the gap.",
+      "learn": { "note": "topics/kubernetes/notes/02-pods-and-workloads.md", "section": "ReplicaSets" }
+    },
+    {
+      "id": "node-down",
+      "title": "A node went down and took two pods with it",
+      "fix": "Self-healing is not instant, so run spare replicas: losing two pods at once still leaves enough serving.",
+      "learn": { "note": "topics/kubernetes/notes/02-pods-and-workloads.md", "section": "Deployments" }
+    }
+  ],
+  "solution": [
+    { "tick": 0, "action": "addReplica" },
+    { "tick": 0, "action": "addReplica" },
+    { "tick": 0, "action": "addReplica" }
+  ]
+}
