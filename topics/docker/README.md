@@ -28,6 +28,9 @@ built from the image's layers plus one writable layer on top.
 New to Docker? Start with `notes/01-images-and-dockerfiles.md` and build/run
 `examples/hello-nginx` alongside it.
 
+See `hello-nginx` go on to become a monitored, deployed service in
+[`topics/capstone/`](../capstone/README.md).
+
 ## Quickstart
 
 ```bash

@@ -1,5 +1,13 @@
 # Contributing
 
+## Found something wrong, or have a suggestion?
+
+[Open an issue](https://github.com/xudipta/cookbook/issues/new/choose) — there's a
+**Bug report** template for something that's wrong, outdated, or fails to validate, and a
+**Content suggestion** template for a note/example/topic worth adding. (The form under
+`topics/github/examples/ISSUE_TEMPLATE/` is a *teaching example* of this same pattern,
+not this repo's own template — these two are.)
+
 ## Adding a note to an existing topic
 
 1. Create `topics/<topic>/notes/NN-short-title.md` (next free `NN`).
@@ -37,6 +45,7 @@ Terraform examples use the `local`/`random`/`null` providers, not real clouds).
 | Topic | Tool | Command |
 | --- | --- | --- |
 | all | markdownlint | `npx markdownlint-cli2 "**/*.md"` |
+| all | check_links.py | `python3 scripts/check_links.py` — internal cross-references (`` `NN-title.md` ``, `` `examples/...` ``, and real Markdown links) actually resolve |
 | all YAML | yamllint | `make lint` |
 | kubernetes | kubeconform | `kubeconform -summary -strict topics/kubernetes/examples/**/*.yaml` |
 | kubernetes | kind | see `validate.yml` `k8s-kind` job |
@@ -45,6 +54,7 @@ Terraform examples use the `local`/`random`/`null` providers, not real clouds).
 | docker | hadolint | `docker run --rm -i hadolint/hadolint < path/to/Dockerfile` |
 | docker | live smoke test | see `validate.yml` `docker-smoke` job (build, run, curl) |
 | linux | shellcheck | `shellcheck topics/linux/examples/scripts/*.sh` |
+| linux | live smoke test | see `validate.yml` `linux-smoke` job (runs `backup.sh` against a real tarball) |
 | terraform | terraform / tflint | `terraform fmt -check -recursive topics/terraform && tflint --recursive` |
 | terraform | live apply | see `validate.yml` `terraform-apply` job (`init`/`apply`/`destroy`) |
 | cicd | actionlint | `actionlint topics/cicd/examples/workflows/*.yml` |
