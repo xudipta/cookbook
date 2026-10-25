@@ -40,6 +40,9 @@ processes that sit on top, for visualization and notification respectively.
 New here? Start with `notes/01-prometheus-basics.md` alongside
 `examples/prometheus/prometheus.yml`.
 
+See a scrape target come from a real deployed service, not just a config file, in
+[`topics/capstone/`](../capstone/README.md).
+
 ## Quickstart
 
 No live Prometheus needed to check a config is sound — `promtool` parses and validates

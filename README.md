@@ -76,6 +76,11 @@ Markdown across the whole repo is checked with `markdownlint`. Each topic's own 
 has a "New here? Start with..." pointer and a diagram of what the topic actually is —
 open one and go.
 
+**See it all together**: [`topics/capstone/`](topics/capstone/README.md) chains Docker,
+Kubernetes, Observability, and CI/CD into one walkthrough — building a service, deploying
+it, scraping a real metric off it, and automating the whole thing — instead of leaving
+you to infer how the topics connect.
+
 ## Layout
 
 ```text
