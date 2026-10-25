@@ -1,8 +1,6 @@
 # Layer Cake
 
-A Dockerfile is a stack of cached layers. Arrange the cards, press **Build**, and watch which
-layers are reused and which rebuild. A teammate keeps changing things between builds, and a good
-order is the difference between a 9-second and a 47-second rebuild.
+A Dockerfile is a stack of cached layers. Arrange the cards, press **Build**, and watch which layers rebuild.
 
 <div id="game" data-game="docker">
   <noscript>This game needs JavaScript.</noscript>

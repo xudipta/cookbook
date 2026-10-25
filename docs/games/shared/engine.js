@@ -59,6 +59,15 @@ export async function mountGame(container, { id }) {
   const base = await res.json();
   const events = new Map(base.events.map((e) => [e.id, e]));
 
+  // The board entry (topic, notes folder) in docs/games/games.json; the shell works without it.
+  let meta = null;
+  try {
+    const listing = await fetch(new URL('../games.json', import.meta.url));
+    if (listing.ok) meta = (await listing.json()).games.find((g) => g.id === id) || null;
+  } catch {
+    // Offline or blocked: no topic strip, everything else still works.
+  }
+
   // A scenario may define `levels: [{ id, title, ...overrides }]`. The selected level is merged over
   // the top-level fields (events always come from the top level), so every level can set its own
   // seed, winTicks, tickMs, schedule, solution and any game-specific setting.
@@ -135,7 +144,9 @@ export async function mountGame(container, { id }) {
       eventList.push(f.event);
     }
     refresh();
-    ui.showResult({ status, score: score(), best, ticks: rt.ticks, actionsUsed: rt.actionsUsed, avgResolve, events: eventList });
+    const at = levels ? levels.findIndex((l) => l.id === level.id) : -1;
+    const nextLevel = at >= 0 && at < levels.length - 1 ? levels[at + 1] : null;
+    ui.showResult({ status, score: score(), best, ticks: rt.ticks, actionsUsed: rt.actionsUsed, avgResolve, events: eventList, nextLevel });
   }
 
   function makeCtx() {
@@ -254,6 +265,7 @@ export async function mountGame(container, { id }) {
     scenario: base,
     levels,
     siteRoot: SITE_ROOT,
+    meta,
     handlers: {
       act: (name) => rt.act(name),
       setLevel: (levelId) => rt.setLevel(levelId),

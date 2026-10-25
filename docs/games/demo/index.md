@@ -1,11 +1,6 @@
 # Replica Rescue (demo)
 
-A tiny game that exists to prove the shared game shell works end to end. Your service
-needs **3 pods** serving to carry its traffic, and a chaos monkey is killing pods. A
-Deployment's ReplicaSet replaces them, but not instantly, and every tick with too few pods
-serving burns your **error budget**. Spare replicas are not free either.
-
-Survive 20 ticks with your budget above 70%.
+A tiny game that proves the shared shell works. Keep **3 pods** serving while a chaos monkey kills them; survive 20 ticks with your budget above 70%.
 
 <div id="game" data-game="demo">
   <noscript>This game needs JavaScript.</noscript>

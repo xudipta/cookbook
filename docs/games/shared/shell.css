@@ -269,3 +269,156 @@
     animation: none !important;
   }
 }
+
+/* ---- game page layout (#58) ---- */
+
+/* A game page is a play screen: no table of contents, a tighter title. */
+body:has(#game[data-game]) .md-sidebar--secondary {
+  display: none;
+}
+
+body:has(#game[data-game]) .md-typeset h1 {
+  font-size: 1.7em;
+}
+
+.cg .cg-head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.75rem;
+}
+
+.cg .cg-mark {
+  display: grid;
+  place-items: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  border-radius: var(--radius-s);
+  background: var(--c);
+  color: var(--on-hue);
+  font: 700 0.72rem/1 var(--font-mono);
+}
+
+.cg .cg-topic {
+  font: 600 0.8rem/1 var(--font-mono);
+  color: var(--muted);
+}
+
+.cg .cg-notes {
+  margin-left: auto;
+  font: 600 0.82rem/1.2 var(--font-mono);
+  color: var(--accent);
+  text-underline-offset: 3px;
+}
+
+/* Levels scroll sideways in one row instead of wrapping into several. */
+.cg .cg-levels {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
+}
+
+.cg .cg-levels .cg-btn {
+  flex: none;
+  white-space: nowrap;
+}
+
+.cg .cg-goal {
+  margin: 0 0 0.6rem;
+}
+
+.cg .cg-goal-toggle {
+  padding: 0.2rem 0;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font: 600 0.8rem/1.4 var(--font-mono);
+  cursor: pointer;
+}
+
+.cg .cg-goal-toggle:hover {
+  color: var(--ink);
+}
+
+.cg .cg-goal .cg-blurb {
+  margin: 0.4rem 0 0;
+}
+
+.cg .cg-result-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.cg .cg-result-actions a.cg-btn {
+  text-decoration: none;
+}
+
+.md-typeset details.cg-fold {
+  margin: 0.75rem 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-m);
+  background: var(--surface);
+}
+
+.md-typeset details.cg-fold > summary {
+  padding: 0.6rem 2.2rem 0.6rem 0.9rem;
+  font: 700 1.05rem/1.3 var(--font-display);
+  font-stretch: 112%;
+  cursor: pointer;
+}
+
+.md-typeset details.cg-fold > summary::before {
+  display: none;
+}
+
+.md-typeset details.cg-fold > :not(summary) {
+  margin-inline: 0.9rem;
+}
+
+@media (max-width: 700px) {
+  .cg {
+    padding: 0.6rem;
+  }
+
+  .cg-hud {
+    gap: 0.4rem 0.9rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .cg .cg-meter-wrap {
+    flex-basis: 100%;
+  }
+
+  .cg-hud .cg-stat {
+    font-size: 0.85rem;
+  }
+
+  .cg-hud .cg-controls {
+    margin-left: auto;
+  }
+
+  /* "Playing" is the default; only show the status once there is a result. */
+  .cg-hud .cg-status[data-status="playing"] {
+    display: none;
+  }
+
+  .cg-hud .cg-controls .cg-btn {
+    padding: 0.2rem 0.6rem;
+    font-size: 0.85rem;
+  }
+
+  .cg-actions,
+  .cg-levels {
+    margin-bottom: 0.5rem;
+  }
+
+  .cg-main-stacked .cg-log {
+    max-height: 5rem;
+  }
+
+  .cg-side .cg-h {
+    display: none;
+  }
+}
