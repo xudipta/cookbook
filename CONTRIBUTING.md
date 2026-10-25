@@ -136,7 +136,7 @@ NODE_PATH=<dir containing node_modules/playwright> SITE_URL=http://localhost:800
 
 ## Updating the README screenshots
 
-`.github/images/docs-home.png` and `.github/images/docs-topic-page.png` are real
+`docs/images/docs-home.png` and `docs/images/docs-topic-page.png` are real
 screenshots of the built docs site. If a theme change in `mkdocs.yml` (palette, nav
 style, logo) would make them look stale, regenerate them from a local build
 (`make docs-serve`, then screenshot the home page and a topic page at a ~1400px-wide
