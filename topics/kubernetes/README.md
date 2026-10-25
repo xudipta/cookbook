@@ -22,6 +22,10 @@ continuously reconciles the real cluster to match — recreating a Pod that dies
 traffic to whichever Pods are actually healthy via a Service, without you scripting any
 of that yourself.
 
+**Play it:** [Chaos Monkey Cluster](../../docs/games/kubernetes/index.md) is a short game
+where you keep a Service healthy while a chaos monkey breaks the cluster, using the same
+`kubectl` commands these notes teach.
+
 ## Contents
 
 - `notes/01-kubectl-commands.md` — create/apply/edit/extract, inspecting and debugging

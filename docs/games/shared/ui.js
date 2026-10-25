@@ -14,7 +14,7 @@ export function el(tag, props = {}, ...kids) {
   return node;
 }
 
-export function createUI(container, { def, scenario, siteRoot, handlers }) {
+export function createUI(container, { def, scenario, levels, siteRoot, handlers }) {
   container.replaceChildren();
   container.classList.add('cg');
   container.tabIndex = 0;
@@ -52,8 +52,21 @@ export function createUI(container, { def, scenario, siteRoot, handlers }) {
     el('div', { class: 'cg-controls' }, pauseBtn, restartBtn),
   );
 
+  // Level picker (only when scenarios.json defines `levels`).
+  const levelBar = levels ? el('div', { class: 'cg-levels', role: 'group', 'aria-label': 'Level' }) : null;
+  const blurb = el('p', { class: 'cg-blurb' });
+  const levelButtons = new Map();
+  for (const lvl of levels || []) {
+    const btn = el('button', { class: 'cg-btn cg-btn-level', type: 'button', 'data-level': lvl.id, text: lvl.title });
+    btn.addEventListener('click', () => handlers.setLevel(lvl.id));
+    levelButtons.set(lvl.id, btn);
+    levelBar.append(btn);
+  }
+
   const actionsBar = el('div', { class: 'cg-actions', role: 'group', 'aria-label': 'Actions' });
   for (const [name, action] of Object.entries(def.actions)) {
+    // `hidden: true` actions have no button (a game drives them from its own UI, e.g. a prompt).
+    if (typeof action === 'object' && action.hidden) continue;
     const label = (typeof action === 'object' && action.label) || name;
     const key = typeof action === 'object' ? action.key : undefined;
     const btn = el('button', { class: 'cg-btn cg-btn-action', type: 'button', 'data-action': name, title: key ? `Shortcut: ${key}` : undefined });
@@ -68,10 +81,14 @@ export function createUI(container, { def, scenario, siteRoot, handlers }) {
   const resultSlot = el('div', { class: 'cg-result-slot' });
 
   container.append(
-    hud,
-    actionsBar,
-    el('div', { class: 'cg-main' }, board, el('div', { class: 'cg-side' }, el('h3', { class: 'cg-h', text: 'Event log' }), logList)),
-    resultSlot,
+    ...[
+      levelBar,
+      blurb,
+      hud,
+      actionsBar,
+      el('div', { class: 'cg-main' }, board, el('div', { class: 'cg-side' }, el('h3', { class: 'cg-h', text: 'Event log' }), logList)),
+      resultSlot,
+    ].filter(Boolean),
   );
 
   return {
@@ -102,6 +119,12 @@ export function createUI(container, { def, scenario, siteRoot, handlers }) {
       pauseBtn.textContent = paused ? 'Resume' : 'Pause';
       pauseBtn.disabled = status !== 'playing';
       for (const btn of actionsBar.querySelectorAll('button')) btn.disabled = status !== 'playing' || paused;
+    },
+
+    setLevel(level) {
+      for (const [id, btn] of levelButtons) btn.setAttribute('aria-pressed', String(Boolean(level) && id === level.id));
+      blurb.textContent = (level && level.blurb) || '';
+      blurb.hidden = !blurb.textContent;
     },
 
     clearLog() {

@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // Plays every game under docs/games/<id>/ in a real browser against the BUILT docs site:
 //   1. loads the page with a fixed seed and no wall-clock timer (autoplay=0),
-//   2. replays the scripted `solution` from scenarios.json through the game's own action API,
+//   2. replays the scripted `solution` (per level, when the scenario has `levels`) from scenarios.json
+//      through the game's own action API,
 //   3. asserts the game reaches "won" and that the page logged no errors of its own,
 //   4. checks every event's "learn" link points at a real page and a real heading anchor.
 //
@@ -33,10 +34,8 @@ async function checkLearnLinks(scenario, learnUrl) {
   return problems;
 }
 
-async function playGame(browser, id) {
-  const scenario = JSON.parse(fs.readFileSync(path.join(GAMES_DIR, id, 'scenarios.json'), 'utf8'));
+async function playRun(browser, id, run) {
   const problems = [];
-
   const page = await browser.newPage();
   page.on('pageerror', (e) => problems.push(`page error: ${e.message}`));
   // Third-party failures (fonts, CDNs) aren't the game's fault; anything from our own origin is.
@@ -44,7 +43,8 @@ async function playGame(browser, id) {
     if (m.type() === 'error' && m.location().url.startsWith(SITE_URL)) problems.push(`console error: ${m.text()}`);
   });
 
-  await page.goto(`${SITE_URL}docs/games/${id}/?seed=${scenario.seed}&autoplay=0`, { waitUntil: 'load' });
+  const level = run.level ? `&level=${encodeURIComponent(run.level)}` : '';
+  await page.goto(`${SITE_URL}docs/games/${id}/?seed=${run.seed}&autoplay=0${level}`, { waitUntil: 'load' });
   try {
     await page.waitForFunction((gid) => window.cookbookGames && window.cookbookGames[gid], id, { timeout: 15000 });
   } catch {
@@ -65,7 +65,7 @@ async function playGame(browser, id) {
       game.step(maxTicks - game.ticks);
       return { status: game.status, ticks: game.ticks, health: Math.round(game.state.health) };
     },
-    { gid: id, solution: scenario.solution, maxTicks: MAX_TICKS },
+    { gid: id, solution: run.solution, maxTicks: MAX_TICKS },
   );
 
   if (outcome.error) problems.push(outcome.error);
@@ -76,6 +76,20 @@ async function playGame(browser, id) {
     problems.push('game reported won but the result panel is missing');
   }
   await page.close();
+  return problems;
+}
+
+async function playGame(browser, id) {
+  const scenario = JSON.parse(fs.readFileSync(path.join(GAMES_DIR, id, 'scenarios.json'), 'utf8'));
+  const runs = scenario.levels
+    ? scenario.levels.map((l) => ({ label: l.id, level: l.id, seed: l.seed ?? scenario.seed, solution: l.solution }))
+    : [{ label: null, level: null, seed: scenario.seed, solution: scenario.solution }];
+
+  const problems = [];
+  for (const run of runs) {
+    if (run.label) console.log(` level: ${run.label}`);
+    problems.push(...(await playRun(browser, id, run)).map((p) => (run.label ? `[${run.label}] ${p}` : p)));
+  }
 
   const { learnUrl } = await import(pathToFileURL(path.join(GAMES_DIR, 'shared', 'learn.js')).href);
   problems.push(...(await checkLearnLinks(scenario, learnUrl)));

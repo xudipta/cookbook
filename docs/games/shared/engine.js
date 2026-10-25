@@ -56,8 +56,20 @@ export async function mountGame(container, { id }) {
 
   const res = await fetch(new URL(`../${id}/scenarios.json`, import.meta.url));
   if (!res.ok) throw new Error(`scenarios.json for "${id}": HTTP ${res.status}`);
-  const scenario = await res.json();
-  const events = new Map(scenario.events.map((e) => [e.id, e]));
+  const base = await res.json();
+  const events = new Map(base.events.map((e) => [e.id, e]));
+
+  // A scenario may define `levels: [{ id, title, ...overrides }]`. The selected level is merged over
+  // the top-level fields (events always come from the top level), so every level can set its own
+  // seed, winTicks, tickMs, schedule, solution and any game-specific setting.
+  const levels = base.levels || null;
+  const mergeLevel = (level) => {
+    const { levels: _ignored, ...rest } = base;
+    return level ? { ...rest, ...level } : rest;
+  };
+  const params = new URLSearchParams(location.search);
+  let level = levels ? levels.find((l) => l.id === params.get('level')) || levels[0] : null;
+  let scenario = mergeLevel(level);
 
   // A game can ship its own stylesheet next to game.js (`styles: 'game.css'`). Select it with
   // `.cg .your-class` so it outranks Material's typography rules.
@@ -69,14 +81,15 @@ export async function mountGame(container, { id }) {
     document.head.append(link);
   }
 
-  const params = new URLSearchParams(location.search);
-  const seed = params.has('seed') ? Number(params.get('seed')) : scenario.seed;
   const autoplay = params.get('autoplay') !== '0';
-  const tickMs = Number(params.get('tick')) || scenario.tickMs || 1000;
+  const seedFor = () => (params.has('seed') ? Number(params.get('seed')) : scenario.seed);
+  const tickMsFor = () => Number(params.get('tick')) || scenario.tickMs || 1000;
 
   const rt = {
     id,
-    seed,
+    seed: seedFor(),
+    level: level ? level.id : null,
+    levels: levels ? levels.map((l) => l.id) : [],
     state: null,
     ticks: 0,
     actionsUsed: 0,
@@ -128,10 +141,17 @@ export async function mountGame(container, { id }) {
     return {
       rng: () => rng(),
       ui,
-      scenario,
+      get scenario() {
+        return scenario;
+      },
       get ticks() {
         return rt.ticks;
       },
+      get paused() {
+        return rt.paused;
+      },
+      // Lets a game's own UI (a prompt, a form) go through the same pipeline as the action buttons.
+      act: (name, ...args) => rt.act(name, ...args),
       log: (text, opts) => ui.log(text, opts),
       fire(eventId, detail) {
         const event = events.get(eventId);
@@ -159,7 +179,7 @@ export async function mountGame(container, { id }) {
     timer = setInterval(() => {
       if (!container.isConnected) return stopTimer(); // navigated away (instant navigation)
       if (!rt.paused) rt.step();
-    }, tickMs);
+    }, tickMsFor());
   }
 
   rt.step = (n = 1) => {
@@ -191,9 +211,19 @@ export async function mountGame(container, { id }) {
     refresh();
   };
 
+  rt.setLevel = (levelId) => {
+    const next = levels && levels.find((l) => l.id === levelId);
+    if (!next) throw new Error(`Unknown level "${levelId}"`);
+    level = next;
+    scenario = mergeLevel(level);
+    rt.level = level.id;
+    rt.restart();
+  };
+
   rt.restart = () => {
     stopTimer();
-    rng = mulberry32(seed);
+    rt.seed = seedFor();
+    rng = mulberry32(rt.seed);
     fired = [];
     rt.ticks = 0;
     rt.actionsUsed = 0;
@@ -202,6 +232,7 @@ export async function mountGame(container, { id }) {
     rt.state = { health: 100 };
     ui.clearLog();
     ui.clearResult();
+    ui.setLevel(level);
     ui.board.replaceChildren();
     def.init(rt.state, ctx);
     refresh();
@@ -210,10 +241,12 @@ export async function mountGame(container, { id }) {
 
   ui = createUI(container, {
     def,
-    scenario,
+    scenario: base,
+    levels,
     siteRoot: SITE_ROOT,
     handlers: {
       act: (name) => rt.act(name),
+      setLevel: (levelId) => rt.setLevel(levelId),
       togglePause: () => rt.togglePause(),
       restart: () => rt.restart(),
     },

@@ -121,6 +121,16 @@ the meter it shows. A few rules keep the games consistent:
 - **Keys `p` and `r` are reserved** (pause, restart), and the shell stops them reaching
   Material's own shortcuts. Avoid `f`, `s`, `n` and `/` for actions.
 - Keep everything static: no build step, no network calls.
+- **Keep the game page short.** The game carries the understanding, so `index.md` is a few lines
+  of rules plus the key commands or syntax and a pointer to the notes, not a second copy of them.
+- **Levels** are optional: add `levels: [{ id, title, blurb, seed, winTicks, ... }]` to
+  `scenarios.json`. The selected level is merged over the top-level fields (events always come
+  from the top), `?level=<id>` picks one, and each level needs its own `solution` (CI plays every
+  one). A level's `schedule: [{ tick, event, ... }]` may only name events declared at the top.
+- **Hidden actions** (`hidden: true`) get no button, for games that drive the pipeline from their
+  own UI. From that UI call `ctx.act('name', ...args)` so the action is still counted, scored and
+  blocked while paused. An action that returns `false` is not counted, which is how a game keeps
+  read-only commands free.
 
 Run it locally with `make docs-serve` and open `/docs/games/<id>/`. Add `?autoplay=0` to stop
 the clock and `?seed=42` for a repeatable run; in the browser console,

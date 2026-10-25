@@ -6,7 +6,8 @@ For every game directory (anything in docs/games/ except `shared/`) check that:
   * scenarios.json has the required fields and well-formed events and solution steps;
   * every event's `learn.note` is a real file and `learn.section` is a real heading in it
     (so a game can never point a reader at a note section that doesn't exist);
-  * every action named in the scripted solution is defined in game.js.
+  * every action named in the scripted solution (one per level, if the scenario has `levels`) is
+    defined in game.js, and every level's `schedule` only names declared events.
 
 Stdlib only. The scripted solution is actually *played* by scripts/games_smoke.cjs.
 """
@@ -105,21 +106,46 @@ def check_game(game_dir: Path) -> list[str]:
         elif normalize_heading(section) not in headings(note):
             err(f"{where}: no heading {section!r} in {learn['note']}")
 
-    solution = scenario.get("solution")
-    if not isinstance(solution, list) or not solution:
-        err("solution must be a non-empty list of {tick, action[, args]} steps")
-        solution = []
-    for i, step in enumerate(solution):
-        if (
-            not isinstance(step, dict)
-            or not isinstance(step.get("tick"), int)
-            or step["tick"] < 0
-            or not isinstance(step.get("action"), str)
-        ):
-            err(f"solution[{i}] must have an integer tick >= 0 and a string action")
+    levels = scenario.get("levels")
+    if levels is not None and not isinstance(levels, list):
+        err("levels must be a list")
+        levels = None
+    # Every run that CI will play: one per level, or the top-level solution.
+    runs: list[tuple[str, object]] = []
+    if levels:
+        seen_levels: set[str] = set()
+        for i, level in enumerate(levels):
+            lid = level.get("id") if isinstance(level, dict) else None
+            if not isinstance(lid, str) or not lid or lid in seen_levels:
+                err(f"levels[{i}] needs a unique string id")
+                continue
+            seen_levels.add(lid)
+            if not isinstance(level.get("title"), str):
+                err(f"level {lid!r} needs a title")
+            runs.append((f"level {lid!r}", level.get("solution")))
+            for j, item in enumerate(level.get("schedule", [])):
+                if not isinstance(item, dict) or item.get("event") not in seen:
+                    err(f"level {lid!r} schedule[{j}] must name an event declared in events (got {item!r})")
+                elif not isinstance(item.get("tick"), int) or item["tick"] < 1:
+                    err(f"level {lid!r} schedule[{j}] needs an integer tick >= 1")
+    else:
+        runs.append(("scenario", scenario.get("solution")))
+
+    for label, solution in runs:
+        if not isinstance(solution, list) or not solution:
+            err(f"{label}: solution must be a non-empty list of {{tick, action[, args]}} steps")
             continue
-        if not re.search(r"\b%s\b" % re.escape(step["action"]), game_js):
-            err(f"solution[{i}]: action {step['action']!r} is not defined in game.js")
+        for i, step in enumerate(solution):
+            if (
+                not isinstance(step, dict)
+                or not isinstance(step.get("tick"), int)
+                or step["tick"] < 0
+                or not isinstance(step.get("action"), str)
+            ):
+                err(f"{label}: solution[{i}] must have an integer tick >= 0 and a string action")
+                continue
+            if not re.search(r"\b%s\b" % re.escape(step["action"]), game_js):
+                err(f"{label}: solution[{i}]: action {step['action']!r} is not defined in game.js")
 
     return errors
 

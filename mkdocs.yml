@@ -164,4 +164,5 @@ nav:
       - Ship a monitored service: topics/capstone/notes/01-ship-a-monitored-service.md
   - Play:
       - docs/games/index.md
+      - Chaos Monkey Cluster (Kubernetes): docs/games/kubernetes/index.md
       - Replica Rescue (demo): docs/games/demo/index.md
