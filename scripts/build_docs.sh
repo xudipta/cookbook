@@ -16,6 +16,11 @@ mkdir -p "$dest"
 
 cp README.md CONTRIBUTING.md CHANGELOG.md "$dest/"
 
+if [ -d .github/images ]; then
+  mkdir -p "$dest/.github/images"
+  cp .github/images/* "$dest/.github/images/"
+fi
+
 while IFS= read -r f; do
   mkdir -p "$dest/$(dirname "$f")"
   cp "$f" "$dest/$f"

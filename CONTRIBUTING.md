@@ -70,6 +70,14 @@ Terraform examples use the `local`/`random`/`null` providers, not real clouds).
 | database | sqlfluff | `sqlfluff lint topics/database/examples/` |
 | database | live migrate | see `validate.yml` `database-migrate` job (migrate up/down against a real Postgres service container) |
 
+## Updating the README screenshots
+
+`.github/images/docs-home.png` and `.github/images/docs-topic-page.png` are real
+screenshots of the built docs site. If a theme change in `mkdocs.yml` (palette, nav
+style, logo) would make them look stale, regenerate them from a local build
+(`make docs-serve`, then screenshot the home page and a topic page at a ~1400px-wide
+viewport) and replace the files in the same PR as the theme change.
+
 ## Commit / PR
 
 - Branch from `main`; don't push to `main` directly.

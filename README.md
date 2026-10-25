@@ -13,6 +13,12 @@ if an example stops working, the badge above goes red.
 
 📖 **Browsable docs site: <https://xudipta.github.io/cookbook/>**
 
+[![Docs site home page](.github/images/docs-home.png)](https://xudipta.github.io/cookbook/)
+
+A topic page, with its own diagram and tabbed navigation:
+
+[![A topic page on the docs site](.github/images/docs-topic-page.png)](https://xudipta.github.io/cookbook/topics/kubernetes/)
+
 ## About this project
 
 I kept hitting the same two problems with my own notes on these tools: the examples
