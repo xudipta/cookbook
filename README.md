@@ -95,6 +95,7 @@ topics/<topic>/
   notes/NN-*.md          # prose notes, numbered in reading order
   examples/<name>/       # runnable files (manifests, Dockerfiles, scripts, .tf, ...)
 docs/<category>.md       # a landing page for a group of topics (Infrastructure, Delivery, ...) in the docs site nav
+docs/games/<game>/       # a browser game for the docs site's Play section (see CONTRIBUTING.md)
 ```
 
 ## How validation works

@@ -69,6 +69,70 @@ Terraform examples use the `local`/`random`/`null` providers, not real clouds).
 | observability | jq | `jq empty topics/observability/examples/grafana/dashboard.json` |
 | database | sqlfluff | `sqlfluff lint topics/database/examples/` |
 | database | live migrate | see `validate.yml` `database-migrate` job (migrate up/down against a real Postgres service container) |
+| games | scenario validator | `python3 scripts/check_games.py` (schema, and every event's `learn.note`/`learn.section` must exist) |
+| games | live playthrough | see `validate.yml` `games-smoke` job (builds the site, replays each game's scripted solution in Chromium) |
+
+## Adding a game
+
+The browser games under `docs/games/` (see the **Play** section of the docs site) share one
+small engine, so a new game is mostly its own rules plus data. A game lives in
+`docs/games/<id>/`, where `<id>` is the topic or game name:
+
+```text
+docs/games/<id>/
+  index.md          # the page: intro, <div id="game" data-game="<id>"></div>, how to play
+  game.js           # the rules: registerGame({...})
+  scenarios.json    # chaos events, learn links and the scripted winning run, as data
+  game.css          # optional; set `styles: 'game.css'` in game.js
+```
+
+`game.js` registers itself with the shared engine:
+
+```js
+import { registerGame } from '../shared/engine.js';
+
+registerGame({
+  id: '<id>',                  // must match the directory name
+  init(state, ctx) {},         // build the starting state; draw into ctx.ui.board
+  tick(state, ctx) {},         // advance one tick; ctx.rng() is seeded, ctx.fire('event-id')
+  actions: {                   // buttons; `key` is an optional keyboard shortcut
+    doThing: { label: 'Do thing', key: 't', run(state, ctx) {} },  // return false = not counted
+  },
+  isWon: (state) => false,
+  isLost: (state) => false,
+  render(state, ctx) {},       // optional; redraw after every tick or action
+});
+```
+
+The shell owns the loop, HUD, scoring, event log and result screen. `state.health` (0-100) is
+the meter it shows. A few rules keep the games consistent:
+
+- **Randomness comes from `ctx.rng()`**, never `Math.random()`, so `?seed=N` replays a run.
+  Draw the same number of values every tick regardless of what the player did.
+- **Every chaos event is declared in `scenarios.json`** with a `fix` explanation and a
+  `learn: { note, section }` pointing at a real heading in a topic note. `ctx.fire(id)` shows
+  it; `ctx.resolve(id)` attaches the explanation and the link. `scripts/check_games.py` fails
+  if the note or heading doesn't exist, so renaming a note heading shows up in CI.
+- **A scripted winning run is part of the scenario**: `solution` is a list of
+  `{ "tick": N, "action": "name" }` steps. CI replays it and the game must end `won`.
+- **Build boards from `<div>`s** (with `role="list"`/`"listitem"` where it helps), not `<ul>`:
+  Material styles lists in a way a single class can't override. Use `.cg .your-class` selectors
+  in `game.css`.
+- **Keys `p` and `r` are reserved** (pause, restart), and the shell stops them reaching
+  Material's own shortcuts. Avoid `f`, `s`, `n` and `/` for actions.
+- Keep everything static: no build step, no network calls.
+
+Run it locally with `make docs-serve` and open `/docs/games/<id>/`. Add `?autoplay=0` to stop
+the clock and `?seed=42` for a repeatable run; in the browser console,
+`cookbookGames.<id>.step(5)` and `.act('doThing')` drive it by hand. To run what CI runs:
+
+```bash
+python3 scripts/check_games.py
+make docs                               # builds the site into site/
+python3 -m http.server 8000 --directory site &
+NODE_PATH=<dir containing node_modules/playwright> SITE_URL=http://localhost:8000/ \
+  node scripts/games_smoke.cjs
+```
 
 ## Updating the README screenshots
 
