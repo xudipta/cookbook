@@ -18,6 +18,10 @@ flowchart LR
 gets refreshed against real infrastructure first) and shows exactly what `apply` would
 change, before anything happens.
 
+**Play it:** [Drift Detective](../../docs/games/terraform/index.md) is a short game where you
+run `terraform` commands to keep config, state and reality in agreement while a teammate
+and a crashed CI job make that hard.
+
 ## Contents
 
 - `notes/01-core-workflow.md` — `init`/`plan`/`apply`/`destroy`, reading a plan, how state

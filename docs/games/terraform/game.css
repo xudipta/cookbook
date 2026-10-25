@@ -1,0 +1,230 @@
+/* Drift Detective. Boards use <div>s, never <ul>, so Material's list styling doesn't apply. */
+
+.cg .tf-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1.1rem;
+  margin-bottom: 0.75rem;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--cg-border);
+  border-radius: 0.3rem;
+  background: var(--cg-surface);
+  font-size: 0.8rem;
+}
+
+.cg .tf-fact {
+  display: inline-flex;
+  gap: 0.35rem;
+  align-items: baseline;
+}
+
+.cg .tf-fact-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--md-default-fg-color--light, #555);
+}
+
+.cg .tf-ws strong {
+  padding: 0 0.4rem;
+  border: 1px solid var(--cg-accent);
+  border-radius: 0.2rem;
+}
+
+.cg .tf-lock strong {
+  color: var(--cg-bad);
+}
+
+.cg .tf-cols {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.75rem;
+}
+
+/* Three panes side by side only when the board itself is wide enough. */
+@container (min-width: 900px) {
+  .cg .tf-cols {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.cg .tf-panel {
+  margin-bottom: 0.75rem;
+  min-width: 0;
+}
+
+.cg .tf-h {
+  margin: 0 0 0.4rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--md-default-fg-color--light, #555);
+}
+
+.cg .tf-code,
+.cg .tf-list {
+  min-height: 3rem;
+  max-height: 22rem;
+  margin: 0;
+  padding: 0.5rem;
+  overflow: auto;
+  border: 1px solid var(--cg-border);
+  border-radius: 0.3rem;
+  background: var(--cg-surface);
+  font-size: 0.74rem;
+  line-height: 1.4;
+}
+
+.cg .tf-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.cg .tf-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.1rem 0.5rem;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--cg-border);
+  border-left: 4px solid var(--cg-accent);
+  border-radius: 0.25rem;
+  background: var(--md-default-bg-color, #fff);
+}
+
+.cg .tf-name {
+  font-size: 0.78rem;
+  word-break: break-all;
+}
+
+.cg .tf-id {
+  font-size: 0.7rem;
+  opacity: 0.8;
+}
+
+.cg .tf-tag {
+  padding: 0 0.35rem;
+  border: 1px solid var(--cg-warn);
+  border-radius: 0.2rem;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  color: var(--cg-warn);
+}
+
+.cg .tf-attrs {
+  flex-basis: 100%;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  font-size: 0.72rem;
+  line-height: 1.35;
+}
+
+.cg .tf-empty {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--md-default-fg-color--light, #555);
+}
+
+.cg .tf-editor,
+.cg .tf-prompt,
+.cg .tf-quicks {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.4rem;
+}
+
+.cg .tf-select,
+.cg .tf-input {
+  flex: 1 1 10rem;
+  min-width: 0;
+  padding: 0.25rem 0.4rem;
+  border: 1px solid var(--cg-border);
+  border-radius: 0.25rem;
+  background: var(--md-default-bg-color, #fff);
+  color: inherit;
+  font: inherit;
+  font-size: 0.78rem;
+}
+
+.cg .tf-cmd {
+  font-family: var(--md-code-font-family, monospace);
+}
+
+.cg .tf-ps1 {
+  font-family: var(--md-code-font-family, monospace);
+  font-weight: 700;
+}
+
+.cg .tf-btn {
+  padding: 0.2rem 0.55rem;
+  border: 1px solid var(--cg-accent);
+  border-radius: 0.2rem;
+  background: transparent;
+  color: var(--cg-accent);
+  font: inherit;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+[data-md-color-scheme="slate"] .cg .tf-btn {
+  color: var(--md-typeset-a-color, #9fa8da);
+  border-color: var(--md-typeset-a-color, #9fa8da);
+}
+
+.cg .tf-btn:hover:not(:disabled) {
+  background: var(--cg-surface);
+}
+
+.cg .tf-btn:disabled,
+.cg .tf-input:disabled,
+.cg .tf-select:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.cg .tf-btn:focus-visible,
+.cg .tf-input:focus-visible,
+.cg .tf-select:focus-visible {
+  outline: 2px solid var(--md-accent-fg-color, #3f51b5);
+  outline-offset: 1px;
+}
+
+.cg .tf-quick {
+  font-family: var(--md-code-font-family, monospace);
+}
+
+.cg .tf-term {
+  height: 18rem;
+  margin: 0;
+  padding: 0.5rem;
+  overflow: auto;
+  border: 1px solid var(--cg-border);
+  border-radius: 0.3rem;
+  background: #1b1d23;
+  color: #e6e6e6;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.cg .tf-line-cmd {
+  color: #9fd0ff;
+  font-weight: 700;
+}
+
+.cg .tf-line-err {
+  color: #ff9d95;
+}
+
+.cg .tf-pending {
+  margin: 0.4rem 0 0;
+  font-size: 0.78rem;
+  color: var(--cg-warn);
+  font-weight: 600;
+}

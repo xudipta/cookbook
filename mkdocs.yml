@@ -166,4 +166,5 @@ nav:
       - docs/games/index.md
       - Chaos Monkey Cluster (Kubernetes): docs/games/kubernetes/index.md
       - Layer Cake (Docker): docs/games/docker/index.md
+      - Drift Detective (Terraform): docs/games/terraform/index.md
       - Replica Rescue (demo): docs/games/demo/index.md
