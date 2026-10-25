@@ -96,8 +96,8 @@ extra:
       name: xudipta/cookbook on GitHub
 
 nav:
-  - Home: README.md
   - Project:
+      - About: about.md
       - Contributing: CONTRIBUTING.md
       - Changelog: CHANGELOG.md
   - Infrastructure:

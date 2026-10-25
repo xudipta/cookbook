@@ -34,6 +34,38 @@ async function checkLearnLinks(scenario, learnUrl) {
   return problems;
 }
 
+// The home page builds its board from docs/games/games.json: one tile per entry, no errors, and a
+// teaser game that responds to a click.
+async function checkHome(browser) {
+  const problems = [];
+  const manifest = JSON.parse(fs.readFileSync(path.join(GAMES_DIR, 'games.json'), 'utf8')).games;
+  const page = await browser.newPage();
+  page.on('pageerror', (e) => problems.push(`page error: ${e.message}`));
+  page.on('console', (m) => {
+    if (m.type() === 'error' && m.location().url.startsWith(SITE_URL)) problems.push(`console error: ${m.text()}`);
+  });
+  await page.goto(SITE_URL, { waitUntil: 'load' });
+  try {
+    await page.waitForSelector('.tile', { timeout: 15000 });
+  } catch {
+    problems.push('the board never rendered (no .tile within 15s)');
+    await page.close();
+    return problems;
+  }
+  const tiles = await page.locator('.tile').count();
+  if (tiles !== manifest.length) problems.push(`board has ${tiles} tiles, games.json has ${manifest.length}`);
+  for (const game of manifest.filter((g) => g.status === 'live')) {
+    const href = await page.locator(`a.tile[href="docs/games/${game.id}/"]`).count();
+    if (!href) problems.push(`no tile links to docs/games/${game.id}/`);
+  }
+  const crashed = page.locator('.pod[data-s="crash"]').first();
+  await crashed.click();
+  if (!(await page.locator('#term').innerText()).includes('kubectl delete pod')) problems.push('teaser: deleting a crashed pod did not log the command');
+  if (await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)) problems.push('home page scrolls horizontally');
+  await page.close();
+  return problems;
+}
+
 async function playRun(browser, id, run) {
   const problems = [];
   const page = await browser.newPage();
@@ -110,6 +142,10 @@ async function playGame(browser, id) {
 
   const browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {});
   let failed = 0;
+  console.log('home page');
+  const homeProblems = await checkHome(browser);
+  for (const p of homeProblems) console.error(`  FAIL ${p}`);
+  if (homeProblems.length) failed += 1;
   for (const id of ids) {
     console.log(`game: ${id}`);
     const problems = await playGame(browser, id);
@@ -118,7 +154,7 @@ async function playGame(browser, id) {
   }
   await browser.close();
   if (failed) {
-    console.error(`${failed} of ${ids.length} game(s) failed`);
+    console.error(`${failed} check(s) failed`);
     process.exit(1);
   }
   console.log(`${ids.length} game(s) passed`);

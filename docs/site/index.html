@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>cookbook: infrastructure, as a game</title>
+  <meta name="description" content="Short browser games where a cluster fails, a build crawls or a state file drifts, and you fix it with the real commands. Every incident links to the note that explains it.">
+  <link rel="icon" href="assets/images/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,500..900&family=IBM+Plex+Mono:wght@400;500;600&family=Public+Sans:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="docs/site/tokens.css">
+  <link rel="stylesheet" href="docs/site/home.css">
+  <script>
+    // Apply a saved theme before first paint (same entry Material's toggle writes; see docs/site/theme.js).
+    try {
+      var p = JSON.parse(localStorage.getItem(new URL('.', location).pathname + '.__palette'));
+      if (p && p.color && p.color.scheme) document.documentElement.dataset.theme = p.color.scheme === 'slate' ? 'dark' : 'light';
+    } catch (e) {}
+  </script>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="./">cook<span>book</span></a>
+    <nav class="nav" aria-label="Main">
+      <a href="#board">Play</a>
+      <a href="#how">How it teaches</a>
+      <a href="#notes">Notes</a>
+      <a href="about/">About</a>
+      <a href="https://github.com/xudipta/cookbook">GitHub</a>
+      <button class="theme" id="theme" type="button" aria-label="Switch colour theme">Dark mode</button>
+    </nav>
+  </header>
+
+  <main>
+    <div class="hero">
+      <div>
+        <p class="label hero-kicker">Infrastructure, as a game</p>
+        <h1>Break it.<br>Fix it.<br><em>Learn why.</em></h1>
+        <p class="lead">Short browser games where a cluster fails, a build crawls or a state file drifts, and you fix it with the real commands. Every incident links to the note that explains it.</p>
+        <div class="cta">
+          <a class="btn primary" href="docs/games/kubernetes/">Play Chaos Monkey Cluster</a>
+          <a class="btn" href="#board">See all games</a>
+        </div>
+        <ul class="facts">
+          <li><strong data-stat="live">3</strong> games live</li>
+          <li><strong data-stat="levels">11</strong> levels</li>
+          <li><strong>0</strong> installs, runs in your browser</li>
+        </ul>
+      </div>
+
+      <div class="rig" aria-label="Try it: a playable incident">
+        <div class="rig-bar">
+          <b>deploy/web · 6 replicas</b>
+          <div class="meter"><span id="avail-text">83%</span><div class="meter-track"><div class="meter-fill" id="avail" data-level="ok"></div></div></div>
+        </div>
+        <div class="pods" id="pods"></div>
+        <pre class="term" id="term" role="log" aria-live="polite"></pre>
+        <div class="rig-foot">
+          <span id="score">Tap a crashed pod to delete it.</span>
+          <button id="reset" type="button">Reset</button>
+        </div>
+      </div>
+    </div>
+
+    <section class="block" id="board" aria-labelledby="board-h">
+      <div class="sec-head">
+        <p class="label">The board</p>
+        <h2 id="board-h">One game per service. <span data-stat="live-word">Three</span> are live.</h2>
+        <p>Each game models a real tool closely enough that the commands transfer. The rest of the board is queued, in the order it ships.</p>
+      </div>
+      <div class="board" id="tiles">
+        <noscript><p>The board needs JavaScript. The games are listed on the <a href="docs/games/">Play page</a>.</p></noscript>
+      </div>
+    </section>
+
+    <section class="block" id="how" aria-labelledby="how-h">
+      <div class="teach">
+        <div>
+          <div class="sec-head">
+            <p class="label">How a game teaches</p>
+            <h2 id="how-h">The loss is a pointer to the page you needed.</h2>
+          </div>
+          <ol class="steps">
+            <li><div><h3>An incident arrives</h3><p>A pod crash-loops, a layer cache misses, a CI job leaves a lock behind. The board shows the symptom, not the cause.</p></div></li>
+            <li><div><h3>You diagnose and fix it</h3><p>Use a real prompt: <code>kubectl describe</code>, <code>docker build</code>, <code>terraform plan</code>. Reading is free; changes cost a move.</p></div></li>
+            <li><div><h3>The log explains why</h3><p>Each resolved incident links to the exact note section behind it, so you can read the theory after you have felt the problem.</p></div></li>
+          </ol>
+        </div>
+        <div class="log" role="img" aria-label="Example event log from the Terraform game">
+          <div class="log-head label">Event log · Drift Detective, day 4</div>
+          <div class="log-item">
+            <span class="when">day 4 · open</span>
+            <strong class="bad">A crashed CI job left the state locked</strong>
+            <code class="cmd">Error: Error acquiring the state lock<br>Who: ci-runner@deploy-812</code>
+          </div>
+          <div class="log-item">
+            <span class="when">day 4 · resolved</span>
+            <strong class="good">Lock cleared with force-unlock</strong>
+            <p>Confirm nothing is really running, then <code>terraform force-unlock LOCK_ID</code>.</p>
+            <a class="learn" href="topics/terraform/notes/03-state-and-workspaces/#drift-and-locking-in-practice">Learn why: Drift and locking, in practice</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="block" id="notes" aria-labelledby="notes-h">
+      <div class="sec-head">
+        <p class="label">Notes</p>
+        <h2 id="notes-h">Prefer to read first?</h2>
+        <p>The notes are short, and every example in them is built, applied or deployed in CI on each change, so the commands work.</p>
+      </div>
+      <div class="notes">
+        <a class="note-link" href="topics/kubernetes/"><b>Kubernetes</b><span>Pods, probes, config, scaling</span></a>
+        <a class="note-link" href="topics/docker/"><b>Docker</b><span>Images, multi-stage builds, caching</span></a>
+        <a class="note-link" href="topics/terraform/"><b>Terraform</b><span>Plan, state, workspaces, locks</span></a>
+        <a class="note-link" href="docs/infrastructure/"><b>All topics</b><span>Linux, CI/CD, Git, observability and more</span></a>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <span>cookbook · MIT licensed · built from <a href="https://github.com/xudipta/cookbook">xudipta/cookbook</a></span>
+    <span>Best scores are saved in this browser only.</span>
+  </footer>
+</div>
+<script type="module" src="docs/site/home.js"></script>
+</body>
+</html>

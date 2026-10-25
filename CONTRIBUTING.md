@@ -96,6 +96,10 @@ docs/games/<id>/
   game.css          # optional; set `styles: 'game.css'` in game.js
 ```
 
+Also add (or update) the game's entry in `docs/games/games.json`: it drives the board on the home
+page (title, topic, blurb, command chips, level count, `status: "live"`). `scripts/check_games.py`
+fails if a game has no entry or its level count disagrees with `scenarios.json`.
+
 `game.js` registers itself with the shared engine:
 
 ```js

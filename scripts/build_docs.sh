@@ -14,7 +14,13 @@ dest=site-src
 rm -rf "$dest"
 mkdir -p "$dest"
 
-cp README.md CONTRIBUTING.md CHANGELOG.md "$dest/"
+cp CONTRIBUTING.md CHANGELOG.md "$dest/"
+
+# The site root is the games-first home page (docs/site/index.html), so the README is published as the
+# About page instead of becoming index.html. CONTRIBUTING links to it as README.md.
+cp README.md "$dest/about.md"
+sed -i 's#](README.md)#](about.md)#g' "$dest/CONTRIBUTING.md"
+cp docs/site/index.html "$dest/index.html"
 
 while IFS= read -r f; do
   mkdir -p "$dest/$(dirname "$f")"
