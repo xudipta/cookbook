@@ -110,6 +110,7 @@ export async function mountGame(container, { id }) {
     ui.setHud({
       ticks: rt.ticks,
       winTicks: scenario.winTicks,
+      tickLabel: scenario.tickLabel || 'Tick',
       health: rt.state.health,
       score: score(),
       status: rt.status,
@@ -150,8 +151,13 @@ export async function mountGame(container, { id }) {
       get paused() {
         return rt.paused;
       },
+      // True once the game has been won or lost, so a game's own controls can disable themselves.
+      get over() {
+        return rt.status !== 'playing';
+      },
       // Lets a game's own UI (a prompt, a form) go through the same pipeline as the action buttons.
       act: (name, ...args) => rt.act(name, ...args),
+      step: (n = 1) => rt.step(n),
       log: (text, opts) => ui.log(text, opts),
       fire(eventId, detail) {
         const event = events.get(eventId);
@@ -175,7 +181,8 @@ export async function mountGame(container, { id }) {
 
   function startTimer() {
     stopTimer();
-    if (!autoplay) return;
+    // `manual: true` games are turn-based: time only advances when the game calls ctx.step().
+    if (!autoplay || base.manual) return;
     timer = setInterval(() => {
       if (!container.isConnected) return stopTimer(); // navigated away (instant navigation)
       if (!rt.paused) rt.step();
@@ -197,8 +204,11 @@ export async function mountGame(container, { id }) {
     const action = def.actions[name];
     if (!action) throw new Error(`Unknown action "${name}"`);
     const run = typeof action === 'function' ? action : action.run;
-    if (run(rt.state, ctx, ...args) === false) return false;
-    rt.actionsUsed += 1;
+    const result = run(rt.state, ctx, ...args);
+    if (result === false) return false; // rejected, or a read-only command: not counted, not valid
+    // 'free' means valid but not scored (e.g. rearranging cards).
+    if (result !== 'free') rt.actionsUsed += 1;
+    if (rt.status !== 'playing') return true; // the action itself ended the game (via ctx.step)
     if (def.isLost(rt.state)) finish('lost');
     else if (def.isWon(rt.state)) finish('won');
     else refresh();
@@ -264,7 +274,7 @@ export async function mountGame(container, { id }) {
       e.stopPropagation();
       fn();
     };
-    if (key === 'p') return handled(() => rt.togglePause());
+    if (key === 'p' && !base.manual) return handled(() => rt.togglePause());
     if (key === 'r') return handled(() => rt.restart());
     for (const [name, action] of Object.entries(def.actions)) {
       if (typeof action === 'object' && action.key && action.key.toLowerCase() === key) {

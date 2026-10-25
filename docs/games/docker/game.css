@@ -1,0 +1,240 @@
+/* Layer Cake. Boards use <div>s, never <ul>, so Material's list styling doesn't apply. */
+
+.cg .dk-cols {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.75rem;
+}
+
+/* Side by side only when the board itself is wide enough for both. */
+@container (min-width: 820px) {
+  .cg .dk-cols {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.cg .dk-panel {
+  margin-bottom: 0.75rem;
+  min-width: 0;
+}
+
+.cg .dk-h {
+  margin: 0 0 0.4rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--md-default-fg-color--light, #555);
+}
+
+.cg .dk-deck,
+.cg .dk-tray {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-height: 3rem;
+  padding: 0.4rem;
+  border: 1px dashed var(--cg-border);
+  border-radius: 0.3rem;
+  background: var(--cg-surface);
+}
+
+.cg .dk-over {
+  border-color: var(--cg-accent);
+  background: var(--md-default-bg-color, #fff);
+}
+
+.cg .dk-card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.5rem;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--cg-border);
+  border-left: 4px solid var(--cg-accent);
+  border-radius: 0.25rem;
+  background: var(--md-default-bg-color, #fff);
+  cursor: grab;
+}
+
+.cg .dk-card[draggable="true"]:active {
+  cursor: grabbing;
+}
+
+.cg .dk-stage-break {
+  margin-top: 0.5rem;
+}
+
+.cg .dk-card-run {
+  border-left-color: var(--cg-warn);
+}
+
+.cg .dk-card-copy {
+  border-left-color: var(--cg-ok);
+}
+
+.cg .dk-card-file,
+.cg .dk-card-flag {
+  border-left-style: dashed;
+}
+
+.cg .dk-text {
+  flex: 1 1 14rem;
+  min-width: 0;
+  background: transparent;
+  font-size: 0.78rem;
+  word-break: break-word;
+}
+
+.cg .dk-tag {
+  padding: 0 0.35rem;
+  border: 1px solid var(--cg-border);
+  border-radius: 0.2rem;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+}
+
+.cg .dk-ops {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.cg .dk-btn {
+  padding: 0.1rem 0.45rem;
+  border: 1px solid var(--cg-accent);
+  border-radius: 0.2rem;
+  background: transparent;
+  color: var(--cg-accent);
+  font: inherit;
+  font-size: 0.72rem;
+  cursor: pointer;
+}
+
+[data-md-color-scheme="slate"] .cg .dk-btn {
+  color: var(--md-typeset-a-color, #9fa8da);
+  border-color: var(--md-typeset-a-color, #9fa8da);
+}
+
+.cg .dk-btn:hover:not(:disabled) {
+  background: var(--cg-surface);
+}
+
+.cg .dk-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.cg .dk-btn:focus-visible {
+  outline: 2px solid var(--md-accent-fg-color, #3f51b5);
+  outline-offset: 1px;
+}
+
+.cg .dk-hint,
+.cg .dk-empty,
+.cg .dk-stats {
+  margin: 0.3rem 0 0;
+  font-size: 0.78rem;
+  color: var(--md-default-fg-color--light, #555);
+}
+
+.cg .dk-layers {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.4rem;
+  border: 1px solid var(--cg-border);
+  border-radius: 0.3rem;
+  min-height: 3rem;
+}
+
+.cg .dk-stage {
+  margin-top: 0.3rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--md-default-fg-color--light, #555);
+}
+
+.cg .dk-layer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.5rem;
+  padding: 0.15rem 0.4rem;
+  border-left: 4px solid var(--cg-border);
+  font-size: 0.78rem;
+}
+
+.cg .dk-layer-cached {
+  border-left-color: var(--cg-ok);
+}
+
+.cg .dk-layer-built {
+  border-left-color: var(--cg-warn);
+}
+
+.cg .dk-layer-error {
+  border-left-color: var(--cg-bad);
+  background: var(--cg-surface);
+}
+
+.cg .dk-badge {
+  min-width: 4.8rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.cg .dk-ltext {
+  flex: 1 1 10rem;
+  min-width: 0;
+  background: transparent;
+  font-size: 0.75rem;
+  word-break: break-word;
+}
+
+.cg .dk-lsize {
+  font-size: 0.72rem;
+  opacity: 0.8;
+}
+
+.cg .dk-goals {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.cg .dk-goal {
+  display: flex;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+}
+
+.cg .dk-goal-mark {
+  min-width: 2.6rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.cg .dk-goal-ok .dk-goal-mark {
+  color: var(--cg-ok);
+}
+
+.cg .dk-goal-todo .dk-goal-mark {
+  color: var(--cg-bad);
+}
+
+.cg .dk-log {
+  max-height: 16rem;
+  margin: 0;
+  padding: 0.5rem;
+  overflow: auto;
+  border: 1px solid var(--cg-border);
+  border-radius: 0.3rem;
+  background: #1b1d23;
+  color: #e6e6e6;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  white-space: pre-wrap;
+}

@@ -127,6 +127,11 @@ the meter it shows. A few rules keep the games consistent:
   `scenarios.json`. The selected level is merged over the top-level fields (events always come
   from the top), `?level=<id>` picks one, and each level needs its own `solution` (CI plays every
   one). A level's `schedule: [{ tick, event, ... }]` may only name events declared at the top.
+- **Turn-based games** set `manual: true` (and optionally `tickLabel`, e.g. "Build") at the top of
+  `scenarios.json`: no timer runs, there is no pause, and time advances only when an action calls
+  `ctx.step()`. In `solution`, the steps run in order and `tick` is just a sort key. An action may
+  return `'free'` to be valid but unscored (rearranging cards); `ctx.over` is true once the game
+  has ended, so a game's own controls can disable themselves.
 - **Hidden actions** (`hidden: true`) get no button, for games that drive the pipeline from their
   own UI. From that UI call `ctx.act('name', ...args)` so the action is still counted, scored and
   blocked while paused. An action that returns `false` is not counted, which is how a game keeps
