@@ -2,7 +2,7 @@
 
 [![Validate](https://github.com/xudipta/cookbook/actions/workflows/validate.yml/badge.svg)](https://github.com/xudipta/cookbook/actions/workflows/validate.yml)
 [![Pages](https://github.com/xudipta/cookbook/actions/workflows/pages.yml/badge.svg)](https://github.com/xudipta/cookbook/actions/workflows/pages.yml)
-[![Docs](https://img.shields.io/badge/docs-xudipta.github.io%2Fcookbook-teal)](https://xudipta.github.io/cookbook/)
+[![Docs](https://img.shields.io/badge/docs-xudipta.github.io%2Fcookbook-3f51b5)](https://xudipta.github.io/cookbook/)
 
 A field guide to infrastructure and AI tooling, written so a newcomer can go from "what
 is this" to running it themselves — and so a returning reader can jump straight to the
@@ -88,6 +88,7 @@ topics/<topic>/
   README.md              # what the topic covers, a diagram, a quickstart, and how it's validated
   notes/NN-*.md          # prose notes, numbered in reading order
   examples/<name>/       # runnable files (manifests, Dockerfiles, scripts, .tf, ...)
+docs/<category>.md       # a landing page for a group of topics (Infrastructure, Delivery, ...) in the docs site nav
 ```
 
 ## How validation works

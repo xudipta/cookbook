@@ -74,7 +74,7 @@ def check_file(md_file: Path) -> list[str]:
 
 
 def main() -> int:
-    md_files = sorted(REPO_ROOT.glob("topics/**/*.md")) + [
+    md_files = sorted(REPO_ROOT.glob("topics/**/*.md")) + sorted(REPO_ROOT.glob("docs/**/*.md")) + [
         REPO_ROOT / "README.md",
         REPO_ROOT / "CONTRIBUTING.md",
     ]
