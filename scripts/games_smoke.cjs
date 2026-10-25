@@ -105,8 +105,16 @@ async function playRun(browser, id, run) {
   else if (outcome.status !== 'won') problems.push(`scripted solution ended "${outcome.status}" after ${outcome.ticks} ticks (health ${outcome.health})`);
   else console.log(`  won after ${outcome.ticks} ticks, health ${outcome.health}`);
 
-  if (!outcome.error && outcome.status === 'won' && !(await page.locator('.cg-result-won').count())) {
-    problems.push('game reported won but the result panel is missing');
+  if (!outcome.error && outcome.status === 'won') {
+    if (!(await page.locator('.cg-result-won').count())) {
+      problems.push('game reported won but the result panel is missing');
+    } else {
+      // A win offers the next level (unless this is the last) and a way back to the notes (when the game is on the board).
+      const next = await page.locator('.cg-result-won [data-cg="next"]').count();
+      if (next !== (run.isLast ? 0 : 1)) problems.push(`result panel has ${next} "Next level" button(s), expected ${run.isLast ? 0 : 1}`);
+      const notes = await page.locator('.cg-result-won a[data-cg="notes"]').count();
+      if (run.onBoard && notes !== 1) problems.push('result panel has no "Read the notes" link');
+    }
   }
   await page.close();
   return problems;
@@ -114,9 +122,10 @@ async function playRun(browser, id, run) {
 
 async function playGame(browser, id) {
   const scenario = JSON.parse(fs.readFileSync(path.join(GAMES_DIR, id, 'scenarios.json'), 'utf8'));
+  const onBoard = JSON.parse(fs.readFileSync(path.join(GAMES_DIR, 'games.json'), 'utf8')).games.some((g) => g.id === id);
   const runs = scenario.levels
-    ? scenario.levels.map((l) => ({ label: l.id, level: l.id, seed: l.seed ?? scenario.seed, solution: l.solution, manual: scenario.manual }))
-    : [{ label: null, level: null, seed: scenario.seed, solution: scenario.solution, manual: scenario.manual }];
+    ? scenario.levels.map((l, i) => ({ label: l.id, level: l.id, seed: l.seed ?? scenario.seed, solution: l.solution, manual: scenario.manual, isLast: i === scenario.levels.length - 1, onBoard }))
+    : [{ label: null, level: null, seed: scenario.seed, solution: scenario.solution, manual: scenario.manual, isLast: true, onBoard }];
 
   const problems = [];
   for (const run of runs) {

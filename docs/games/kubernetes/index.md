@@ -1,7 +1,6 @@
 # Chaos Monkey Cluster
 
-Keep a Service healthy while a chaos monkey breaks the cluster. Look first, then act: every
-failure leaves clues in `kubectl`, and each one links to the note that explains it.
+Keep a Service healthy while a chaos monkey breaks the cluster. Every failure leaves clues in `kubectl`.
 
 <div id="game" data-game="kubernetes">
   <noscript>This game needs JavaScript.</noscript>

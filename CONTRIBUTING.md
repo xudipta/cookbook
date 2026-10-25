@@ -82,6 +82,16 @@ three, then run `python3 scripts/check_contrast.py`, which fails on drift or on 
 WCAG AA (4.5:1). Pages outside Material use `docs/site/theme.js`, which reads and writes the same
 stored theme choice as Material's own toggle.
 
+## Game page layout
+
+Every game page gets the same frame from the shared shell, so a game's own code only draws its board:
+a topic strip (from the game's entry in `docs/games/games.json`) with a link to the notes; a level
+picker that scrolls sideways; a collapsible level goal; the HUD and action buttons; the board; and, after
+a run, a result panel with **Next level**, **Play again** and **Read the notes**. The page text below the
+board (every `##` section in `index.md`) folds into collapsible panels, open on a first visit and closed
+afterwards, and the table of contents is hidden. Keep the text above the board to one or two sentences:
+on a 390px-wide phone the board should start near the top of the screen.
+
 ## Adding a game
 
 The browser games under `docs/games/` (see the **Play** section of the docs site) share one

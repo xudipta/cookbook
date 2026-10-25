@@ -14,11 +14,22 @@ export function el(tag, props = {}, ...kids) {
   return node;
 }
 
-export function createUI(container, { def, scenario, levels, siteRoot, handlers }) {
+export function createUI(container, { def, scenario, levels, siteRoot, handlers, meta }) {
   container.replaceChildren();
   container.classList.add('cg');
   container.tabIndex = 0;
   container.setAttribute('aria-label', `${scenario.title || def.id} game`);
+
+  // The topic strip: which topic this game belongs to, and the way back to its notes.
+  const head = meta
+    ? el(
+        'div',
+        { class: 'cg-head' },
+        el('span', { class: 'cg-mark', style: `--c: var(--h-${meta.hue})`, 'aria-hidden': 'true', text: meta.code }),
+        el('span', { class: 'cg-topic', text: meta.topic }),
+        el('a', { class: 'cg-notes', href: new URL(meta.notes, siteRoot).href, text: 'Read the notes' }),
+      )
+    : null;
 
   const tickEl = el('span', { class: 'cg-stat', 'data-stat': 'tick' });
   const scoreEl = el('span', { class: 'cg-stat', 'data-stat': 'score' });
@@ -56,6 +67,15 @@ export function createUI(container, { def, scenario, levels, siteRoot, handlers 
   // Level picker (only when scenarios.json defines `levels`).
   const levelBar = levels ? el('div', { class: 'cg-levels', role: 'group', 'aria-label': 'Level' }) : null;
   const blurb = el('p', { class: 'cg-blurb' });
+  // On a phone the level goal folds away so the board stays near the top of the screen.
+  const goalToggle = el('button', { class: 'cg-goal-toggle', type: 'button', 'aria-expanded': 'true' });
+  const blurbBox = el('div', { class: 'cg-goal' }, goalToggle, blurb);
+  const showGoal = (open) => {
+    blurb.hidden = !open;
+    goalToggle.setAttribute('aria-expanded', String(open));
+    goalToggle.textContent = `${open ? '▾' : '▸'} Level goal`;
+  };
+  goalToggle.addEventListener('click', () => showGoal(blurb.hidden));
   const levelButtons = new Map();
   for (const lvl of levels || []) {
     const btn = el('button', { class: 'cg-btn cg-btn-level', type: 'button', 'data-level': lvl.id, text: lvl.title });
@@ -83,8 +103,9 @@ export function createUI(container, { def, scenario, levels, siteRoot, handlers 
 
   container.append(
     ...[
+      head,
       levelBar,
-      blurb,
+      blurbBox,
       hud,
       actionsBar,
       el('div', { class: `cg-main${scenario.stacked ? ' cg-main-stacked' : ''}` }, board, el('div', { class: 'cg-side' }, el('h3', { class: 'cg-h', text: 'Event log' }), logList)),
@@ -125,14 +146,15 @@ export function createUI(container, { def, scenario, levels, siteRoot, handlers 
     setLevel(level) {
       for (const [id, btn] of levelButtons) btn.setAttribute('aria-pressed', String(Boolean(level) && id === level.id));
       blurb.textContent = (level && level.blurb) || '';
-      blurb.hidden = !blurb.textContent;
+      blurbBox.hidden = !blurb.textContent;
+      showGoal(matchMedia('(min-width: 700px)').matches);
     },
 
     clearLog() {
       logList.replaceChildren();
     },
 
-    showResult({ status, score, best, ticks, actionsUsed, avgResolve, events }) {
+    showResult({ status, score, best, ticks, actionsUsed, avgResolve, events, nextLevel }) {
       const won = status === 'won';
       const list = el('ul', { class: 'cg-result-events cg-list' });
       for (const e of events) {
@@ -140,8 +162,12 @@ export function createUI(container, { def, scenario, levels, siteRoot, handlers 
         if (e.learn) item.append(' ', learnLink(e.learn, siteRoot));
         list.append(item);
       }
-      const again = el('button', { class: 'cg-btn cg-btn-primary', type: 'button', text: 'Play again' });
+      const next =
+        won && nextLevel ? el('button', { class: 'cg-btn cg-btn-primary', type: 'button', 'data-cg': 'next', text: `Next level: ${nextLevel.title}` }) : null;
+      if (next) next.addEventListener('click', () => handlers.setLevel(nextLevel.id));
+      const again = el('button', { class: `cg-btn${next ? '' : ' cg-btn-primary'}`, type: 'button', 'data-cg': 'again', text: 'Play again' });
       again.addEventListener('click', () => handlers.restart());
+      const notes = meta ? el('a', { class: 'cg-btn', 'data-cg': 'notes', href: new URL(meta.notes, siteRoot).href, text: 'Read the notes' }) : null;
       const facts = [`Score ${score}`, `Best ${best}`, `${ticks} ticks`, `${actionsUsed} actions`];
       if (avgResolve !== null) facts.push(`avg ${avgResolve.toFixed(1)} ticks to resolve an event`);
       resultSlot.replaceChildren(
@@ -152,10 +178,10 @@ export function createUI(container, { def, scenario, levels, siteRoot, handlers 
           el('p', { class: 'cg-result-facts', text: facts.join(' · ') }),
           events.length ? el('p', { text: 'What happened, and where to read more:' }) : null,
           list,
-          again,
+          el('div', { class: 'cg-result-actions' }, next, again, notes),
         ),
       );
-      again.focus({ preventScroll: true });
+      (next || again).focus({ preventScroll: true });
     },
 
     clearResult() {

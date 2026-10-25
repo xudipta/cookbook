@@ -1,8 +1,6 @@
 # Drift Detective
 
-Terraform only knows what its state file says. Reality drifts: someone edits a resource in the
-console, a teammate creates one by hand, CI crashes holding the lock. Run `terraform` commands in
-the prompt, read every plan, and end each day with config, state and the real world in agreement.
+Reality drifts from what Terraform's state says. Read every plan, and end each day with config, state and the real world in agreement.
 
 <div id="game" data-game="terraform">
   <noscript>This game needs JavaScript.</noscript>
