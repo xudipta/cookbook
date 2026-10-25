@@ -219,6 +219,6 @@ standing one up in a sandboxed environment doesn't always succeed (nested contai
 fail at the `kubeadm` control-plane step depending on the host's cgroup setup) — that's
 what happened writing this doc. The manifests are schema-valid and follow the identical
 sidecar/ConfigMap-mount pattern `topics/kubernetes/notes/02-pods-and-workloads.md` and
-`03-config-and-secrets.md` already demonstrate working, but if you hit something
+`topics/kubernetes/notes/03-config-and-secrets.md` already demonstrate working, but if you hit something
 different running this for real on a working `kind` setup, please open an issue —
 that gap is exactly what this callout is flagging rather than papering over.
