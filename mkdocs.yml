@@ -86,6 +86,7 @@ extra:
 nav:
   - Home: README.md
   - Contributing: CONTRIBUTING.md
+  - Changelog: CHANGELOG.md
   - Kubernetes:
       - Overview: topics/kubernetes/README.md
       - kubectl commands: topics/kubernetes/notes/01-kubectl-commands.md

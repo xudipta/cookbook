@@ -14,7 +14,7 @@ dest=site-src
 rm -rf "$dest"
 mkdir -p "$dest"
 
-cp README.md CONTRIBUTING.md "$dest/"
+cp README.md CONTRIBUTING.md CHANGELOG.md "$dest/"
 
 while IFS= read -r f; do
   mkdir -p "$dest/$(dirname "$f")"
