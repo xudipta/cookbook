@@ -33,6 +33,7 @@ export function createUI(container, { def, scenario, levels, siteRoot, handlers,
 
   const tickEl = el('span', { class: 'cg-stat', 'data-stat': 'tick' });
   const scoreEl = el('span', { class: 'cg-stat', 'data-stat': 'score' });
+  const bestEl = el('span', { class: 'cg-stat', 'data-stat': 'best' });
   const statusEl = el('span', { class: 'cg-stat cg-status', 'data-stat': 'status', role: 'status' });
   const barFill = el('div', { class: 'cg-meter-fill' });
   const meter = el(
@@ -60,6 +61,7 @@ export function createUI(container, { def, scenario, levels, siteRoot, handlers,
     el('div', { class: 'cg-meter-wrap' }, el('span', { class: 'cg-label', text: scenario.healthLabel || 'Health' }), meter, meterValue),
     tickEl,
     scoreEl,
+    bestEl,
     statusEl,
     el('div', { class: 'cg-controls' }, pauseBtn, restartBtn),
   );
@@ -128,9 +130,11 @@ export function createUI(container, { def, scenario, levels, siteRoot, handlers,
       if (learn) li.append(learnLink(learn, siteRoot));
     },
 
-    setHud({ ticks, winTicks, tickLabel = 'Tick', health, score, status, paused }) {
+    setHud({ ticks, winTicks, tickLabel = 'Tick', health, score, best = 0, status, paused }) {
       tickEl.textContent = winTicks ? `${tickLabel} ${ticks} / ${winTicks}` : `${tickLabel} ${ticks}`;
       scoreEl.textContent = `Score ${score}`;
+      bestEl.textContent = best ? `Best ${best}` : '';
+      bestEl.hidden = !best;
       const pct = Math.max(0, Math.min(100, Math.round(health)));
       barFill.style.width = `${pct}%`;
       barFill.dataset.level = pct >= 70 ? 'ok' : pct >= 40 ? 'warn' : 'bad';
@@ -148,6 +152,17 @@ export function createUI(container, { def, scenario, levels, siteRoot, handlers,
       blurb.textContent = (level && level.blurb) || '';
       blurbBox.hidden = !blurb.textContent;
       showGoal(matchMedia('(min-width: 700px)').matches);
+    },
+
+    // Mark the levels already won in this browser (a check mark, not colour alone).
+    setProgress(doneIds) {
+      const done = new Set(doneIds);
+      for (const [id, btn] of levelButtons) {
+        const title = levels.find((l) => l.id === id).title;
+        btn.dataset.done = String(done.has(id));
+        btn.textContent = done.has(id) ? `${title} ✓` : title;
+        btn.setAttribute('aria-label', done.has(id) ? `${title}, completed` : title);
+      }
     },
 
     clearLog() {

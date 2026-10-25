@@ -92,6 +92,15 @@ board (every `##` section in `index.md`) folds into collapsible panels, open on 
 afterwards, and the table of contents is hidden. Keep the text above the board to one or two sentences:
 on a 390px-wide phone the board should start near the top of the screen.
 
+## Progress
+
+The shell saves each run in the browser (`docs/games/shared/progress.js`): a best score and a won flag
+per level, under `cookbook-game-progress:<game>`. Games do nothing for this; the shell records every
+finished run, marks completed levels with a check in the level picker, shows the saved best in the HUD,
+and the home page board reads the same entries. The older `cookbook-game-best:<game>` key is still
+written and read, so earlier scores survive. Storage can be blocked, so always go through `progress.js`
+(every access is wrapped) and never assume a saved value exists.
+
 ## Adding a game
 
 The browser games under `docs/games/` (see the **Play** section of the docs site) share one

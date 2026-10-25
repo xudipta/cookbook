@@ -125,3 +125,11 @@ footer a { text-underline-offset: 3px; }
   .nav { margin-left: 0; }
 }
 @media (prefers-reduced-motion: reduce) { .meter-fill { transition: none; } }
+
+.tile-progress { display: flex; align-items: center; gap: 0.6rem; font: 500 0.78rem/1.3 var(--font-mono); color: var(--muted); }
+.pips { display: inline-flex; gap: 0.2rem; }
+.pips i { width: 0.9rem; height: 0.4rem; border-radius: 2px; background: var(--line); }
+.pips i[data-done="true"] { background: var(--ok); }
+.board-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; margin: 1.25rem 0 0; font-size: 0.88rem; color: var(--muted); }
+.board-foot button { font: 500 0.78rem/1 var(--font-mono); padding: 0.5rem 0.7rem; border: 1px solid var(--line); border-radius: var(--radius-s); background: transparent; color: var(--ink); cursor: pointer; }
+.board-foot button:hover { border-color: var(--bad); }
