@@ -34,4 +34,7 @@ while IFS= read -r f; do
   cp "$f" "$dest/$f"
 done < <(find docs -type f \( -name '*.js' -o -name '*.css' -o -name '*.json' -o -name '*.png' -o -name '*.svg' -o -name '*.jpg' -o -name '*.gif' \))
 
+# Notes of topics with a game (or a planned one) get a Play banner; see scripts/play_banners.py.
+python3 scripts/play_banners.py "$dest"
+
 echo "assembled $(find "$dest" -name '*.md' | wc -l | tr -d ' ') pages into $dest/"

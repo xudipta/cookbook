@@ -11,13 +11,15 @@ every example is **checked in CI** on every change: linted, schema-validated, or
 built/applied/deployed against a real target. Nothing here is stale by construction —
 if an example stops working, the badge above goes red.
 
-📖 **Browsable docs site: <https://xudipta.github.io/cookbook/>**
+🎮 **Play the games and read the notes: <https://xudipta.github.io/cookbook/>**
 
-[![Docs site home page](docs/images/docs-home.png)](https://xudipta.github.io/cookbook/)
+The home page: a playable incident, and a board with one game per topic.
 
-A topic page, with its own diagram and tabbed navigation:
+[![The games-first home page](docs/images/docs-home.png)](https://xudipta.github.io/cookbook/)
 
-[![A topic page on the docs site](docs/images/docs-topic-page.png)](https://xudipta.github.io/cookbook/topics/kubernetes/)
+A note page. Topics with a game link to it from the top of every page:
+
+[![A note page with its Play banner](docs/images/docs-topic-page.png)](https://xudipta.github.io/cookbook/topics/docker/notes/01-images-and-dockerfiles/)
 
 ## About this project
 
@@ -95,7 +97,9 @@ topics/<topic>/
   notes/NN-*.md          # prose notes, numbered in reading order
   examples/<name>/       # runnable files (manifests, Dockerfiles, scripts, .tf, ...)
 docs/<category>.md       # a landing page for a group of topics (Infrastructure, Delivery, ...) in the docs site nav
-docs/games/<game>/       # a browser game for the docs site's Play section (see CONTRIBUTING.md)
+docs/games/<game>/       # a browser game for the site's Play section (see CONTRIBUTING.md)
+docs/games/games.json    # the games on the home page's board
+docs/site/               # the home page and the shared design tokens
 ```
 
 ## How validation works
@@ -108,10 +112,12 @@ vulnerabilities.
 
 ## Docs site
 
-`pages.yml` publishes the topic READMEs and notes to
-<https://xudipta.github.io/cookbook/> (MkDocs Material, with Mermaid diagrams rendered
-inline) on every push to `main`. `scripts/build_docs.sh` assembles `site-src/` from the
-topic tree; `validate.yml` strict-builds it on every docs change.
+`pages.yml` publishes the site to <https://xudipta.github.io/cookbook/> on every push to
+`main`: the games-first home page (`docs/site/`), the browser games under **Play**, and the
+topic READMEs and notes under **Learn** (MkDocs Material, with Mermaid diagrams rendered
+inline). `scripts/build_docs.sh` assembles `site-src/` from the topic tree, adding a Play
+banner to the notes of every topic that has a game; `validate.yml` strict-builds it on every
+docs change.
 
 ## Local checks
 
