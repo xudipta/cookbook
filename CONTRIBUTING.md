@@ -72,6 +72,16 @@ Terraform examples use the `local`/`random`/`null` providers, not real clouds).
 | games | scenario validator | `python3 scripts/check_games.py` (schema, and every event's `learn.note`/`learn.section` must exist) |
 | games | live playthrough | see `validate.yml` `games-smoke` job (builds the site, replays each game's scripted solution in Chromium) |
 
+## Site design tokens
+
+Colours, fonts, radii and spacing for the home page, the games and the notes live in
+`docs/site/tokens.css`; `docs/site/material.css` maps them onto Material. Style new UI with
+`var(--surface)`, `var(--ink)`, `var(--accent)` and friends instead of literal colours, so it
+follows the light and dark themes. The dark palette appears three times in `tokens.css`; change all
+three, then run `python3 scripts/check_contrast.py`, which fails on drift or on any text pair below
+WCAG AA (4.5:1). Pages outside Material use `docs/site/theme.js`, which reads and writes the same
+stored theme choice as Material's own toggle.
+
 ## Adding a game
 
 The browser games under `docs/games/` (see the **Play** section of the docs site) share one

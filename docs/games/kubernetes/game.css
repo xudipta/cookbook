@@ -32,7 +32,7 @@
   padding: 0.4rem;
   border: 1px solid var(--cg-border);
   border-radius: 0.3rem;
-  background: var(--md-default-bg-color, #fff);
+  background: var(--surface);
 }
 
 .cg .k8s-node-head {
@@ -144,7 +144,7 @@
 .cg .k8s-hint {
   margin: 0.6rem 0 0.3rem;
   font-size: 0.8rem;
-  color: var(--md-default-fg-color--light, #555);
+  color: var(--muted);
 }
 
 .cg .k8s-prompt {
@@ -164,7 +164,7 @@
   padding: 0.35rem 0.5rem;
   border: 1px solid var(--cg-border);
   border-radius: 0.3rem;
-  background: var(--md-default-bg-color, #fff);
+  background: var(--surface);
   color: inherit;
   font-family: var(--md-code-font, monospace);
   font-size: 0.85rem;
@@ -177,8 +177,8 @@
   overflow: auto;
   border: 1px solid var(--cg-border);
   border-radius: 0.3rem;
-  background: #1b1d23;
-  color: #e6e6e6;
+  background: var(--term-bg);
+  color: var(--term-ink);
   font-size: 0.75rem;
   line-height: 1.35;
   white-space: pre;
@@ -220,7 +220,7 @@
   padding: 0.25rem 0.4rem;
   border: 1px solid var(--cg-border);
   border-radius: 0.25rem;
-  background: var(--md-default-bg-color, #fff);
+  background: var(--surface);
   color: inherit;
   font-family: var(--md-code-font, monospace);
 }
