@@ -2,7 +2,7 @@
 
 [![Validate](https://github.com/xudipta/cookbook/actions/workflows/validate.yml/badge.svg)](https://github.com/xudipta/cookbook/actions/workflows/validate.yml)
 [![Pages](https://github.com/xudipta/cookbook/actions/workflows/pages.yml/badge.svg)](https://github.com/xudipta/cookbook/actions/workflows/pages.yml)
-[![Docs](https://img.shields.io/badge/docs-xudipta.github.io%2Fcookbook-teal)](https://xudipta.github.io/cookbook/)
+[![Docs](https://img.shields.io/badge/docs-xudipta.github.io%2Fcookbook-3f51b5)](https://xudipta.github.io/cookbook/)
 
 A field guide to infrastructure and AI tooling, written so a newcomer can go from "what
 is this" to running it themselves — and so a returning reader can jump straight to the
@@ -18,6 +18,26 @@ if an example stops working, the badge above goes red.
 A topic page, with its own diagram and tabbed navigation:
 
 [![A topic page on the docs site](.github/images/docs-topic-page.png)](https://xudipta.github.io/cookbook/topics/kubernetes/)
+
+## About this project
+
+I kept hitting the same two problems with my own notes on these tools: the examples
+rotted the moment the underlying tool changed, and reference material scattered across
+separate files/gists/wikis with no good way to check I hadn't quietly broken one. This
+repo is my answer — every topic pairs prose with a runnable example, and every example
+is wired into CI, not just linted but actually built, applied, or deployed against a
+real target (`kind`, a real Postgres, a live Terraform apply). If an example breaks, the
+badge above goes red; nothing here can go stale without me noticing.
+
+Beyond the reference content itself, it's also where I practice the engineering habits
+I care about on real infrastructure code: path-filtered CI so a docs-only change doesn't
+spin up a cluster, small reviewable PRs with their own test plan, docs-as-code (the
+GitHub Pages site is generated from the same files you're reading), and treating "the
+example actually runs" as a release gate rather than a nice-to-have.
+
+It's written for two readers at once: someone new to a topic, who should be able to go
+from the Quickstart to a working example in a couple of minutes; and future me, who
+mostly just needs the one command I forgot.
 
 ## What's here
 
@@ -50,7 +70,7 @@ flowchart TD
 | Kubernetes | [`topics/kubernetes/`](topics/kubernetes/README.md) | `yamllint`, `kubeconform`, `helm lint`, `kubectl kustomize`, `kind` deploy + Service curl test |
 | Docker / Containers | [`topics/docker/`](topics/docker/README.md) | `hadolint`, live build + run + curl smoke test |
 | Terraform / IaC | [`topics/terraform/`](topics/terraform/README.md) | `terraform fmt -check`, `tflint`, live `init`/`apply`/`destroy` |
-| Linux / Shell | [`topics/linux/`](topics/linux/README.md) | `shellcheck` on every `*.sh` |
+| Linux / Shell | [`topics/linux/`](topics/linux/README.md) | `shellcheck`, live `backup.sh` smoke test |
 | CI/CD | [`topics/cicd/`](topics/cicd/README.md) | `actionlint` on example workflows |
 | GitHub / Git | [`topics/github/`](topics/github/README.md) | `yamllint` on the issue form, `shellcheck` on the `gh` script |
 | Observability | [`topics/observability/`](topics/observability/README.md) | `promtool check config`/`rules`, `jq` on the Grafana dashboard |
@@ -62,6 +82,11 @@ Markdown across the whole repo is checked with `markdownlint`. Each topic's own 
 has a "New here? Start with..." pointer and a diagram of what the topic actually is —
 open one and go.
 
+**See it all together**: [`topics/capstone/`](topics/capstone/README.md) chains Docker,
+Kubernetes, Observability, and CI/CD into one walkthrough — building a service, deploying
+it, scraping a real metric off it, and automating the whole thing — instead of leaving
+you to infer how the topics connect.
+
 ## Layout
 
 ```text
@@ -69,6 +94,7 @@ topics/<topic>/
   README.md              # what the topic covers, a diagram, a quickstart, and how it's validated
   notes/NN-*.md          # prose notes, numbered in reading order
   examples/<name>/       # runnable files (manifests, Dockerfiles, scripts, .tf, ...)
+docs/<category>.md       # a landing page for a group of topics (Infrastructure, Delivery, ...) in the docs site nav
 ```
 
 ## How validation works
@@ -99,3 +125,12 @@ make docs-serve # preview the docs site at http://localhost:8000
 ## Adding a topic
 
 See [`CONTRIBUTING.md`](CONTRIBUTING.md).
+
+## Changelog
+
+See [`CHANGELOG.md`](CHANGELOG.md) — generated from this repo's own merged PR history,
+a real usage example of `topics/skills/examples/release-notes/`.
+
+## License
+
+[MIT](LICENSE) — copy, adapt, and reuse any note, manifest, or script here.

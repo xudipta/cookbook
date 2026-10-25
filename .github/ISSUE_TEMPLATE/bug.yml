@@ -1,0 +1,47 @@
+---
+name: Bug report
+description: Something in a note, example, or manifest is wrong, outdated, or doesn't validate
+title: "bug: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Something broke, or something documented doesn't match reality — the more
+        specific the file/command below, the faster it's fixable.
+  - type: dropdown
+    id: topic
+    attributes:
+      label: Topic
+      options:
+        - kubernetes
+        - docker
+        - linux
+        - terraform
+        - cicd
+        - github
+        - skills
+        - mcp
+        - observability
+        - database
+        - capstone
+        - repo-wide (README, CONTRIBUTING, CI config, docs site)
+    validations:
+      required: true
+  - type: input
+    id: file
+    attributes:
+      label: File
+      description: The specific note, example, or manifest this is about
+      placeholder: "topics/kubernetes/examples/deployment/sample-deployment.yaml"
+    validations:
+      required: true
+  - type: textarea
+    id: whats-wrong
+    attributes:
+      label: What's wrong
+      description: >-
+        What does the file/doc say, and what's actually true? Include the command you
+        ran and its output if it's a "doesn't validate" bug.
+    validations:
+      required: true

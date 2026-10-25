@@ -34,6 +34,9 @@ starts once both `lint` and `test` have passed.
 New here? Start with `notes/01-github-actions-basics.md` and read it alongside
 `examples/workflows/reusable-lint.yml`.
 
+See a build-and-deploy workflow for an actual service, not just a lint job, in
+[`topics/capstone/`](../capstone/README.md).
+
 ## Quickstart
 
 Call the example reusable workflow from another workflow in the same repo:

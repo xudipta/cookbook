@@ -1,5 +1,13 @@
 # Contributing
 
+## Found something wrong, or have a suggestion?
+
+[Open an issue](https://github.com/xudipta/cookbook/issues/new/choose) — there's a
+**Bug report** template for something that's wrong, outdated, or fails to validate, and a
+**Content suggestion** template for a note/example/topic worth adding. (The form under
+`topics/github/examples/ISSUE_TEMPLATE/` is a *teaching example* of this same pattern,
+not this repo's own template — these two are.)
+
 ## Adding a note to an existing topic
 
 1. Create `topics/<topic>/notes/NN-short-title.md` (next free `NN`).
@@ -26,8 +34,12 @@
 
 3. Add a row to the **Topics** table in [`README.md`](README.md).
 
-4. Add the topic's `README.md` and notes to `nav:` in `mkdocs.yml` so they appear on the
-   docs site. Run `make docs` — the strict build fails if a page is missing from `nav`.
+4. Add the topic's `README.md` and notes to `nav:` in `mkdocs.yml`, nested under whichever
+   top-level category it belongs to (`Infrastructure`, `Delivery`, `Operations`, `AI
+   Tooling` — see the existing entries for the shape; add a new category only if none of
+   those genuinely fit, and give it its own `docs/<category>.md` landing page the same
+   way the existing ones work). Run `make docs` — the strict build fails if a page is
+   missing from `nav`.
 
 Keep examples **self-contained and credential-free** so CI can run them anywhere (e.g.
 Terraform examples use the `local`/`random`/`null` providers, not real clouds).
@@ -37,6 +49,7 @@ Terraform examples use the `local`/`random`/`null` providers, not real clouds).
 | Topic | Tool | Command |
 | --- | --- | --- |
 | all | markdownlint | `npx markdownlint-cli2 "**/*.md"` |
+| all | check_links.py | `python3 scripts/check_links.py` — internal cross-references (`` `NN-title.md` ``, `` `examples/...` ``, and real Markdown links) actually resolve |
 | all YAML | yamllint | `make lint` |
 | kubernetes | kubeconform | `kubeconform -summary -strict topics/kubernetes/examples/**/*.yaml` |
 | kubernetes | kind | see `validate.yml` `k8s-kind` job |
@@ -45,6 +58,7 @@ Terraform examples use the `local`/`random`/`null` providers, not real clouds).
 | docker | hadolint | `docker run --rm -i hadolint/hadolint < path/to/Dockerfile` |
 | docker | live smoke test | see `validate.yml` `docker-smoke` job (build, run, curl) |
 | linux | shellcheck | `shellcheck topics/linux/examples/scripts/*.sh` |
+| linux | live smoke test | see `validate.yml` `linux-smoke` job (runs `backup.sh` against a real tarball) |
 | terraform | terraform / tflint | `terraform fmt -check -recursive topics/terraform && tflint --recursive` |
 | terraform | live apply | see `validate.yml` `terraform-apply` job (`init`/`apply`/`destroy`) |
 | cicd | actionlint | `actionlint topics/cicd/examples/workflows/*.yml` |
@@ -69,3 +83,5 @@ viewport) and replace the files in the same PR as the theme change.
 - Branch from `main`; don't push to `main` directly.
 - Fill in the PR template (topic + which validator covers the change).
 - CI must be green before merge. `@xudipta` owns review (see [`.github/CODEOWNERS`](https://github.com/xudipta/cookbook/blob/main/.github/CODEOWNERS)).
+- `CHANGELOG.md` doesn't need updating on every PR — it's regenerated periodically with
+  `topics/skills/examples/release-notes/`, not maintained by hand per change.

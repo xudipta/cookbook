@@ -1,0 +1,48 @@
+---
+name: Content suggestion
+description: A note, example, or topic to add or improve
+title: "content: "
+labels: [documentation, enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        A gap in the reference material, not a bug — something missing, or something
+        that could be explained better. See `CONTRIBUTING.md` for how a note/topic
+        addition is expected to be structured before filing this.
+  - type: dropdown
+    id: topic
+    attributes:
+      label: Topic
+      description: Pick the closest existing topic, or "new topic" if none fits
+      options:
+        - kubernetes
+        - docker
+        - linux
+        - terraform
+        - cicd
+        - github
+        - skills
+        - mcp
+        - observability
+        - database
+        - capstone
+        - new topic
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What to add or improve
+      description: >-
+        Be concrete — a missing manifest/command/concept, a note that's unclear, an
+        example that doesn't match how the tool is actually used.
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why it's worth adding
+      description: What would a reader be able to do after this exists that they can't today?
+    validations:
+      required: true

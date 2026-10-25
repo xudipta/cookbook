@@ -14,7 +14,7 @@ dest=site-src
 rm -rf "$dest"
 mkdir -p "$dest"
 
-cp README.md CONTRIBUTING.md "$dest/"
+cp README.md CONTRIBUTING.md CHANGELOG.md "$dest/"
 
 if [ -d .github/images ]; then
   mkdir -p "$dest/.github/images"
@@ -24,6 +24,6 @@ fi
 while IFS= read -r f; do
   mkdir -p "$dest/$(dirname "$f")"
   cp "$f" "$dest/$f"
-done < <(find topics -type f -name '*.md' -not -path '*/examples/*')
+done < <(find topics docs -type f -name '*.md' -not -path '*/examples/*')
 
 echo "assembled $(find "$dest" -name '*.md' | wc -l | tr -d ' ') pages into $dest/"
