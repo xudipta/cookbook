@@ -40,7 +40,7 @@ function attrLines(attrs) {
 
 function statePane(w) {
   const entries = Object.entries(w.envs[w.workspace].state);
-  if (!entries.length) return [el('p', { class: 'tf-empty', text: 'Empty. Terraform manages nothing in this workspace yet.' })];
+  if (!entries.length) return [el('p', { class: 'tf-empty', role: 'listitem', text: 'Empty. Terraform manages nothing in this workspace yet.' })];
   return entries.map(([addr, s]) =>
     el('div', { class: 'tf-item', role: 'listitem' }, el('strong', { class: 'tf-name', text: addr }), el('span', { class: 'tf-id', text: `id ${s.id}` }), el('pre', { class: 'tf-attrs', text: attrLines(s.attrs).join('\n') })),
   );
@@ -50,7 +50,7 @@ function realPane(w) {
   const env = w.envs[w.workspace];
   const managed = new Set(Object.values(env.state).map((s) => s.id));
   const items = Object.entries(env.real);
-  if (!items.length) return [el('p', { class: 'tf-empty', text: 'Nothing exists in this workspace yet.' })];
+  if (!items.length) return [el('p', { class: 'tf-empty', role: 'listitem', text: 'Nothing exists in this workspace yet.' })];
   return items.map(([id, r]) =>
     el(
       'div',

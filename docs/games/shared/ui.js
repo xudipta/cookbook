@@ -100,7 +100,10 @@ export function createUI(container, { def, scenario, levels, siteRoot, handlers,
   }
 
   const board = el('div', { class: 'cg-board', role: 'region', 'aria-label': 'Game board' });
-  const logList = el('ol', { class: 'cg-log cg-list', role: 'log', 'aria-live': 'polite', 'aria-label': 'Event log' });
+  // role="log" on a wrapper (not on the list, which would hide its list items); the list itself is
+  // focusable so a long log can be scrolled with the keyboard.
+  const logList = el('ol', { class: 'cg-log cg-list', tabindex: 0, 'aria-label': 'Event log entries' });
+  const logRegion = el('div', { role: 'log', 'aria-live': 'polite', 'aria-label': 'Event log' }, logList);
   const resultSlot = el('div', { class: 'cg-result-slot' });
 
   container.append(
@@ -110,7 +113,7 @@ export function createUI(container, { def, scenario, levels, siteRoot, handlers,
       blurbBox,
       hud,
       actionsBar,
-      el('div', { class: `cg-main${scenario.stacked ? ' cg-main-stacked' : ''}` }, board, el('div', { class: 'cg-side' }, el('h3', { class: 'cg-h', text: 'Event log' }), logList)),
+      el('div', { class: `cg-main${scenario.stacked ? ' cg-main-stacked' : ''}` }, board, el('div', { class: 'cg-side' }, el('h3', { class: 'cg-h', text: 'Event log' }), logRegion)),
       resultSlot,
     ].filter(Boolean),
   );

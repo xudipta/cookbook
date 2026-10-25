@@ -53,6 +53,24 @@ async function mount() {
   }
 }
 
+// Material wraps wide tables in a scrollable box; make it reachable by keyboard.
+function focusableScrollWraps() {
+  for (const wrap of document.querySelectorAll('.md-typeset__scrollwrap')) {
+    wrap.tabIndex = 0;
+    wrap.setAttribute('role', 'region');
+    wrap.setAttribute('aria-label', 'Table');
+  }
+}
+
 // Material's instant navigation swaps page content without a reload; document$ fires on each swap.
-if (window.document$) window.document$.subscribe(mount);
-else document.addEventListener('DOMContentLoaded', mount);
+if (window.document$) {
+  window.document$.subscribe(() => {
+    focusableScrollWraps();
+    mount();
+  });
+} else {
+  document.addEventListener('DOMContentLoaded', () => {
+    focusableScrollWraps();
+    mount();
+  });
+}

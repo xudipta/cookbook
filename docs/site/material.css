@@ -100,3 +100,26 @@ body[data-md-color-scheme] .md-search__input::placeholder,
 body[data-md-color-scheme] .md-search__icon {
   color: var(--muted);
 }
+
+/* Code highlighting: Material's light palette misses WCAG AA on the code background. */
+body[data-md-color-scheme="default"] {
+  --md-code-hl-keyword-color: #5b3bb0;
+  --md-code-hl-string-color: #0b6b4b;
+  --md-code-hl-number-color: #a8341c;
+  --md-code-hl-function-color: #1a5db3;
+  --md-code-hl-constant-color: #7d3a8f;
+  --md-code-hl-special-color: #7d3a8f;
+  --md-code-hl-name-color: #8a3b00;
+  --md-code-hl-operator-color: #2b3a47;
+  --md-code-hl-punctuation-color: #2b3a47;
+  --md-code-hl-comment-color: #4b5a68;
+  --md-code-hl-variable-color: #1c5d78;
+  --md-code-hl-generic-color: #4b5a68;
+}
+
+/* A link inside running text must not rely on colour alone. */
+body[data-md-color-scheme] .md-typeset p a,
+body[data-md-color-scheme] .md-typeset li a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
