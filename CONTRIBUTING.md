@@ -45,6 +45,7 @@ Terraform examples use the `local`/`random`/`null` providers, not real clouds).
 | Topic | Tool | Command |
 | --- | --- | --- |
 | all | markdownlint | `npx markdownlint-cli2 "**/*.md"` |
+| all | check_links.py | `python3 scripts/check_links.py` — internal cross-references (`` `NN-title.md` ``, `` `examples/...` ``, and real Markdown links) actually resolve |
 | all YAML | yamllint | `make lint` |
 | kubernetes | kubeconform | `kubeconform -summary -strict topics/kubernetes/examples/**/*.yaml` |
 | kubernetes | kind | see `validate.yml` `k8s-kind` job |

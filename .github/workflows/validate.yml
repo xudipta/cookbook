@@ -78,6 +78,15 @@ jobs:
           config: .markdownlint.yaml
           globs: '**/*.md'
 
+  link-check:
+    needs: changes
+    if: needs.changes.outputs.md == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check internal cross-references resolve
+        run: python3 scripts/check_links.py
+
   yamllint:
     needs: changes
     if: needs.changes.outputs.yaml == 'true'
