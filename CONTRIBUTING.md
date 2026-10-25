@@ -135,7 +135,8 @@ the meter it shows. A few rules keep the games consistent:
 - **Hidden actions** (`hidden: true`) get no button, for games that drive the pipeline from their
   own UI. From that UI call `ctx.act('name', ...args)` so the action is still counted, scored and
   blocked while paused. An action that returns `false` is not counted, which is how a game keeps
-  read-only commands free.
+  read-only commands free. The engine does not re-render after a `false`, so an action whose
+  output matters (a terminal) calls its own `render` before returning.
 
 Run it locally with `make docs-serve` and open `/docs/games/<id>/`. Add `?autoplay=0` to stop
 the clock and `?seed=42` for a repeatable run; in the browser console,

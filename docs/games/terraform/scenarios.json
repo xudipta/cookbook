@@ -1,0 +1,535 @@
+{
+  "id": "terraform",
+  "title": "Drift Detective",
+  "healthLabel": "Team trust",
+  "tickLabel": "Day",
+  "manual": true,
+  "stacked": true,
+  "seed": 1,
+  "schema": {
+    "local_file": {
+      "key": "filename",
+      "forceNew": [],
+      "data": false,
+      "exists": "file already exists"
+    },
+    "aws_instance": {
+      "key": null,
+      "forceNew": [
+        "ami"
+      ],
+      "data": false
+    },
+    "aws_s3_bucket": {
+      "key": "bucket",
+      "forceNew": [
+        "bucket"
+      ],
+      "data": true,
+      "exists": "BucketAlreadyOwnedByYou: Your previous request to create the named bucket succeeded and you already own it."
+    },
+    "aws_db_instance": {
+      "key": "identifier",
+      "forceNew": [
+        "identifier",
+        "engine"
+      ],
+      "data": true,
+      "exists": "DBInstanceAlreadyExists: DB instance already exists"
+    }
+  },
+  "events": [
+    {
+      "id": "var-change",
+      "title": "A teammate changed a variable",
+      "fix": "A changed input shows up on the next plan as `~` update in-place. Read the plan, then apply it in the workspace the change is meant for.",
+      "learn": {
+        "note": "topics/terraform/notes/01-core-workflow.md",
+        "section": "Try it: `examples/local-file`"
+      }
+    },
+    {
+      "id": "console-edit",
+      "title": "Someone edited a resource by hand in the console",
+      "fix": "plan refreshes state against reality and proposes to undo the manual change. Apply to revert it, or edit the config to match if the change was wanted.",
+      "learn": {
+        "note": "topics/terraform/notes/01-core-workflow.md",
+        "section": "State"
+      }
+    },
+    {
+      "id": "hand-made",
+      "title": "A teammate created a resource by hand and wrote its config",
+      "fix": "A create fails if the object already exists. `terraform import ADDRESS ID` records the existing object in state, and the next plan shows only what differs.",
+      "learn": {
+        "note": "topics/terraform/notes/01-core-workflow.md",
+        "section": "State"
+      }
+    },
+    {
+      "id": "forces-replace",
+      "title": "A config change would replace the database",
+      "fix": "`-/+` with `# forces replacement` means destroy, then create. For a database that is data loss. Read every plan: revert the change, or plan a migration.",
+      "learn": {
+        "note": "topics/terraform/notes/01-core-workflow.md",
+        "section": "Core workflow"
+      }
+    },
+    {
+      "id": "data-loss",
+      "title": "Terraform destroyed a stateful resource",
+      "fix": "A forced replacement or a destroy deletes the data with it. Plans exist so you read `-/+` and `-` lines before you type yes.",
+      "learn": {
+        "note": "topics/terraform/notes/01-core-workflow.md",
+        "section": "Core workflow"
+      }
+    },
+    {
+      "id": "lock-active",
+      "title": "CI is holding the state lock",
+      "fix": "A lock means an operation is in flight. Wait for it to finish; forcing the lock open while it runs puts two writers on one state.",
+      "learn": {
+        "note": "topics/terraform/notes/03-state-and-workspaces.md",
+        "section": "Drift and locking, in practice"
+      }
+    },
+    {
+      "id": "lock-stale",
+      "title": "A crashed CI job left the state locked",
+      "fix": "Confirm nothing is really running (check the pipeline), then `terraform force-unlock LOCK_ID` with the ID from the error.",
+      "learn": {
+        "note": "topics/terraform/notes/03-state-and-workspaces.md",
+        "section": "Drift and locking, in practice"
+      }
+    },
+    {
+      "id": "lock-forced",
+      "title": "You forced a lock that was still held",
+      "fix": "The running job lost its lock and can now write over your changes. Only force-unlock after confirming no apply is in flight.",
+      "learn": {
+        "note": "topics/terraform/notes/03-state-and-workspaces.md",
+        "section": "Drift and locking, in practice"
+      }
+    },
+    {
+      "id": "state-lost",
+      "title": "A laptop was reimaged: terraform.tfstate is gone",
+      "fix": "Local state lives on one machine. Remote state survives it; without it Terraform forgets what it manages, and every create collides with the object that already exists.",
+      "learn": {
+        "note": "topics/terraform/notes/03-state-and-workspaces.md",
+        "section": "Why remote state"
+      }
+    }
+  ],
+  "levels": [
+    {
+      "id": "first-apply",
+      "title": "1. First apply",
+      "blurb": "The workflow from topics/terraform/examples/local-file: init, plan, apply. Then a teammate changes a variable and someone edits the file by hand. Read each plan before you apply.",
+      "winTicks": 4,
+      "minHealth": 50,
+      "workspace": "default",
+      "initialized": false,
+      "stateStore": "local",
+      "config": {
+        "backend": false,
+        "vars": {
+          "greeting": "hello from the cookbook"
+        },
+        "resources": {
+          "local_file.greeting": {
+            "type": "local_file",
+            "attrs": {
+              "content": {
+                "var": "greeting"
+              },
+              "filename": "greeting.txt"
+            }
+          }
+        }
+      },
+      "envs": {
+        "default": {
+          "deployed": []
+        }
+      },
+      "schedule": [
+        {
+          "tick": 2,
+          "event": "var-change",
+          "var": "greeting",
+          "value": "hi from the team"
+        },
+        {
+          "tick": 3,
+          "event": "console-edit",
+          "env": "default",
+          "addr": "local_file.greeting",
+          "attr": "content",
+          "value": "oops, edited by hand"
+        }
+      ],
+      "solution": [
+        {
+          "tick": 0,
+          "action": "terraform",
+          "args": [
+            "terraform init"
+          ]
+        },
+        {
+          "tick": 0,
+          "action": "terraform",
+          "args": [
+            "terraform apply -auto-approve"
+          ]
+        },
+        {
+          "tick": 0,
+          "action": "nextDay"
+        },
+        {
+          "tick": 1,
+          "action": "nextDay"
+        },
+        {
+          "tick": 2,
+          "action": "terraform",
+          "args": [
+            "terraform apply -auto-approve"
+          ]
+        },
+        {
+          "tick": 2,
+          "action": "nextDay"
+        },
+        {
+          "tick": 3,
+          "action": "terraform",
+          "args": [
+            "terraform apply -auto-approve"
+          ]
+        },
+        {
+          "tick": 3,
+          "action": "nextDay"
+        }
+      ]
+    },
+    {
+      "id": "drift",
+      "title": "2. Drift and imports",
+      "blurb": "An instance, a bucket and a database are running. Reality will move without Terraform, and a teammate will make a change that looks harmless in the diff. Keep config, state and reality in agreement without destroying data.",
+      "winTicks": 5,
+      "minHealth": 50,
+      "workspace": "default",
+      "initialized": true,
+      "stateStore": "local",
+      "config": {
+        "backend": false,
+        "vars": {},
+        "resources": {
+          "aws_instance.web": {
+            "type": "aws_instance",
+            "attrs": {
+              "ami": "ami-0abc123",
+              "instance_type": "t3.micro"
+            }
+          },
+          "aws_s3_bucket.logs": {
+            "type": "aws_s3_bucket",
+            "attrs": {
+              "bucket": "acme-logs",
+              "versioning": "Enabled"
+            }
+          },
+          "aws_db_instance.main": {
+            "type": "aws_db_instance",
+            "attrs": {
+              "identifier": "orders-db",
+              "engine": "postgres",
+              "instance_class": "db.t3.micro"
+            }
+          }
+        }
+      },
+      "envs": {
+        "default": {
+          "deployed": [
+            "aws_instance.web",
+            "aws_s3_bucket.logs",
+            "aws_db_instance.main"
+          ]
+        }
+      },
+      "schedule": [
+        {
+          "tick": 1,
+          "event": "console-edit",
+          "env": "default",
+          "addr": "aws_instance.web",
+          "attr": "instance_type",
+          "value": "t3.large"
+        },
+        {
+          "tick": 2,
+          "event": "hand-made",
+          "env": "default",
+          "addr": "aws_s3_bucket.assets",
+          "id": "acme-assets",
+          "type": "aws_s3_bucket",
+          "attrs": {
+            "bucket": "acme-assets",
+            "versioning": "Disabled"
+          },
+          "config": {
+            "bucket": "acme-assets",
+            "versioning": "Enabled"
+          }
+        },
+        {
+          "tick": 3,
+          "event": "forces-replace",
+          "addr": "aws_db_instance.main",
+          "attr": "identifier",
+          "value": "orders-db-v2"
+        }
+      ],
+      "solution": [
+        {
+          "tick": 0,
+          "action": "nextDay"
+        },
+        {
+          "tick": 1,
+          "action": "terraform",
+          "args": [
+            "terraform apply -auto-approve"
+          ]
+        },
+        {
+          "tick": 1,
+          "action": "nextDay"
+        },
+        {
+          "tick": 2,
+          "action": "terraform",
+          "args": [
+            "terraform import aws_s3_bucket.assets acme-assets"
+          ]
+        },
+        {
+          "tick": 2,
+          "action": "terraform",
+          "args": [
+            "terraform apply -auto-approve"
+          ]
+        },
+        {
+          "tick": 2,
+          "action": "nextDay"
+        },
+        {
+          "tick": 3,
+          "action": "setAttr",
+          "args": [
+            "aws_db_instance.main",
+            "identifier",
+            "orders-db"
+          ]
+        },
+        {
+          "tick": 3,
+          "action": "nextDay"
+        },
+        {
+          "tick": 4,
+          "action": "nextDay"
+        }
+      ]
+    },
+    {
+      "id": "team",
+      "title": "3. Team chaos",
+      "blurb": "Two workspaces, dev and prod, and a teammate who just added a remote backend block. CI shares your state, locks come and go, and you start in prod. Check which workspace you are in before every plan.",
+      "winTicks": 6,
+      "minHealth": 50,
+      "workspace": "prod",
+      "initialized": false,
+      "stateStore": "local",
+      "config": {
+        "backend": true,
+        "vars": {
+          "size": "t3.micro"
+        },
+        "resources": {
+          "aws_instance.web": {
+            "type": "aws_instance",
+            "attrs": {
+              "ami": "ami-0abc123",
+              "instance_type": {
+                "ws": {
+                  "prod": "m5.large",
+                  "*": {
+                    "var": "size"
+                  }
+                }
+              }
+            }
+          },
+          "aws_s3_bucket.logs": {
+            "type": "aws_s3_bucket",
+            "attrs": {
+              "bucket": {
+                "ws": {
+                  "prod": "acme-prod-logs",
+                  "*": "acme-dev-logs"
+                }
+              },
+              "versioning": "Enabled"
+            }
+          }
+        }
+      },
+      "envs": {
+        "dev": {
+          "deployed": [
+            "aws_instance.web",
+            "aws_s3_bucket.logs"
+          ]
+        },
+        "prod": {
+          "deployed": [
+            "aws_instance.web",
+            "aws_s3_bucket.logs"
+          ]
+        }
+      },
+      "schedule": [
+        {
+          "tick": 1,
+          "event": "var-change",
+          "var": "size",
+          "value": "t3.small"
+        },
+        {
+          "tick": 2,
+          "event": "console-edit",
+          "env": "prod",
+          "addr": "aws_instance.web",
+          "attr": "instance_type",
+          "value": "m5.2xlarge"
+        },
+        {
+          "tick": 2,
+          "event": "lock-active",
+          "lockId": "6a4e2f1c-9b1d-4c33-8f0a-2d5e7b9c1a10",
+          "who": "ci-runner@nightly-plan",
+          "op": "OperationTypePlan",
+          "days": 1
+        },
+        {
+          "tick": 3,
+          "event": "state-lost"
+        },
+        {
+          "tick": 4,
+          "event": "console-edit",
+          "env": "dev",
+          "addr": "aws_s3_bucket.logs",
+          "attr": "versioning",
+          "value": "Suspended"
+        },
+        {
+          "tick": 4,
+          "event": "lock-stale",
+          "lockId": "b81c0d52-7e44-4a0f-9d3b-5c2a8e6f1b77",
+          "who": "ci-runner@deploy-812",
+          "op": "OperationTypeApply"
+        }
+      ],
+      "solution": [
+        {
+          "tick": 0,
+          "action": "terraform",
+          "args": [
+            "terraform init -migrate-state"
+          ]
+        },
+        {
+          "tick": 0,
+          "action": "nextDay"
+        },
+        {
+          "tick": 1,
+          "action": "terraform",
+          "args": [
+            "terraform workspace select dev"
+          ]
+        },
+        {
+          "tick": 1,
+          "action": "terraform",
+          "args": [
+            "terraform apply -auto-approve"
+          ]
+        },
+        {
+          "tick": 1,
+          "action": "nextDay"
+        },
+        {
+          "tick": 2,
+          "action": "nextDay"
+        },
+        {
+          "tick": 3,
+          "action": "terraform",
+          "args": [
+            "terraform workspace select prod"
+          ]
+        },
+        {
+          "tick": 3,
+          "action": "terraform",
+          "args": [
+            "terraform apply -auto-approve"
+          ]
+        },
+        {
+          "tick": 3,
+          "action": "nextDay"
+        },
+        {
+          "tick": 4,
+          "action": "terraform",
+          "args": [
+            "terraform force-unlock b81c0d52-7e44-4a0f-9d3b-5c2a8e6f1b77"
+          ]
+        },
+        {
+          "tick": 4,
+          "action": "terraform",
+          "args": [
+            "terraform workspace select dev"
+          ]
+        },
+        {
+          "tick": 4,
+          "action": "terraform",
+          "args": [
+            "terraform apply -auto-approve"
+          ]
+        },
+        {
+          "tick": 4,
+          "action": "nextDay"
+        },
+        {
+          "tick": 5,
+          "action": "nextDay"
+        }
+      ]
+    }
+  ]
+}
