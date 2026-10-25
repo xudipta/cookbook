@@ -1,0 +1,137 @@
+{
+  "games": [
+    {
+      "id": "kubernetes",
+      "title": "Chaos Monkey Cluster",
+      "topic": "Kubernetes",
+      "code": "K8",
+      "hue": "k8s",
+      "status": "live",
+      "levels": 3,
+      "blurb": "Keep a cluster serving while pods crash, nodes drain and releases go wrong.",
+      "chips": [
+        "kubectl get",
+        "describe",
+        "rollout undo",
+        "scale"
+      ],
+      "facts": [
+        "3 levels",
+        "9 failure types"
+      ],
+      "notes": "topics/kubernetes/"
+    },
+    {
+      "id": "docker",
+      "title": "Layer Cake",
+      "topic": "Docker",
+      "code": "DK",
+      "hue": "docker",
+      "status": "live",
+      "levels": 5,
+      "blurb": "Arrange Dockerfile lines and watch which layers the build cache reuses.",
+      "chips": [
+        "FROM",
+        "COPY",
+        "multi-stage",
+        ".dockerignore"
+      ],
+      "facts": [
+        "5 levels",
+        "build logs"
+      ],
+      "notes": "topics/docker/"
+    },
+    {
+      "id": "terraform",
+      "title": "Drift Detective",
+      "topic": "Terraform",
+      "code": "TF",
+      "hue": "tf",
+      "status": "live",
+      "levels": 3,
+      "blurb": "Keep config, state and reality in agreement through drift, imports and locks.",
+      "chips": [
+        "plan",
+        "apply",
+        "import",
+        "force-unlock"
+      ],
+      "facts": [
+        "3 levels",
+        "plan simulator"
+      ],
+      "notes": "topics/terraform/"
+    },
+    {
+      "id": "linux",
+      "title": "Linux",
+      "topic": "Linux / Shell",
+      "code": "LX",
+      "hue": "linux",
+      "status": "queued",
+      "issue": 41,
+      "notes": "topics/linux/"
+    },
+    {
+      "id": "cicd",
+      "title": "CI/CD",
+      "topic": "Pipelines",
+      "code": "CI",
+      "hue": "cicd",
+      "status": "queued",
+      "issue": 42,
+      "notes": "topics/cicd/"
+    },
+    {
+      "id": "github",
+      "title": "GitHub / Git",
+      "topic": "Version control",
+      "code": "GT",
+      "hue": "git",
+      "status": "queued",
+      "issue": 43,
+      "notes": "topics/github/"
+    },
+    {
+      "id": "observability",
+      "title": "Observability",
+      "topic": "Metrics and alerts",
+      "code": "OB",
+      "hue": "obs",
+      "status": "queued",
+      "issue": 44,
+      "notes": "topics/observability/"
+    },
+    {
+      "id": "database",
+      "title": "Database",
+      "topic": "SQL and migrations",
+      "code": "DB",
+      "hue": "db",
+      "status": "queued",
+      "issue": 45,
+      "notes": "topics/database/"
+    },
+    {
+      "id": "skills",
+      "title": "Agent Skills",
+      "topic": "AI tooling",
+      "code": "SK",
+      "hue": "skills",
+      "status": "queued",
+      "issue": 46,
+      "notes": "topics/skills/"
+    },
+    {
+      "id": "mcp",
+      "title": "MCP",
+      "topic": "AI tooling",
+      "code": "MC",
+      "hue": "mcp",
+      "status": "queued",
+      "issue": 47,
+      "notes": "topics/mcp/"
+    }
+  ]
+}

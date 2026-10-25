@@ -72,6 +72,7 @@ jobs:
               - 'scripts/check_contrast.py'
             games:
               - 'docs/games/**'
+              - 'docs/site/**'
               - 'scripts/check_games.py'
               - 'scripts/games_smoke.cjs'
               - 'scripts/build_docs.sh'

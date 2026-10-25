@@ -6,6 +6,8 @@ For every game directory (anything in docs/games/ except `shared/`) check that:
   * scenarios.json has the required fields and well-formed events and solution steps;
   * every event's `learn.note` is a real file and `learn.section` is a real heading in it
     (so a game can never point a reader at a note section that doesn't exist);
+  * docs/games/games.json (the home page's board) lists every game, and each live entry matches its
+    directory (level count, notes folder);
   * every action named in the scripted solution (one per level, if the scenario has `levels`) is
     defined in game.js, and every level's `schedule` only names declared events.
 
@@ -150,6 +152,58 @@ def check_game(game_dir: Path) -> list[str]:
     return errors
 
 
+# Game directories that are not on the home page's board (the shell's demo game).
+NOT_ON_BOARD = {"demo"}
+
+
+def check_manifest(game_dirs: list[Path]) -> list[str]:
+    """docs/games/games.json drives the home page's board, so it must agree with the game directories."""
+    path = GAMES_DIR / "games.json"
+    rel = path.relative_to(REPO_ROOT)
+    errors: list[str] = []
+    try:
+        games = json.loads(path.read_text(encoding="utf-8"))["games"]
+    except (OSError, ValueError, KeyError) as exc:
+        return [f"{rel}: cannot read a top-level \"games\" list ({exc})"]
+    seen: set[str] = set()
+    for i, g in enumerate(games):
+        gid = g.get("id") if isinstance(g, dict) else None
+        where = f"{rel}: games[{i}] ({gid})"
+        if not isinstance(gid, str) or gid in seen:
+            errors.append(f"{rel}: games[{i}] needs a unique string id")
+            continue
+        seen.add(gid)
+        for key in ("title", "topic", "code", "hue", "notes"):
+            if not isinstance(g.get(key), str) or not g[key]:
+                errors.append(f"{where}: needs a non-empty {key}")
+        if isinstance(g.get("notes"), str) and not (REPO_ROOT / g["notes"]).is_dir():
+            errors.append(f"{where}: notes {g['notes']!r} is not a directory in the repo")
+        if g.get("status") == "live":
+            game_dir = GAMES_DIR / gid
+            if not game_dir.is_dir():
+                errors.append(f"{where}: live, but docs/games/{gid}/ does not exist")
+                continue
+            for key in ("blurb", "chips", "facts"):
+                if not g.get(key):
+                    errors.append(f"{where}: live games need {key}")
+            try:
+                scenario = json.loads((game_dir / "scenarios.json").read_text(encoding="utf-8"))
+            except (OSError, ValueError):
+                continue  # check_game reports it
+            expected = len(scenario.get("levels") or [1])
+            if g.get("levels") != expected:
+                errors.append(f"{where}: levels is {g.get('levels')!r} but scenarios.json has {expected}")
+        elif g.get("status") == "queued":
+            if not isinstance(g.get("issue"), int):
+                errors.append(f"{where}: queued games need an integer issue")
+        else:
+            errors.append(f"{where}: status must be 'live' or 'queued'")
+    for d in game_dirs:
+        if d.name not in NOT_ON_BOARD and d.name not in seen:
+            errors.append(f"{rel}: game {d.name!r} has no entry (add it, or list it in NOT_ON_BOARD)")
+    return errors
+
+
 def main() -> int:
     games = sorted(p for p in GAMES_DIR.iterdir() if p.is_dir() and p.name != "shared")
     if not games:
@@ -158,6 +212,7 @@ def main() -> int:
     errors = []
     for game_dir in games:
         errors.extend(check_game(game_dir))
+    errors.extend(check_manifest(games))
     for line in errors:
         print(line)
     if errors:
