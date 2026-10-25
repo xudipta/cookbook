@@ -20,6 +20,7 @@ jobs:
       k8s: ${{ steps.filter.outputs.k8s }}
       docker: ${{ steps.filter.outputs.docker }}
       shell: ${{ steps.filter.outputs.shell }}
+      linux: ${{ steps.filter.outputs.linux }}
       terraform: ${{ steps.filter.outputs.terraform }}
       cicd: ${{ steps.filter.outputs.cicd }}
       skills: ${{ steps.filter.outputs.skills }}
@@ -45,6 +46,8 @@ jobs:
               - 'topics/docker/**'
             shell:
               - '**/*.sh'
+            linux:
+              - 'topics/linux/**'
             terraform:
               - 'topics/terraform/**'
             cicd:
@@ -74,6 +77,15 @@ jobs:
         with:
           config: .markdownlint.yaml
           globs: '**/*.md'
+
+  link-check:
+    needs: changes
+    if: needs.changes.outputs.md == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check internal cross-references resolve
+        run: python3 scripts/check_links.py
 
   yamllint:
     needs: changes
@@ -231,6 +243,19 @@ jobs:
           fi
           printf '%s\n' "${files[@]}"
           shellcheck "${files[@]}"
+
+  linux-smoke:
+    needs: changes
+    if: needs.changes.outputs.linux == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run the README Quickstart for real
+        run: |
+          mkdir -p /tmp/demo/src
+          echo "hello" > /tmp/demo/src/file.txt
+          topics/linux/examples/scripts/backup.sh /tmp/demo/src /tmp/demo/dest
+          tar -tzf /tmp/demo/dest/src-*.tar.gz | grep -q 'src/file.txt'
 
   terraform-validate:
     needs: changes

@@ -85,9 +85,13 @@ kubectl top pods                            # CPU/memory usage (needs metrics-se
 ```bash
 kubectl get pods -n kube-system              # -n / --namespace targets one namespace
 kubectl config set-context --current --namespace=my-ns   # change the default for this context
+kubectl create namespace sample-namespace     # imperative — fine for throwaway/local use
+kubectl apply -f examples/namespace/sample-namespace.yaml   # declarative — the same object, tracked as a manifest
 ```
 
 A resource with no `metadata.namespace` in its manifest is created in whatever namespace
 `kubectl` is currently pointed at (`default`, unless changed as above) —
 `examples/configs/sample-configmap.yaml` sets `namespace: default` explicitly; every
-other example in this topic relies on that default.
+other example in this topic relies on that default. `examples/namespace/sample-namespace.yaml`
+is the plain object itself — a `Namespace` has almost no spec, it's just a name other
+resources' `metadata.namespace` can point at.
