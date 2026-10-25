@@ -1,0 +1,102 @@
+/* Maps the site tokens (tokens.css) onto Material for MkDocs, so the notes share the palette and type
+   of the home page and the games. Scoped to body[data-md-color-scheme] to outrank Material's own
+   scheme rules; no theme fork, just variables and a few type rules. */
+
+body[data-md-color-scheme] {
+  --md-text-font: var(--font-body);
+  --md-code-font: var(--font-mono);
+
+  --md-default-bg-color: var(--bg);
+  --md-default-fg-color: var(--ink);
+  --md-default-fg-color--light: var(--muted);
+  --md-default-fg-color--lighter: var(--line);
+  --md-default-fg-color--lightest: var(--line);
+
+  --md-primary-fg-color: var(--surface);
+  --md-primary-fg-color--light: var(--surface-2);
+  --md-primary-fg-color--dark: var(--surface);
+  --md-primary-bg-color: var(--ink);
+  --md-primary-bg-color--light: var(--muted);
+  --md-accent-fg-color: var(--accent);
+  --md-accent-fg-color--transparent: transparent;
+  --md-accent-bg-color: var(--accent-ink);
+
+  --md-typeset-color: var(--ink);
+  --md-typeset-a-color: var(--accent);
+  --md-typeset-mark-color: var(--surface-2);
+  --md-typeset-table-color: var(--line);
+
+  --md-code-bg-color: var(--surface-2);
+  --md-code-fg-color: var(--ink);
+
+  --md-footer-bg-color: var(--surface);
+  --md-footer-bg-color--dark: var(--surface-2);
+  --md-footer-fg-color: var(--ink);
+  --md-footer-fg-color--light: var(--muted);
+  --md-footer-fg-color--lighter: var(--muted);
+}
+
+body[data-md-color-scheme] .md-header,
+body[data-md-color-scheme] .md-tabs {
+  border-bottom: 1px solid var(--line);
+  box-shadow: none;
+}
+
+body[data-md-color-scheme] .md-header__title,
+body[data-md-color-scheme] .md-header__topic {
+  font-family: var(--font-display);
+  font-stretch: 125%;
+  font-weight: 800;
+}
+
+body[data-md-color-scheme] .md-typeset h1,
+body[data-md-color-scheme] .md-typeset h2,
+body[data-md-color-scheme] .md-typeset h3 {
+  font-family: var(--font-display);
+  font-stretch: 112%;
+  font-weight: 800;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+body[data-md-color-scheme] .md-typeset h1 {
+  font-size: 2.2em;
+  line-height: 1.1;
+}
+
+body[data-md-color-scheme] .md-typeset h4,
+body[data-md-color-scheme] .md-typeset h5,
+body[data-md-color-scheme] .md-typeset h6 {
+  color: var(--ink);
+}
+
+body[data-md-color-scheme] .md-typeset a:focus-visible,
+body[data-md-color-scheme] .md-nav__link:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+body[data-md-color-scheme] .md-nav__link--active,
+body[data-md-color-scheme] .md-tabs__link--active {
+  color: var(--accent);
+}
+
+body[data-md-color-scheme] .md-typeset code {
+  border-radius: var(--radius-s);
+}
+
+body[data-md-color-scheme] .md-typeset .admonition,
+body[data-md-color-scheme] .md-typeset details {
+  border-radius: var(--radius-m);
+}
+
+body[data-md-color-scheme] .md-search__input {
+  background-color: var(--surface-2);
+  color: var(--ink);
+}
+
+body[data-md-color-scheme] .md-search__input::placeholder,
+body[data-md-color-scheme] .md-search__icon {
+  color: var(--muted);
+}

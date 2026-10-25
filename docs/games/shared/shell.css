@@ -1,26 +1,20 @@
-/* Shared styles for the cookbook games. Colours come from Material's CSS variables so the
-   games follow the site's light/dark theme; status colours are always paired with text. */
+/* Shared styles for the cookbook games. Colours come from the site tokens (docs/site/tokens.css), so
+   the games follow the light/dark theme; status colours are always paired with text. */
 
 .cg {
-  --cg-ok: #1b7f3b;
-  --cg-warn: #9a6700;
-  --cg-bad: #c62828;
-  --cg-surface: var(--md-code-bg-color, #f5f5f5);
-  --cg-border: var(--md-default-fg-color--lightest, #ddd);
-  --cg-accent: var(--md-primary-fg-color, #3f51b5);
+  --cg-ok: var(--ok);
+  --cg-warn: var(--warn);
+  --cg-bad: var(--bad);
+  --cg-surface: var(--surface-2);
+  --cg-border: var(--line);
+  --cg-accent: var(--accent);
 
   margin: 1.25rem 0;
   padding: 1rem;
   border: 1px solid var(--cg-border);
-  border-radius: 0.5rem;
-  background: var(--md-default-bg-color, #fff);
-  color: var(--md-default-fg-color, #222);
-}
-
-[data-md-color-scheme="slate"] .cg {
-  --cg-ok: #5fd37f;
-  --cg-warn: #e3b341;
-  --cg-bad: #ff7b72;
+  border-radius: var(--radius-m);
+  background: var(--surface);
+  color: var(--ink);
 }
 
 .cg [hidden] {
@@ -30,7 +24,7 @@
 .cg:focus-visible,
 .cg-btn:focus-visible,
 .cg a:focus-visible {
-  outline: 2px solid var(--md-accent-fg-color, #3f51b5);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
@@ -108,16 +102,14 @@
 
 .cg .cg-blurb {
   margin: 0 0 0.75rem;
-  color: var(--md-default-fg-color--light, #555);
+  color: var(--muted);
 }
 
 .cg-btn-level[aria-pressed="true"],
 .cg-btn-level[aria-pressed="true"]:hover:not(:disabled),
-.cg-btn-primary:hover:not(:disabled),
-[data-md-color-scheme="slate"] .cg-btn-level[aria-pressed="true"],
-[data-md-color-scheme="slate"] .cg-btn-primary {
+.cg-btn-primary:hover:not(:disabled) {
   background: var(--cg-accent);
-  color: #fff;
+  color: var(--accent-ink);
   border-color: var(--cg-accent);
 }
 
@@ -134,11 +126,6 @@
   cursor: pointer;
 }
 
-[data-md-color-scheme="slate"] .cg-btn {
-  color: var(--md-typeset-a-color, #9fa8da);
-  border-color: var(--md-typeset-a-color, #9fa8da);
-}
-
 .cg-btn:hover:not(:disabled) {
   background: var(--cg-surface);
 }
@@ -150,13 +137,7 @@
 
 .cg-btn-primary {
   background: var(--cg-accent);
-  color: #fff;
-}
-
-[data-md-color-scheme="slate"] .cg-btn-primary {
-  background: var(--cg-accent);
-  color: #fff;
-  border-color: var(--cg-accent);
+  color: var(--accent-ink);
 }
 
 .cg-btn kbd {
@@ -253,7 +234,7 @@
 
 .cg-log-fix {
   display: block;
-  color: var(--md-default-fg-color--light, #555);
+  color: var(--muted);
 }
 
 .cg-learn {

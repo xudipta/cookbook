@@ -22,7 +22,7 @@
   font-size: 0.7rem;
   font-weight: 700;
   text-transform: uppercase;
-  color: var(--md-default-fg-color--light, #555);
+  color: var(--muted);
 }
 
 .cg .tf-ws strong {
@@ -59,7 +59,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.03em;
-  color: var(--md-default-fg-color--light, #555);
+  color: var(--muted);
 }
 
 .cg .tf-code,
@@ -91,7 +91,7 @@
   border: 1px solid var(--cg-border);
   border-left: 4px solid var(--cg-accent);
   border-radius: 0.25rem;
-  background: var(--md-default-bg-color, #fff);
+  background: var(--surface);
 }
 
 .cg .tf-name {
@@ -125,7 +125,7 @@
 .cg .tf-empty {
   margin: 0;
   font-size: 0.78rem;
-  color: var(--md-default-fg-color--light, #555);
+  color: var(--muted);
 }
 
 .cg .tf-editor,
@@ -145,7 +145,7 @@
   padding: 0.25rem 0.4rem;
   border: 1px solid var(--cg-border);
   border-radius: 0.25rem;
-  background: var(--md-default-bg-color, #fff);
+  background: var(--surface);
   color: inherit;
   font: inherit;
   font-size: 0.78rem;
@@ -171,11 +171,6 @@
   cursor: pointer;
 }
 
-[data-md-color-scheme="slate"] .cg .tf-btn {
-  color: var(--md-typeset-a-color, #9fa8da);
-  border-color: var(--md-typeset-a-color, #9fa8da);
-}
-
 .cg .tf-btn:hover:not(:disabled) {
   background: var(--cg-surface);
 }
@@ -190,7 +185,7 @@
 .cg .tf-btn:focus-visible,
 .cg .tf-input:focus-visible,
 .cg .tf-select:focus-visible {
-  outline: 2px solid var(--md-accent-fg-color, #3f51b5);
+  outline: 2px solid var(--accent);
   outline-offset: 1px;
 }
 
@@ -205,8 +200,8 @@
   overflow: auto;
   border: 1px solid var(--cg-border);
   border-radius: 0.3rem;
-  background: #1b1d23;
-  color: #e6e6e6;
+  background: var(--term-bg);
+  color: var(--term-ink);
   font-size: 0.72rem;
   line-height: 1.35;
   white-space: pre-wrap;

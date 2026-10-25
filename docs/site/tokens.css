@@ -1,0 +1,135 @@
+/* Design tokens shared by the home page, the game pages and the notes (see #56).
+   Light values live on bare :root. Dark values appear three times (system preference, an explicit
+   data-theme, and Material's slate scheme); scripts/check_contrast.py fails if the three drift apart
+   or any text/background pair drops below WCAG AA. */
+
+:root {
+  --bg: #edf0f3;
+  --surface: #ffffff;
+  --surface-2: #e3e8ed;
+  --ink: #121c26;
+  --muted: #4b5a68;
+  --line: #c9d2da;
+  --accent: #006d62;
+  --accent-ink: #ffffff;
+  --ok: #137536;
+  --warn: #8f5a00;
+  --bad: #c0302b;
+  --term-bg: #0f171e;
+  --term-ink: #dbe6ee;
+  --term-dim: #8da0b0;
+  --on-hue: #ffffff;
+  --h-k8s: #2a62c9;
+  --h-docker: #0a7a9e;
+  --h-tf: #6c43c0;
+  --h-linux: #8f5d00;
+  --h-cicd: #1a7a44;
+  --h-git: #b8470f;
+  --h-obs: #b52f63;
+  --h-db: #4252c2;
+  --h-skills: #0b7a6c;
+  --h-mcp: #587709;
+
+  --font-display: "Archivo", "Arial Narrow", system-ui, sans-serif;
+  --font-body: "Public Sans", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --radius-s: 4px;
+  --radius-m: 6px;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2.5rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0c1217;
+    --surface: #131c24;
+    --surface-2: #1a2630;
+    --ink: #e8eef3;
+    --muted: #98a9b7;
+    --line: #263541;
+    --accent: #3ed6c2;
+    --accent-ink: #04201c;
+    --ok: #4ccf7c;
+    --warn: #e8b64a;
+    --bad: #ff7a70;
+    --term-bg: #080d11;
+    --term-ink: #dbe6ee;
+    --term-dim: #7f93a3;
+    --on-hue: #0c1217;
+    --h-k8s: #6a9dff;
+    --h-docker: #4cc3e8;
+    --h-tf: #a98cf2;
+    --h-linux: #e3b04b;
+    --h-cicd: #55cf86;
+    --h-git: #ff8a5c;
+    --h-obs: #ee77a6;
+    --h-db: #8b98ff;
+    --h-skills: #4fd8c6;
+    --h-mcp: #a6cc4c;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"],
+body[data-md-color-scheme="slate"] {
+  --bg: #0c1217;
+  --surface: #131c24;
+  --surface-2: #1a2630;
+  --ink: #e8eef3;
+  --muted: #98a9b7;
+  --line: #263541;
+  --accent: #3ed6c2;
+  --accent-ink: #04201c;
+  --ok: #4ccf7c;
+  --warn: #e8b64a;
+  --bad: #ff7a70;
+  --term-bg: #080d11;
+  --term-ink: #dbe6ee;
+  --term-dim: #7f93a3;
+  --on-hue: #0c1217;
+  --h-k8s: #6a9dff;
+  --h-docker: #4cc3e8;
+  --h-tf: #a98cf2;
+  --h-linux: #e3b04b;
+  --h-cicd: #55cf86;
+  --h-git: #ff8a5c;
+  --h-obs: #ee77a6;
+  --h-db: #8b98ff;
+  --h-skills: #4fd8c6;
+  --h-mcp: #a6cc4c;
+  color-scheme: dark;
+}
+
+/* Material lets a reader pick light while the OS is dark; the explicit scheme wins. */
+body[data-md-color-scheme="default"] {
+  --bg: #edf0f3;
+  --surface: #ffffff;
+  --surface-2: #e3e8ed;
+  --ink: #121c26;
+  --muted: #4b5a68;
+  --line: #c9d2da;
+  --accent: #006d62;
+  --accent-ink: #ffffff;
+  --ok: #137536;
+  --warn: #8f5a00;
+  --bad: #c0302b;
+  --term-bg: #0f171e;
+  --term-ink: #dbe6ee;
+  --term-dim: #8da0b0;
+  --on-hue: #ffffff;
+  --h-k8s: #2a62c9;
+  --h-docker: #0a7a9e;
+  --h-tf: #6c43c0;
+  --h-linux: #8f5d00;
+  --h-cicd: #1a7a44;
+  --h-git: #b8470f;
+  --h-obs: #b52f63;
+  --h-db: #4252c2;
+  --h-skills: #0b7a6c;
+  --h-mcp: #587709;
+  color-scheme: light;
+}
