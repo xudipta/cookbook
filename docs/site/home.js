@@ -1,4 +1,5 @@
 // Home page: the board (built from docs/games/games.json), the hero teaser game and the theme toggle.
+import { bestScore, completedLevels, resetProgress } from '../games/shared/progress.js';
 import { initTheme } from './theme.js';
 
 const el = (tag, props = {}, ...kids) => {
@@ -15,14 +16,6 @@ const el = (tag, props = {}, ...kids) => {
 
 const GITHUB_ISSUES = 'https://github.com/xudipta/cookbook/issues/';
 const WORDS = ['Zero', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten'];
-
-function bestScore(id) {
-  try {
-    return Number(localStorage.getItem(`cookbook-game-best:${id}`)) || 0;
-  } catch {
-    return 0;
-  }
-}
 
 function tile(game) {
   const live = game.status === 'live';
@@ -43,22 +36,32 @@ function tile(game) {
     );
   }
   const best = bestScore(game.id);
+  const done = completedLevels(game.id).length;
+  const progress = el(
+    'div',
+    { class: 'tile-progress' },
+    el('span', { class: 'pips', 'aria-hidden': 'true' }, Array.from({ length: game.levels }, (_, i) => el('i', { 'data-done': String(i < done) }))),
+    el('span', { text: `${done} of ${game.levels} levels done` }),
+  );
   return el(
     'a',
     { class: 'tile live', href: `docs/games/${game.id}/` },
     top,
     el('p', { text: game.blurb }),
     el('ul', { class: 'chips' }, game.chips.map((c) => el('li', { text: c }))),
+    progress,
     el('div', { class: 'tile-foot' }, el('span', { text: game.facts.join(' · ') }), el('span', {}, 'Best ', el('b', { text: best || '—' }))),
   );
 }
+
+let games = [];
 
 async function board() {
   const root = document.getElementById('tiles');
   try {
     const res = await fetch(new URL('../games/games.json', import.meta.url));
     if (!res.ok) throw new Error(`games.json: HTTP ${res.status}`);
-    const { games } = await res.json();
+    games = (await res.json()).games;
     root.replaceChildren(...games.map(tile));
     const live = games.filter((g) => g.status === 'live');
     const set = (name, value) => document.querySelectorAll(`[data-stat="${name}"]`).forEach((n) => (n.textContent = value));
@@ -168,6 +171,25 @@ function start() {
     }
   }, 1000);
 }
+
+// "Reset saved progress" asks twice: the first click arms it, the second (within 5s) clears every game.
+const resetBtn = document.getElementById('reset-progress');
+let armed = null;
+resetBtn.addEventListener('click', () => {
+  if (!armed) {
+    resetBtn.textContent = 'Click again to erase scores and completed levels';
+    armed = setTimeout(() => {
+      armed = null;
+      resetBtn.textContent = 'Reset saved progress';
+    }, 5000);
+    return;
+  }
+  clearTimeout(armed);
+  armed = null;
+  resetProgress(games.map((g) => g.id));
+  resetBtn.textContent = 'Progress erased';
+  board();
+});
 
 initTheme(document.getElementById('theme'));
 document.getElementById('reset').addEventListener('click', start);

@@ -1,11 +1,11 @@
 // Shared engine for the cookbook games. A game module calls registerGame() with its
 // definition; boot.js then calls mountGame() to run it on the page. See "Adding a game" in
 // CONTRIBUTING.md for the contract.
+import { completedLevels, levelBest, recordRun } from './progress.js';
 import { createUI } from './ui.js';
 
 const registry = new Map();
 const SITE_ROOT = new URL('../../../', import.meta.url);
-const BEST_KEY = 'cookbook-game-best:';
 
 const REQUIRED = ['id', 'init', 'tick', 'actions', 'isWon', 'isLost'];
 
@@ -32,22 +32,6 @@ export function mulberry32(seed) {
 // every action costs 10, and winning adds 500.
 export function computeScore({ health, actionsUsed, won }) {
   return Math.max(0, Math.round(health * 10) - actionsUsed * 10 + (won ? 500 : 0));
-}
-
-function readBest(id) {
-  try {
-    return Number(localStorage.getItem(BEST_KEY + id)) || 0;
-  } catch {
-    return 0;
-  }
-}
-
-function writeBest(id, score) {
-  try {
-    localStorage.setItem(BEST_KEY + id, String(score));
-  } catch {
-    // Storage can be blocked (private windows, embedded previews); the game works without it.
-  }
 }
 
 export async function mountGame(container, { id }) {
@@ -122,6 +106,7 @@ export async function mountGame(container, { id }) {
       tickLabel: scenario.tickLabel || 'Tick',
       health: rt.state.health,
       score: score(),
+      best: levelBest(id, rt.level),
       status: rt.status,
       paused: rt.paused,
     });
@@ -130,8 +115,8 @@ export async function mountGame(container, { id }) {
   function finish(status) {
     rt.status = status;
     stopTimer();
-    const best = Math.max(readBest(id), score());
-    writeBest(id, best);
+    const best = recordRun(id, rt.level, { score: score(), won: status === 'won' });
+    ui.setProgress(completedLevels(id));
     const resolved = fired.filter((f) => f.resolvedAt !== null);
     const avgResolve = resolved.length
       ? resolved.reduce((sum, f) => sum + (f.resolvedAt - f.firedAt), 0) / resolved.length
@@ -254,6 +239,7 @@ export async function mountGame(container, { id }) {
     ui.clearLog();
     ui.clearResult();
     ui.setLevel(level);
+    ui.setProgress(completedLevels(id));
     ui.board.replaceChildren();
     def.init(rt.state, ctx);
     refresh();

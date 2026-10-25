@@ -44,6 +44,14 @@ async function checkHome(browser) {
   page.on('console', (m) => {
     if (m.type() === 'error' && m.location().url.startsWith(SITE_URL)) problems.push(`console error: ${m.text()}`);
   });
+  // A score saved before per-level progress existed (legacy key) and one completed level.
+  await page.addInitScript(() => {
+    if (!localStorage.getItem('seeded')) {
+      localStorage.setItem('seeded', '1');
+      localStorage.setItem('cookbook-game-best:kubernetes', '1234');
+      localStorage.setItem('cookbook-game-progress:docker', JSON.stringify({ levels: { hello: { best: 900, won: true, plays: 1, last: 1 } } }));
+    }
+  });
   await page.goto(SITE_URL, { waitUntil: 'load' });
   try {
     await page.waitForSelector('.tile', { timeout: 15000 });
@@ -58,6 +66,15 @@ async function checkHome(browser) {
     const href = await page.locator(`a.tile[href="docs/games/${game.id}/"]`).count();
     if (!href) problems.push(`no tile links to docs/games/${game.id}/`);
   }
+  const k8s = await page.locator('a.tile[href="docs/games/kubernetes/"]').innerText();
+  if (!k8s.includes('1234')) problems.push('the board lost a score saved under the legacy key');
+  const docker = await page.locator('a.tile[href="docs/games/docker/"]').innerText();
+  if (!docker.includes('1 of 5 levels done') || !docker.includes('900')) problems.push('the board does not show saved per-level progress');
+  await page.click('#reset-progress');
+  await page.click('#reset-progress');
+  await page.waitForFunction(() => document.querySelector('a.tile[href="docs/games/docker/"]').innerText.includes('0 of 5 levels done'));
+  const cleared = await page.evaluate(() => Object.keys(localStorage).filter((k) => k.startsWith('cookbook-game-')));
+  if (cleared.length) problems.push(`reset left saved progress behind: ${cleared.join(', ')}`);
   const crashed = page.locator('.pod[data-s="crash"]').first();
   await crashed.click();
   if (!(await page.locator('#term').innerText()).includes('kubectl delete pod')) problems.push('teaser: deleting a crashed pod did not log the command');
@@ -114,6 +131,18 @@ async function playRun(browser, id, run) {
       if (next !== (run.isLast ? 0 : 1)) problems.push(`result panel has ${next} "Next level" button(s), expected ${run.isLast ? 0 : 1}`);
       const notes = await page.locator('.cg-result-won a[data-cg="notes"]').count();
       if (run.onBoard && notes !== 1) problems.push('result panel has no "Read the notes" link');
+
+      // The win was saved: the stored entry says so, and after a reload the level is marked done.
+      const key = `cookbook-game-progress:${id}`;
+      const saved = await page.evaluate((k) => JSON.parse(localStorage.getItem(k) || 'null'), key);
+      const entry = saved && saved.levels && saved.levels[run.level || '_'];
+      if (!entry || !entry.won || !(entry.best > 0)) problems.push(`the win was not saved under ${key}`);
+      if (run.level) {
+        await page.reload({ waitUntil: 'load' });
+        await page.waitForSelector(`.cg-btn-level[data-level="${run.level}"]`, { timeout: 15000 });
+        const done = await page.getAttribute(`.cg-btn-level[data-level="${run.level}"]`, 'data-done');
+        if (done !== 'true') problems.push('after a reload the won level is not marked done');
+      }
     }
   }
   await page.close();
