@@ -70,6 +70,7 @@ jobs:
               - 'scripts/build_docs.sh'
               - 'scripts/check_site_assets.py'
               - 'scripts/check_contrast.py'
+              - 'scripts/play_banners.py'
             games:
               - 'docs/games/**'
               - 'docs/site/**'

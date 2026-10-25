@@ -35,11 +35,13 @@ not this repo's own template — these two are.)
 3. Add a row to the **Topics** table in [`README.md`](README.md).
 
 4. Add the topic's `README.md` and notes to `nav:` in `mkdocs.yml`, nested under whichever
-   top-level category it belongs to (`Infrastructure`, `Delivery`, `Operations`, `AI
+   category it belongs to under **Learn** (`Infrastructure`, `Delivery`, `Operations`, `AI
    Tooling` — see the existing entries for the shape; add a new category only if none of
-   those genuinely fit, and give it its own `docs/<category>.md` landing page the same
-   way the existing ones work). Run `make docs` — the strict build fails if a page is
-   missing from `nav`.
+   those genuinely fit, and give it its own `docs/<category>.md` landing page, linked from
+   `docs/learn.md`). Run `make docs` — the strict build fails if a page is missing from
+   `nav`. The top-level sections are **Play** (the games), **Learn** (the notes) and
+   **About**; the site build adds a "Play it" banner to every note of a topic that has an
+   entry in `docs/games/games.json` (a topic README links to its game itself).
 
 Keep examples **self-contained and credential-free** so CI can run them anywhere (e.g.
 Terraform examples use the `local`/`random`/`null` providers, not real clouds).

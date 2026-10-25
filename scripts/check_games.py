@@ -7,7 +7,7 @@ For every game directory (anything in docs/games/ except `shared/`) check that:
   * every event's `learn.note` is a real file and `learn.section` is a real heading in it
     (so a game can never point a reader at a note section that doesn't exist);
   * docs/games/games.json (the home page's board) lists every game, and each live entry matches its
-    directory (level count, notes folder);
+    directory (level count, notes folder), is linked from its topic README and from docs/games/index.md;
   * every action named in the scripted solution (one per level, if the scenario has `levels`) is
     defined in game.js, and every level's `schedule` only names declared events.
 
@@ -190,6 +190,12 @@ def check_manifest(game_dirs: list[Path]) -> list[str]:
                 scenario = json.loads((game_dir / "scenarios.json").read_text(encoding="utf-8"))
             except (OSError, ValueError):
                 continue  # check_game reports it
+            readme = REPO_ROOT / g["notes"] / "README.md"
+            if readme.is_file() and f"docs/games/{gid}/" not in readme.read_text(encoding="utf-8"):
+                errors.append(f"{where}: {g['notes']}README.md has no link to docs/games/{gid}/ (add a 'Play it' pointer)")
+            landing = GAMES_DIR / "index.md"
+            if landing.is_file() and f"]({gid}/index.md)" not in landing.read_text(encoding="utf-8"):
+                errors.append(f"{where}: docs/games/index.md does not list it (add a row linking {gid}/index.md)")
             expected = len(scenario.get("levels") or [1])
             if g.get("levels") != expected:
                 errors.append(f"{where}: levels is {g.get('levels')!r} but scenarios.json has {expected}")
