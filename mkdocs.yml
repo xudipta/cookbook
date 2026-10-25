@@ -94,6 +94,7 @@ nav:
       - Services and networking: topics/kubernetes/notes/04-services-and-networking.md
       - SecurityContext: topics/kubernetes/notes/05-security-context.md
       - Helm and Kustomize: topics/kubernetes/notes/06-helm-and-kustomize.md
+      - Probes and resources: topics/kubernetes/notes/07-probes-and-resources.md
   - Docker:
       - Overview: topics/docker/README.md
       - Images and Dockerfiles: topics/docker/notes/01-images-and-dockerfiles.md

@@ -13,6 +13,26 @@ if an example stops working, the badge above goes red.
 
 📖 **Browsable docs site: <https://xudipta.github.io/cookbook/>**
 
+## About this project
+
+I kept hitting the same two problems with my own notes on these tools: the examples
+rotted the moment the underlying tool changed, and reference material scattered across
+separate files/gists/wikis with no good way to check I hadn't quietly broken one. This
+repo is my answer — every topic pairs prose with a runnable example, and every example
+is wired into CI, not just linted but actually built, applied, or deployed against a
+real target (`kind`, a real Postgres, a live Terraform apply). If an example breaks, the
+badge above goes red; nothing here can go stale without me noticing.
+
+Beyond the reference content itself, it's also where I practice the engineering habits
+I care about on real infrastructure code: path-filtered CI so a docs-only change doesn't
+spin up a cluster, small reviewable PRs with their own test plan, docs-as-code (the
+GitHub Pages site is generated from the same files you're reading), and treating "the
+example actually runs" as a release gate rather than a nice-to-have.
+
+It's written for two readers at once: someone new to a topic, who should be able to go
+from the Quickstart to a working example in a couple of minutes; and future me, who
+mostly just needs the one command I forgot.
+
 ## What's here
 
 ```mermaid
@@ -44,7 +64,7 @@ flowchart TD
 | Kubernetes | [`topics/kubernetes/`](topics/kubernetes/README.md) | `yamllint`, `kubeconform`, `helm lint`, `kubectl kustomize`, `kind` deploy + Service curl test |
 | Docker / Containers | [`topics/docker/`](topics/docker/README.md) | `hadolint`, live build + run + curl smoke test |
 | Terraform / IaC | [`topics/terraform/`](topics/terraform/README.md) | `terraform fmt -check`, `tflint`, live `init`/`apply`/`destroy` |
-| Linux / Shell | [`topics/linux/`](topics/linux/README.md) | `shellcheck` on every `*.sh` |
+| Linux / Shell | [`topics/linux/`](topics/linux/README.md) | `shellcheck`, live `backup.sh` smoke test |
 | CI/CD | [`topics/cicd/`](topics/cicd/README.md) | `actionlint` on example workflows |
 | GitHub / Git | [`topics/github/`](topics/github/README.md) | `yamllint` on the issue form, `shellcheck` on the `gh` script |
 | Observability | [`topics/observability/`](topics/observability/README.md) | `promtool check config`/`rules`, `jq` on the Grafana dashboard |
@@ -98,3 +118,7 @@ make docs-serve # preview the docs site at http://localhost:8000
 ## Adding a topic
 
 See [`CONTRIBUTING.md`](CONTRIBUTING.md).
+
+## License
+
+[MIT](LICENSE) — copy, adapt, and reuse any note, manifest, or script here.

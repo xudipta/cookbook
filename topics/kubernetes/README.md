@@ -38,12 +38,16 @@ of that yourself.
   that matter, walking through the `*-with-security-context.yaml` examples.
 - `notes/06-helm-and-kustomize.md` — templating + release tracking vs. patch overlays,
   walking through `examples/helm/` and `examples/kustomize/` (with diagrams).
+- `notes/07-probes-and-resources.md` — `resources.requests`/`limits` and what exceeding
+  each one actually does, readiness vs. liveness probes, walking through
+  `examples/deployment/deployment-with-resources-and-probes.yaml`.
 - `examples/pod/` — Pod definitions.
 - `examples/deployment/` — Deployment definitions.
 - `examples/replicaset/` — ReplicaSet definitions.
 - `examples/services/` — Service definitions.
 - `examples/configs/` — ConfigMap definitions.
 - `examples/secrets/` — Secret definitions.
+- `examples/namespace/` — a plain Namespace.
 - `examples/helm/sample-chart/` — a minimal Helm chart.
 - `examples/kustomize/` — a `base/` with `dev`/`prod` overlays.
 
@@ -83,3 +87,8 @@ two and watch the ReplicaSet replace it.
 - A `kind` cluster applies `secrets/`, `configs/`, `deployment/`, `services/`, waits for
   the Deployment to become available, and curls the Service to confirm nginx responds —
   the exact sequence in the Quickstart above.
+
+`examples/namespace/` and `examples/deployment/deployment-with-resources-and-probes.yaml`
+are covered by `yamllint`/`kubeconform` above but aren't part of the `kind` job's apply
+sequence — they're illustrative of fields (resource limits, probes) rather than part of
+the one running app the live test exercises end to end.
