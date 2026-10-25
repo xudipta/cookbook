@@ -15,6 +15,10 @@ A container starts in milliseconds because there's no OS to boot — it's an iso
 process on the same kernel as everything else on the host, with its own filesystem view
 built from the image's layers plus one writable layer on top.
 
+**Play it:** [Layer Cake](../../docs/games/docker/index.md) is a short puzzle where you
+arrange Dockerfile cards and watch which layers the build cache reuses, using the same
+instructions these notes teach.
+
 ## Contents
 
 - `notes/01-images-and-dockerfiles.md` — layers, the build cache, Dockerfile best

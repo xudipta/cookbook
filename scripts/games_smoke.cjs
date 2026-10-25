@@ -54,18 +54,19 @@ async function playRun(browser, id, run) {
   }
 
   const outcome = await page.evaluate(
-    ({ gid, solution, maxTicks }) => {
+    ({ gid, solution, maxTicks, manual }) => {
       const game = window.cookbookGames[gid];
+      // Turn-based (manual) games only advance when an action does; the step's `tick` is just an order key.
       for (const step of [...solution].sort((a, b) => a.tick - b.tick)) {
-        if (step.tick > game.ticks) game.step(step.tick - game.ticks);
+        if (!manual && step.tick > game.ticks) game.step(step.tick - game.ticks);
         if (game.act(step.action, ...(step.args || [])) === false) {
           return { error: `action "${step.action}" was rejected at tick ${game.ticks}` };
         }
       }
-      game.step(maxTicks - game.ticks);
+      if (!manual) game.step(maxTicks - game.ticks);
       return { status: game.status, ticks: game.ticks, health: Math.round(game.state.health) };
     },
-    { gid: id, solution: run.solution, maxTicks: MAX_TICKS },
+    { gid: id, solution: run.solution, maxTicks: MAX_TICKS, manual: Boolean(run.manual) },
   );
 
   if (outcome.error) problems.push(outcome.error);
@@ -82,8 +83,8 @@ async function playRun(browser, id, run) {
 async function playGame(browser, id) {
   const scenario = JSON.parse(fs.readFileSync(path.join(GAMES_DIR, id, 'scenarios.json'), 'utf8'));
   const runs = scenario.levels
-    ? scenario.levels.map((l) => ({ label: l.id, level: l.id, seed: l.seed ?? scenario.seed, solution: l.solution }))
-    : [{ label: null, level: null, seed: scenario.seed, solution: scenario.solution }];
+    ? scenario.levels.map((l) => ({ label: l.id, level: l.id, seed: l.seed ?? scenario.seed, solution: l.solution, manual: scenario.manual }))
+    : [{ label: null, level: null, seed: scenario.seed, solution: scenario.solution, manual: scenario.manual }];
 
   const problems = [];
   for (const run of runs) {

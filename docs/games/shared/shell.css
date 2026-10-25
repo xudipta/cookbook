@@ -23,6 +23,10 @@
   --cg-bad: #ff7b72;
 }
 
+.cg [hidden] {
+  display: none !important;
+}
+
 .cg:focus-visible,
 .cg-btn:focus-visible,
 .cg a:focus-visible {
@@ -174,7 +178,20 @@
   }
 }
 
+.cg-main-stacked {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.cg-main-stacked .cg-side {
+  order: -1;
+}
+
+.cg-main-stacked .cg-log {
+  max-height: 9rem;
+}
+
 .cg-board {
+  container-type: inline-size;
   min-height: 8rem;
   padding: 0.75rem;
   border: 1px solid var(--cg-border);

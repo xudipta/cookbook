@@ -42,6 +42,7 @@ export function createUI(container, { def, scenario, levels, siteRoot, handlers 
   pauseBtn.addEventListener('click', () => handlers.togglePause());
   restartBtn.addEventListener('click', () => handlers.restart());
 
+  if (scenario.manual) pauseBtn.hidden = true; // nothing runs on a clock, so there is nothing to pause
   const hud = el(
     'div',
     { class: 'cg-hud' },
@@ -86,7 +87,7 @@ export function createUI(container, { def, scenario, levels, siteRoot, handlers 
       blurb,
       hud,
       actionsBar,
-      el('div', { class: 'cg-main' }, board, el('div', { class: 'cg-side' }, el('h3', { class: 'cg-h', text: 'Event log' }), logList)),
+      el('div', { class: `cg-main${scenario.stacked ? ' cg-main-stacked' : ''}` }, board, el('div', { class: 'cg-side' }, el('h3', { class: 'cg-h', text: 'Event log' }), logList)),
       resultSlot,
     ].filter(Boolean),
   );
@@ -106,8 +107,8 @@ export function createUI(container, { def, scenario, levels, siteRoot, handlers 
       if (learn) li.append(learnLink(learn, siteRoot));
     },
 
-    setHud({ ticks, winTicks, health, score, status, paused }) {
-      tickEl.textContent = winTicks ? `Tick ${ticks} / ${winTicks}` : `Tick ${ticks}`;
+    setHud({ ticks, winTicks, tickLabel = 'Tick', health, score, status, paused }) {
+      tickEl.textContent = winTicks ? `${tickLabel} ${ticks} / ${winTicks}` : `${tickLabel} ${ticks}`;
       scoreEl.textContent = `Score ${score}`;
       const pct = Math.max(0, Math.min(100, Math.round(health)));
       barFill.style.width = `${pct}%`;

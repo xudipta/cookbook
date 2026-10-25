@@ -11,6 +11,7 @@ sections, and a scripted winning run must actually win.
 | Game | Topic | Status |
 | --- | --- | --- |
 | [Chaos Monkey Cluster](kubernetes/index.md) | Kubernetes | Playable: 3 levels, 9 failure types, a `kubectl` prompt |
+| [Layer Cake](docker/index.md) | Docker | Playable: 5 levels, a layer-cache simulator, `docker build`-style logs |
 | [Replica Rescue (demo)](demo/index.md) | Kubernetes basics | Playable; exists to prove the shell |
 
 Topic games are planned for every topic; follow the

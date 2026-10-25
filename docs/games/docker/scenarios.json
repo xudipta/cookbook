@@ -1,0 +1,954 @@
+{
+  "id": "docker",
+  "title": "Layer Cake",
+  "healthLabel": "Build budget",
+  "tickLabel": "Build",
+  "manual": true,
+  "seed": 1,
+  "events": [
+    {
+      "id": "dev-edit-src",
+      "title": "A teammate edited a source file",
+      "fix": "COPY and ADD are cache-busted by the content of the files they copy, so that layer and every layer after it rebuild. Copy the dependency manifest and install first, and the slow install stays cached.",
+      "learn": {
+        "note": "topics/docker/notes/02-multi-stage-builds-and-caching.md",
+        "section": "How the layer cache works"
+      }
+    },
+    {
+      "id": "dev-add-dep",
+      "title": "A teammate changed the dependency manifest",
+      "fix": "A changed manifest legitimately re-runs the install. That is the point of copying it on its own first: the install reruns only when the manifest changes, not on every code edit.",
+      "learn": {
+        "note": "topics/docker/notes/01-images-and-dockerfiles.md",
+        "section": "Dockerfile tips"
+      }
+    },
+    {
+      "id": "base-bump",
+      "title": "The base image was updated upstream",
+      "fix": "A new base layer changes the cache key of everything built on it, so every layer rebuilds. Pin base image tags so that only happens when you choose.",
+      "learn": {
+        "note": "topics/docker/notes/01-images-and-dockerfiles.md",
+        "section": "Dockerfile tips"
+      }
+    },
+    {
+      "id": "cold-runner",
+      "title": "CI started on a fresh runner with an empty cache",
+      "fix": "With no cache every layer rebuilds. Carry a cache between runs: --cache-from, or cache-from/cache-to in docker/build-push-action.",
+      "learn": {
+        "note": "topics/docker/notes/02-multi-stage-builds-and-caching.md",
+        "section": "Build cache in CI"
+      }
+    },
+    {
+      "id": "err-no-from",
+      "title": "The build failed: the Dockerfile does not start with FROM",
+      "fix": "Every Dockerfile begins with FROM; any other instruction before it has no build stage to run in.",
+      "learn": {
+        "note": "topics/docker/notes/01-images-and-dockerfiles.md",
+        "section": "Debugging a build"
+      }
+    },
+    {
+      "id": "err-bad-tag",
+      "title": "The build failed: the base image tag does not exist",
+      "fix": "The registry has no such tag. Read the first ERROR line of the build log: it names the image it could not resolve.",
+      "learn": {
+        "note": "topics/docker/notes/01-images-and-dockerfiles.md",
+        "section": "Debugging a build"
+      }
+    },
+    {
+      "id": "err-missing-input",
+      "title": "The build failed: an instruction ran before its inputs were there",
+      "fix": "Each instruction only sees what earlier layers put in the image. Read the failing step in the log, then check what it needs (a copied file, an installed dependency) is placed above it.",
+      "learn": {
+        "note": "topics/docker/notes/01-images-and-dockerfiles.md",
+        "section": "Debugging a build"
+      }
+    },
+    {
+      "id": "err-bad-stage",
+      "title": "The build failed: COPY --from names a stage that does not exist",
+      "fix": "COPY --from=NAME needs an earlier FROM ... AS NAME. Name the build stage, and copy from it only after the final stage's FROM.",
+      "learn": {
+        "note": "topics/docker/notes/02-multi-stage-builds-and-caching.md",
+        "section": "Why multi-stage"
+      }
+    },
+    {
+      "id": "bloat",
+      "title": "The image is bigger than it needs to be",
+      "fix": "A single-stage image ships the compiler, dev dependencies and source it only needed to build. Build in one stage and copy just the artifact into a small runtime stage.",
+      "learn": {
+        "note": "topics/docker/notes/02-multi-stage-builds-and-caching.md",
+        "section": "Why multi-stage"
+      }
+    },
+    {
+      "id": "no-start",
+      "title": "The image builds but the container would not start",
+      "fix": "A successful build only means every instruction ran. The container still needs a CMD (or a base image that has one), the files it runs, and any USER it names to exist.",
+      "learn": {
+        "note": "topics/docker/notes/01-images-and-dockerfiles.md",
+        "section": "Quick reference"
+      }
+    },
+    {
+      "id": "secret-leak",
+      "title": "A secret (.env) was baked into the image",
+      "fix": "COPY . . copies everything in the build context, including .env. List secrets, .git and local dependency folders in a .dockerignore so they never enter the context or the image.",
+      "learn": {
+        "note": "topics/docker/notes/01-images-and-dockerfiles.md",
+        "section": "Dockerfile tips"
+      }
+    },
+    {
+      "id": "ctx-bloat",
+      "title": "The build context is huge",
+      "fix": "Docker sends the whole context to the builder on every build, and COPY . . puts all of it in a layer. A .dockerignore keeps .git, node_modules and virtualenvs out.",
+      "learn": {
+        "note": "topics/docker/notes/01-images-and-dockerfiles.md",
+        "section": "Dockerfile tips"
+      }
+    },
+    {
+      "id": "apt-cache",
+      "title": "Package-manager cache was left in the image",
+      "fix": "Files deleted in a later layer still exist in the earlier one, so cleanup has to happen in the same RUN that created them (apt-get install ... && rm -rf /var/lib/apt/lists/*).",
+      "learn": {
+        "note": "topics/docker/notes/01-images-and-dockerfiles.md",
+        "section": "Dockerfile tips"
+      }
+    },
+    {
+      "id": "root-user",
+      "title": "The container runs as root",
+      "fix": "The base image's default user is often root. Create an unprivileged user and switch to it with USER before CMD.",
+      "learn": {
+        "note": "topics/docker/notes/01-images-and-dockerfiles.md",
+        "section": "Dockerfile tips"
+      }
+    }
+  ],
+  "levels": [
+    {
+      "id": "hello",
+      "title": "1. Hello nginx",
+      "blurb": "Arrange the cards into the Dockerfile from topics/docker/examples/hello-nginx so it builds and serves the page. Then a teammate edits index.html: watch what rebuilds.",
+      "winTicks": 2,
+      "minHealth": 50,
+      "drainRate": 0.25,
+      "failPenalty": 10,
+      "images": {
+        "nginx:1.27-alpine": {
+          "size": 48,
+          "pull": 3,
+          "paths": [
+            "/usr/sbin/nginx",
+            "/usr/share/nginx/html"
+          ],
+          "defaultCmd": true
+        }
+      },
+      "context": {
+        "files": {
+          "index.html": 0.01
+        }
+      },
+      "cards": [
+        {
+          "id": "from-nginx",
+          "kind": "from",
+          "text": "FROM nginx:1.27-alpine",
+          "image": "nginx:1.27-alpine"
+        },
+        {
+          "id": "copy-index",
+          "kind": "copy",
+          "text": "COPY index.html /usr/share/nginx/html/index.html",
+          "files": [
+            "index.html"
+          ],
+          "dest": "/usr/share/nginx/html/index.html",
+          "destFile": true
+        },
+        {
+          "id": "expose-80",
+          "kind": "expose",
+          "text": "EXPOSE 80"
+        },
+        {
+          "id": "healthcheck",
+          "kind": "healthcheck",
+          "text": "HEALTHCHECK CMD wget --quiet --tries=1 --spider http://localhost/ || exit 1"
+        }
+      ],
+      "dockerfile": [
+        "copy-index",
+        "expose-80",
+        "healthcheck",
+        "from-nginx"
+      ],
+      "goal": {
+        "requirePaths": [
+          "/usr/share/nginx/html/index.html"
+        ],
+        "requireWhy": "nginx serves it from there"
+      },
+      "schedule": [
+        {
+          "tick": 1,
+          "event": "dev-edit-src",
+          "files": [
+            "index.html"
+          ]
+        }
+      ],
+      "solution": [
+        {
+          "tick": 0,
+          "action": "arrange",
+          "args": [
+            [
+              "from-nginx",
+              "copy-index",
+              "expose-80",
+              "healthcheck"
+            ]
+          ]
+        },
+        {
+          "tick": 1,
+          "action": "build"
+        },
+        {
+          "tick": 2,
+          "action": "build"
+        }
+      ]
+    },
+    {
+      "id": "cache",
+      "title": "2. Cache order",
+      "blurb": "This Dockerfile works but reinstalls every dependency whenever anyone touches the code. Reorder it (and add what's missing) so edits rebuild only what they must, and keep the cache alive on a fresh CI runner. You have five builds.",
+      "winTicks": 5,
+      "minHealth": 75,
+      "drainRate": 0.25,
+      "failPenalty": 10,
+      "goodBuildSeconds": 12,
+      "images": {
+        "node:20-alpine": {
+          "size": 135,
+          "pull": 6,
+          "paths": [
+            "/usr/local/bin/node",
+            "/usr/local/bin/npm"
+          ],
+          "defaultCmd": false
+        }
+      },
+      "context": {
+        "files": {
+          "package.json": 0.01,
+          "package-lock.json": 0.4,
+          "src": 2
+        }
+      },
+      "cards": [
+        {
+          "id": "from-node",
+          "kind": "from",
+          "text": "FROM node:20-alpine",
+          "image": "node:20-alpine"
+        },
+        {
+          "id": "workdir",
+          "kind": "workdir",
+          "text": "WORKDIR /app",
+          "path": "/app"
+        },
+        {
+          "id": "copy-manifest",
+          "kind": "copy",
+          "text": "COPY package.json package-lock.json ./",
+          "files": [
+            "package.json",
+            "package-lock.json"
+          ],
+          "dest": "./"
+        },
+        {
+          "id": "npm-ci",
+          "kind": "run",
+          "text": "RUN npm ci",
+          "time": 38,
+          "size": 120,
+          "requires": [
+            "/app/package.json"
+          ],
+          "produces": [
+            "/app/node_modules"
+          ],
+          "errors": {
+            "/app/package.json": "npm error code ENOENT\nnpm error path /app/package.json\nnpm error enoent Could not read package.json"
+          }
+        },
+        {
+          "id": "copy-all",
+          "kind": "copy",
+          "text": "COPY . .",
+          "files": "*",
+          "dest": "./"
+        },
+        {
+          "id": "build",
+          "kind": "run",
+          "text": "RUN npm run build",
+          "time": 9,
+          "size": 5,
+          "requires": [
+            "/app/node_modules",
+            "/app/src"
+          ],
+          "produces": [
+            "/app/dist/index.html",
+            "/app/dist/server.js"
+          ],
+          "errors": {
+            "/app/node_modules": "sh: vite: not found",
+            "/app/src": "error: could not resolve entry module \"src/main.js\""
+          }
+        },
+        {
+          "id": "cmd-node",
+          "kind": "cmd",
+          "text": "CMD [\"node\", \"dist/server.js\"]",
+          "requires": [
+            "/app/dist/server.js",
+            "/app/node_modules"
+          ]
+        },
+        {
+          "id": "cache-flag",
+          "kind": "flag",
+          "text": "docker build --cache-from registry.example/app:cache ."
+        }
+      ],
+      "dockerfile": [
+        "from-node",
+        "workdir",
+        "copy-all",
+        "npm-ci",
+        "build",
+        "cmd-node"
+      ],
+      "goal": {},
+      "schedule": [
+        {
+          "tick": 1,
+          "event": "dev-edit-src"
+        },
+        {
+          "tick": 2,
+          "event": "dev-add-dep"
+        },
+        {
+          "tick": 3,
+          "event": "dev-edit-src"
+        },
+        {
+          "tick": 4,
+          "event": "cold-runner"
+        }
+      ],
+      "solution": [
+        {
+          "tick": 0,
+          "action": "arrange",
+          "args": [
+            [
+              "from-node",
+              "workdir",
+              "copy-manifest",
+              "npm-ci",
+              "copy-all",
+              "build",
+              "cmd-node",
+              "cache-flag"
+            ]
+          ]
+        },
+        {
+          "tick": 1,
+          "action": "build"
+        },
+        {
+          "tick": 2,
+          "action": "build"
+        },
+        {
+          "tick": 3,
+          "action": "build"
+        },
+        {
+          "tick": 4,
+          "action": "build"
+        },
+        {
+          "tick": 5,
+          "action": "build"
+        }
+      ]
+    },
+    {
+      "id": "bloat",
+      "title": "3. Bloat",
+      "blurb": "The app is a static site, but this image ships Node, every dependency and the source. Split it into a build stage and a small runtime stage so the final image is under 80 MB.",
+      "winTicks": 3,
+      "minHealth": 70,
+      "drainRate": 0.25,
+      "failPenalty": 10,
+      "goodBuildSeconds": 14,
+      "images": {
+        "node:20-alpine": {
+          "size": 135,
+          "pull": 6,
+          "paths": [
+            "/usr/local/bin/node",
+            "/usr/local/bin/npm"
+          ],
+          "defaultCmd": false
+        },
+        "nginx:1.27-alpine": {
+          "size": 48,
+          "pull": 3,
+          "paths": [
+            "/usr/sbin/nginx",
+            "/usr/share/nginx/html"
+          ],
+          "defaultCmd": true
+        }
+      },
+      "context": {
+        "files": {
+          "package.json": 0.01,
+          "package-lock.json": 0.4,
+          "src": 2
+        }
+      },
+      "cards": [
+        {
+          "id": "from-node",
+          "kind": "from",
+          "text": "FROM node:20-alpine",
+          "image": "node:20-alpine"
+        },
+        {
+          "id": "from-node-build",
+          "kind": "from",
+          "text": "FROM node:20-alpine AS build",
+          "image": "node:20-alpine",
+          "as": "build"
+        },
+        {
+          "id": "from-nginx",
+          "kind": "from",
+          "text": "FROM nginx:1.27-alpine",
+          "image": "nginx:1.27-alpine"
+        },
+        {
+          "id": "workdir",
+          "kind": "workdir",
+          "text": "WORKDIR /app",
+          "path": "/app"
+        },
+        {
+          "id": "copy-manifest",
+          "kind": "copy",
+          "text": "COPY package.json package-lock.json ./",
+          "files": [
+            "package.json",
+            "package-lock.json"
+          ],
+          "dest": "./"
+        },
+        {
+          "id": "npm-ci",
+          "kind": "run",
+          "text": "RUN npm ci",
+          "time": 38,
+          "size": 120,
+          "requires": [
+            "/app/package.json"
+          ],
+          "produces": [
+            "/app/node_modules"
+          ],
+          "errors": {
+            "/app/package.json": "npm error code ENOENT\nnpm error path /app/package.json\nnpm error enoent Could not read package.json"
+          }
+        },
+        {
+          "id": "copy-all",
+          "kind": "copy",
+          "text": "COPY . .",
+          "files": "*",
+          "dest": "./"
+        },
+        {
+          "id": "build",
+          "kind": "run",
+          "text": "RUN npm run build",
+          "time": 9,
+          "size": 5,
+          "requires": [
+            "/app/node_modules",
+            "/app/src"
+          ],
+          "produces": [
+            "/app/dist/index.html",
+            "/app/dist/server.js"
+          ],
+          "errors": {
+            "/app/node_modules": "sh: vite: not found",
+            "/app/src": "error: could not resolve entry module \"src/main.js\""
+          }
+        },
+        {
+          "id": "cmd-node",
+          "kind": "cmd",
+          "text": "CMD [\"node\", \"dist/server.js\"]",
+          "requires": [
+            "/app/dist/server.js",
+            "/app/node_modules"
+          ]
+        },
+        {
+          "id": "copy-dist",
+          "kind": "copy",
+          "text": "COPY --from=build /app/dist /usr/share/nginx/html",
+          "fromStage": "build",
+          "paths": [
+            "/app/dist"
+          ],
+          "dest": "/usr/share/nginx/html",
+          "size": 5
+        },
+        {
+          "id": "expose-80",
+          "kind": "expose",
+          "text": "EXPOSE 80"
+        }
+      ],
+      "dockerfile": [
+        "from-node",
+        "workdir",
+        "copy-manifest",
+        "npm-ci",
+        "copy-all",
+        "build",
+        "cmd-node"
+      ],
+      "goal": {
+        "maxSize": 80,
+        "requirePaths": [
+          "/usr/share/nginx/html/index.html"
+        ],
+        "requireWhy": "the built site must end up where nginx serves it"
+      },
+      "schedule": [
+        {
+          "tick": 1,
+          "event": "dev-edit-src"
+        },
+        {
+          "tick": 2,
+          "event": "base-bump"
+        }
+      ],
+      "solution": [
+        {
+          "tick": 0,
+          "action": "arrange",
+          "args": [
+            [
+              "from-node-build",
+              "workdir",
+              "copy-manifest",
+              "npm-ci",
+              "copy-all",
+              "build",
+              "from-nginx",
+              "copy-dist",
+              "expose-80"
+            ]
+          ]
+        },
+        {
+          "tick": 1,
+          "action": "build"
+        },
+        {
+          "tick": 2,
+          "action": "build"
+        },
+        {
+          "tick": 3,
+          "action": "build"
+        }
+      ]
+    },
+    {
+      "id": "hygiene",
+      "title": "4. Hygiene",
+      "blurb": "A Python service that builds, but the image is huge, leaks a secret, and runs as root. Pick the right variant of each card (and add what's missing) until it is under 200 MB, holds no secrets, and runs as a non-root user.",
+      "winTicks": 2,
+      "minHealth": 50,
+      "drainRate": 0.1,
+      "failPenalty": 10,
+      "goodBuildSeconds": 20,
+      "images": {
+        "python:3.12-slim": {
+          "size": 125,
+          "pull": 5,
+          "paths": [
+            "/usr/local/bin/python",
+            "/usr/local/bin/pip"
+          ],
+          "defaultCmd": false
+        }
+      },
+      "context": {
+        "files": {
+          "requirements.txt": 0.01,
+          "app.py": 0.05,
+          ".env": 0.001,
+          ".git": 40,
+          ".venv": 90
+        }
+      },
+      "cards": [
+        {
+          "id": "from-py",
+          "kind": "from",
+          "text": "FROM python:3.12-slim",
+          "image": "python:3.12-slim"
+        },
+        {
+          "id": "workdir",
+          "kind": "workdir",
+          "text": "WORKDIR /app",
+          "path": "/app"
+        },
+        {
+          "id": "apt-bad",
+          "kind": "run",
+          "text": "RUN apt-get update && apt-get install -y curl",
+          "time": 12,
+          "size": 79,
+          "produces": [
+            "/usr/bin/curl",
+            "/var/lib/apt/lists"
+          ]
+        },
+        {
+          "id": "apt-good",
+          "kind": "run",
+          "text": "RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*",
+          "time": 12,
+          "size": 9,
+          "produces": [
+            "/usr/bin/curl"
+          ]
+        },
+        {
+          "id": "apt-clean-later",
+          "kind": "run",
+          "text": "RUN rm -rf /var/lib/apt/lists/*",
+          "time": 0.2,
+          "size": 0,
+          "removes": [
+            "/var/lib/apt/lists"
+          ]
+        },
+        {
+          "id": "copy-req",
+          "kind": "copy",
+          "text": "COPY requirements.txt ./",
+          "files": [
+            "requirements.txt"
+          ],
+          "dest": "./"
+        },
+        {
+          "id": "pip-bad",
+          "kind": "run",
+          "text": "RUN pip install -r requirements.txt",
+          "time": 14,
+          "size": 95,
+          "requires": [
+            "/app/requirements.txt"
+          ],
+          "produces": [
+            "/usr/local/lib/python3.12/site-packages"
+          ],
+          "errors": {
+            "/app/requirements.txt": "ERROR: Could not open requirements file: [Errno 2] No such file or directory: 'requirements.txt'"
+          }
+        },
+        {
+          "id": "pip-good",
+          "kind": "run",
+          "text": "RUN pip install --no-cache-dir -r requirements.txt",
+          "time": 14,
+          "size": 45,
+          "requires": [
+            "/app/requirements.txt"
+          ],
+          "produces": [
+            "/usr/local/lib/python3.12/site-packages"
+          ],
+          "errors": {
+            "/app/requirements.txt": "ERROR: Could not open requirements file: [Errno 2] No such file or directory: 'requirements.txt'"
+          }
+        },
+        {
+          "id": "copy-all",
+          "kind": "copy",
+          "text": "COPY . .",
+          "files": "*",
+          "dest": "./"
+        },
+        {
+          "id": "dockerignore",
+          "kind": "file",
+          "text": ".dockerignore  (.git, .venv, .env)",
+          "ignores": [
+            ".git",
+            ".venv",
+            ".env"
+          ]
+        },
+        {
+          "id": "useradd",
+          "kind": "run",
+          "text": "RUN useradd -m app",
+          "time": 0.5,
+          "size": 0.5,
+          "produces": [
+            "/home/app"
+          ]
+        },
+        {
+          "id": "user-app",
+          "kind": "user",
+          "text": "USER app",
+          "user": "app"
+        },
+        {
+          "id": "cmd-py",
+          "kind": "cmd",
+          "text": "CMD [\"python\", \"app.py\"]",
+          "requires": [
+            "/app/app.py",
+            "/usr/local/lib/python3.12/site-packages"
+          ]
+        }
+      ],
+      "dockerfile": [
+        "from-py",
+        "workdir",
+        "apt-bad",
+        "copy-all",
+        "pip-bad",
+        "cmd-py"
+      ],
+      "goal": {
+        "maxSize": 200,
+        "noSecrets": true,
+        "nonRoot": true
+      },
+      "schedule": [
+        {
+          "tick": 1,
+          "event": "dev-edit-src",
+          "files": [
+            "app.py"
+          ]
+        }
+      ],
+      "solution": [
+        {
+          "tick": 0,
+          "action": "arrange",
+          "args": [
+            [
+              "dockerignore",
+              "from-py",
+              "workdir",
+              "apt-good",
+              "copy-req",
+              "pip-good",
+              "copy-all",
+              "useradd",
+              "user-app",
+              "cmd-py"
+            ]
+          ]
+        },
+        {
+          "tick": 1,
+          "action": "build"
+        },
+        {
+          "tick": 2,
+          "action": "build"
+        }
+      ]
+    },
+    {
+      "id": "broken",
+      "title": "5. Broken build",
+      "blurb": "This build fails. Read the log, find the offending step, fix it, and repeat: there is more than one problem. Each failed build costs budget, so read before you rebuild.",
+      "winTicks": 1,
+      "minHealth": 50,
+      "drainRate": 0.25,
+      "failPenalty": 15,
+      "images": {
+        "node:20-alpine": {
+          "size": 135,
+          "pull": 6,
+          "paths": [
+            "/usr/local/bin/node",
+            "/usr/local/bin/npm"
+          ],
+          "defaultCmd": false
+        }
+      },
+      "context": {
+        "files": {
+          "package.json": 0.01,
+          "package-lock.json": 0.4,
+          "src": 2
+        }
+      },
+      "cards": [
+        {
+          "id": "from-node-typo",
+          "kind": "from",
+          "text": "FROM node:20-alpin",
+          "image": "node:20-alpin"
+        },
+        {
+          "id": "from-node",
+          "kind": "from",
+          "text": "FROM node:20-alpine",
+          "image": "node:20-alpine"
+        },
+        {
+          "id": "workdir",
+          "kind": "workdir",
+          "text": "WORKDIR /app",
+          "path": "/app"
+        },
+        {
+          "id": "copy-manifest",
+          "kind": "copy",
+          "text": "COPY package.json package-lock.json ./",
+          "files": [
+            "package.json",
+            "package-lock.json"
+          ],
+          "dest": "./"
+        },
+        {
+          "id": "npm-ci",
+          "kind": "run",
+          "text": "RUN npm ci",
+          "time": 38,
+          "size": 120,
+          "requires": [
+            "/app/package.json"
+          ],
+          "produces": [
+            "/app/node_modules"
+          ],
+          "errors": {
+            "/app/package.json": "npm error code ENOENT\nnpm error path /app/package.json\nnpm error enoent Could not read package.json"
+          }
+        },
+        {
+          "id": "copy-all",
+          "kind": "copy",
+          "text": "COPY . .",
+          "files": "*",
+          "dest": "./"
+        },
+        {
+          "id": "build",
+          "kind": "run",
+          "text": "RUN npm run build",
+          "time": 9,
+          "size": 5,
+          "requires": [
+            "/app/node_modules",
+            "/app/src"
+          ],
+          "produces": [
+            "/app/dist/index.html",
+            "/app/dist/server.js"
+          ],
+          "errors": {
+            "/app/node_modules": "sh: vite: not found",
+            "/app/src": "error: could not resolve entry module \"src/main.js\""
+          }
+        },
+        {
+          "id": "cmd-node",
+          "kind": "cmd",
+          "text": "CMD [\"node\", \"dist/server.js\"]",
+          "requires": [
+            "/app/dist/server.js",
+            "/app/node_modules"
+          ]
+        }
+      ],
+      "dockerfile": [
+        "from-node-typo",
+        "workdir",
+        "build",
+        "copy-manifest",
+        "npm-ci",
+        "copy-all",
+        "cmd-node"
+      ],
+      "goal": {},
+      "schedule": [],
+      "solution": [
+        {
+          "tick": 0,
+          "action": "arrange",
+          "args": [
+            [
+              "from-node",
+              "workdir",
+              "copy-manifest",
+              "npm-ci",
+              "copy-all",
+              "build",
+              "cmd-node"
+            ]
+          ]
+        },
+        {
+          "tick": 1,
+          "action": "build"
+        }
+      ]
+    }
+  ],
+  "stacked": true
+}
