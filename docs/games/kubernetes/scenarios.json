@@ -1,0 +1,287 @@
+{
+  "id": "kubernetes",
+  "title": "Chaos Monkey Cluster",
+  "healthLabel": "Error budget",
+  "seed": 11,
+  "tickMs": 3000,
+  "nodes": 3,
+  "nodeCapacity": 700,
+  "needed": 3,
+  "drainRate": 0.05,
+  "batchRequest": 350,
+  "killChance": 0,
+  "hints": false,
+  "barePod": false,
+  "web": {
+    "replicas": 4,
+    "request": 300,
+    "limit": 400,
+    "readiness": true
+  },
+  "events": [
+    {
+      "id": "pod-killed",
+      "title": "The chaos monkey killed a pod",
+      "fix": "The Deployment's ReplicaSet notices the missing pod and starts a replacement on its own. With a readiness probe and a spare replica nothing is lost, so acting here only wastes time.",
+      "learn": {
+        "note": "topics/kubernetes/notes/02-pods-and-workloads.md",
+        "section": "ReplicaSets"
+      }
+    },
+    {
+      "id": "bare-pod-killed",
+      "title": "A bare Pod was killed and nothing brought it back",
+      "fix": "A Pod created directly isn't self-healing; only a controller recreates pods. Put the workload under a Deployment (here: scale the Deployment up to replace the lost capacity).",
+      "learn": {
+        "note": "topics/kubernetes/notes/02-pods-and-workloads.md",
+        "section": "Pods"
+      }
+    },
+    {
+      "id": "bad-image",
+      "title": "A rollout pointed the Deployment at an image tag that doesn't exist",
+      "fix": "The new pods can't pull the image, so the rollout stalls and the old pods it already retired aren't replaced. kubectl rollout undo returns to the last working revision.",
+      "learn": {
+        "note": "topics/kubernetes/notes/02-pods-and-workloads.md",
+        "section": "Deployments"
+      }
+    },
+    {
+      "id": "label-typo",
+      "title": "A rollout changed the pod label to the wrong value",
+      "fix": "The pods run fine but no longer match the Service's selector, so the Service has no endpoints for them. Fix the label to match the selector (or roll back).",
+      "learn": {
+        "note": "topics/kubernetes/notes/04-services-and-networking.md",
+        "section": "How it wires up"
+      }
+    },
+    {
+      "id": "config-key",
+      "title": "A rollout referenced a ConfigMap key that doesn't exist",
+      "fix": "The container can't even be created (CreateContainerConfigError), so there are no logs to read: kubectl describe pod and its Events name the missing key. Correct the key (or roll back).",
+      "learn": {
+        "note": "topics/kubernetes/notes/03-config-and-secrets.md",
+        "section": "Consuming them: env vars vs. volume mounts"
+      }
+    },
+    {
+      "id": "oom",
+      "title": "A release needs more memory than the pod's limit allows",
+      "fix": "Going over a memory limit gets the container OOMKilled (CPU would only be throttled). The new pods crash-loop while the old ones keep serving: raise limits.memory above what the app needs, keeping requests at or below limits.",
+      "learn": {
+        "note": "topics/kubernetes/notes/07-probes-and-resources.md",
+        "section": "Resource requests and limits"
+      }
+    },
+    {
+      "id": "no-readiness",
+      "title": "A release shipped without a readiness probe",
+      "fix": "With no readiness probe a pod counts as ready the moment its container starts, so the Service sends traffic to pods that are still warming up. Add the probe (or roll back).",
+      "learn": {
+        "note": "topics/kubernetes/notes/07-probes-and-resources.md",
+        "section": "Probes"
+      }
+    },
+    {
+      "id": "node-pressure",
+      "title": "A batch job grabbed the nodes' memory and a web pod was evicted",
+      "fix": "The scheduler places pods by memory requests, and none is left, so the replacement stays Pending. Free capacity by scaling the noisy batch Deployment down, or lower the web pods' requests.",
+      "learn": {
+        "note": "topics/kubernetes/notes/07-probes-and-resources.md",
+        "section": "Resource requests and limits"
+      }
+    },
+    {
+      "id": "nonroot",
+      "title": "A hardening change set runAsNonRoot on an image that runs as root",
+      "fix": "The kubelet refuses to start a container that would run as root when runAsNonRoot is true. Prefer an image built for non-root (web:1.0-nonroot) over weakening the setting, or roll back.",
+      "learn": {
+        "note": "topics/kubernetes/notes/05-security-context.md",
+        "section": "The fields that matter most"
+      }
+    }
+  ],
+  "levels": [
+    {
+      "id": "tutorial",
+      "title": "1. Tutorial",
+      "blurb": "One problem at a time, with hints. Look first (kubectl get pods, kubectl describe), then act. Keep the Service healthy for 30 ticks.",
+      "seed": 11,
+      "tickMs": 5000,
+      "winTicks": 30,
+      "minHealth": 60,
+      "hints": true,
+      "schedule": [
+        {
+          "tick": 5,
+          "event": "pod-killed",
+          "hint": "A pod died. Run kubectl get pods and watch what the Deployment does before touching anything."
+        },
+        {
+          "tick": 12,
+          "event": "bad-image",
+          "hint": "The rollout is stuck. kubectl get pods shows why; kubectl describe pod <name> shows the Events."
+        },
+        {
+          "tick": 22,
+          "event": "config-key",
+          "hint": "Pods fail to start. kubectl describe pod <name> and read the Events at the bottom."
+        }
+      ],
+      "solution": [
+        {
+          "tick": 12,
+          "action": "kubectl",
+          "args": [
+            "kubectl rollout undo deploy/web"
+          ]
+        },
+        {
+          "tick": 22,
+          "action": "applyEdit",
+          "args": [
+            {
+              "envKey": "mode"
+            }
+          ]
+        }
+      ],
+      "needed": 4,
+      "drainRate": 0.05
+    },
+    {
+      "id": "shift",
+      "title": "2. Shift",
+      "blurb": "No hints and overlapping trouble. One of your pods is a bare Pod (legacy-web) and the release process is sloppy. Survive 45 ticks.",
+      "seed": 23,
+      "tickMs": 4000,
+      "winTicks": 45,
+      "minHealth": 60,
+      "killChance": 0.05,
+      "barePod": true,
+      "web": {
+        "replicas": 2,
+        "request": 300,
+        "limit": 400,
+        "readiness": true
+      },
+      "schedule": [
+        {
+          "tick": 5,
+          "event": "bare-pod-killed"
+        },
+        {
+          "tick": 15,
+          "event": "label-typo"
+        },
+        {
+          "tick": 26,
+          "event": "oom",
+          "image": "web:1.1"
+        },
+        {
+          "tick": 36,
+          "event": "no-readiness"
+        }
+      ],
+      "solution": [
+        {
+          "tick": 5,
+          "action": "kubectl",
+          "args": [
+            "kubectl scale deploy/web --replicas=3"
+          ]
+        },
+        {
+          "tick": 15,
+          "action": "kubectl",
+          "args": [
+            "kubectl rollout undo deploy/web"
+          ]
+        },
+        {
+          "tick": 26,
+          "action": "kubectl",
+          "args": [
+            "kubectl set resources deploy/web --limits=memory=500Mi"
+          ]
+        },
+        {
+          "tick": 36,
+          "action": "applyEdit",
+          "args": [
+            {
+              "readiness": true
+            }
+          ]
+        }
+      ],
+      "needed": 3,
+      "drainRate": 0.025
+    },
+    {
+      "id": "incident",
+      "title": "3. Incident night",
+      "blurb": "Compound failures: a noisy neighbour, a bad rollout and a security change land close together. Survive 50 ticks.",
+      "seed": 41,
+      "tickMs": 3500,
+      "winTicks": 50,
+      "minHealth": 55,
+      "killChance": 0.05,
+      "schedule": [
+        {
+          "tick": 4,
+          "event": "node-pressure",
+          "evictFrom": "node-2"
+        },
+        {
+          "tick": 11,
+          "event": "bad-image"
+        },
+        {
+          "tick": 20,
+          "event": "nonroot"
+        },
+        {
+          "tick": 30,
+          "event": "oom",
+          "image": "web:1.1-nonroot"
+        }
+      ],
+      "solution": [
+        {
+          "tick": 4,
+          "action": "kubectl",
+          "args": [
+            "kubectl scale deploy/batch --replicas=0"
+          ]
+        },
+        {
+          "tick": 11,
+          "action": "kubectl",
+          "args": [
+            "kubectl rollout undo deploy/web"
+          ]
+        },
+        {
+          "tick": 20,
+          "action": "applyEdit",
+          "args": [
+            {
+              "image": "web:1.0-nonroot"
+            }
+          ]
+        },
+        {
+          "tick": 30,
+          "action": "kubectl",
+          "args": [
+            "kubectl set resources deploy/web --limits=memory=500Mi"
+          ]
+        }
+      ],
+      "needed": 4,
+      "drainRate": 0.025
+    }
+  ]
+}

@@ -1,0 +1,232 @@
+/* Chaos Monkey Cluster. Boards use <div>s, never <ul>, so Material's list styling doesn't apply. */
+
+.cg .k8s-summary {
+  margin: 0 0 0.5rem;
+}
+
+.cg .k8s-strip {
+  display: grid;
+  grid-template-columns: repeat(20, 1fr);
+  gap: 2px;
+  margin-bottom: 0.75rem;
+}
+
+.cg .k8s-cell {
+  height: 0.6rem;
+  border-radius: 2px;
+  background: var(--cg-ok);
+}
+
+.cg .k8s-cell-fail {
+  background: var(--cg-bad);
+}
+
+.cg .k8s-nodes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr));
+  gap: 0.5rem;
+}
+
+.cg .k8s-node,
+.cg .k8s-pending {
+  padding: 0.4rem;
+  border: 1px solid var(--cg-border);
+  border-radius: 0.3rem;
+  background: var(--md-default-bg-color, #fff);
+}
+
+.cg .k8s-node-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0 0.5rem;
+  font-size: 0.8rem;
+}
+
+.cg .k8s-bar {
+  height: 0.4rem;
+  margin: 0.25rem 0 0.4rem;
+  border-radius: 0.2rem;
+  background: var(--cg-surface);
+  border: 1px solid var(--cg-border);
+  overflow: hidden;
+}
+
+.cg .k8s-bar-fill {
+  height: 100%;
+  background: var(--cg-ok);
+}
+
+.cg .k8s-bar-fill[data-level="warn"] {
+  background: var(--cg-warn);
+}
+
+.cg .k8s-bar-fill[data-level="bad"] {
+  background: var(--cg-bad);
+}
+
+.cg .k8s-pending {
+  margin-top: 0.5rem;
+  border-style: dashed;
+}
+
+.cg .k8s-pending:empty {
+  display: none;
+}
+
+.cg .k8s-pending-head {
+  margin-bottom: 0.3rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.cg .k8s-pods {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.cg .k8s-pending .k8s-pods {
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+
+.cg .k8s-pod {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 8rem;
+  padding: 0.25rem 0.4rem;
+  border: 2px solid var(--cg-border);
+  border-radius: 0.3rem;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 0.8rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.cg .k8s-pod:hover {
+  background: var(--cg-surface);
+}
+
+.cg .k8s-pod-name {
+  font-weight: 600;
+}
+
+.cg .k8s-pod-meta {
+  opacity: 0.75;
+  font-size: 0.72rem;
+}
+
+.cg .k8s-pod-ok {
+  border-color: var(--cg-ok);
+}
+
+.cg .k8s-pod-starting {
+  border-color: var(--cg-warn);
+  border-style: dashed;
+}
+
+.cg .k8s-pod-bad {
+  border-color: var(--cg-bad);
+}
+
+.cg .k8s-pod-pending {
+  border-style: dotted;
+}
+
+.cg .k8s-pod-term {
+  opacity: 0.5;
+}
+
+.cg .k8s-hint {
+  margin: 0.6rem 0 0.3rem;
+  font-size: 0.8rem;
+  color: var(--md-default-fg-color--light, #555);
+}
+
+.cg .k8s-prompt {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.cg .k8s-ps1 {
+  font-family: var(--md-code-font, monospace);
+  font-weight: 700;
+}
+
+.cg .k8s-input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--cg-border);
+  border-radius: 0.3rem;
+  background: var(--md-default-bg-color, #fff);
+  color: inherit;
+  font-family: var(--md-code-font, monospace);
+  font-size: 0.85rem;
+}
+
+.cg .k8s-term {
+  height: 14rem;
+  margin: 0.5rem 0 0;
+  padding: 0.5rem;
+  overflow: auto;
+  border: 1px solid var(--cg-border);
+  border-radius: 0.3rem;
+  background: #1b1d23;
+  color: #e6e6e6;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  white-space: pre;
+}
+
+.cg .k8s-edit {
+  margin-top: 0.6rem;
+  padding: 0.6rem;
+  border: 1px solid var(--cg-accent);
+  border-radius: 0.3rem;
+}
+
+.cg .k8s-edit[hidden] {
+  display: none;
+}
+
+.cg .k8s-edit-title {
+  margin: 0 0 0.5rem;
+  font-family: var(--md-code-font, monospace);
+  font-size: 0.85rem;
+}
+
+.cg .k8s-edit-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 0.5rem 0.75rem;
+}
+
+.cg .k8s-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  font-size: 0.8rem;
+}
+
+.cg .k8s-field input[type="text"],
+.cg .k8s-field input:not([type]),
+.cg .k8s-field input[type="number"] {
+  padding: 0.25rem 0.4rem;
+  border: 1px solid var(--cg-border);
+  border-radius: 0.25rem;
+  background: var(--md-default-bg-color, #fff);
+  color: inherit;
+  font-family: var(--md-code-font, monospace);
+}
+
+.cg .k8s-edit-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.6rem;
+}

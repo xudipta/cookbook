@@ -10,7 +10,8 @@ sections, and a scripted winning run must actually win.
 
 | Game | Topic | Status |
 | --- | --- | --- |
-| [Replica Rescue (demo)](demo/index.md) | Kubernetes basics | Playable — exists to prove the shell |
+| [Chaos Monkey Cluster](kubernetes/index.md) | Kubernetes | Playable: 3 levels, 9 failure types, a `kubectl` prompt |
+| [Replica Rescue (demo)](demo/index.md) | Kubernetes basics | Playable; exists to prove the shell |
 
 Topic games are planned for every topic; follow the
 [epic on GitHub](https://github.com/xudipta/cookbook/issues/36) for progress.
