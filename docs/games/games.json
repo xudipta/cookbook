@@ -75,12 +75,23 @@
     },
     {
       "id": "cicd",
-      "title": "CI/CD",
+      "title": "Pipeline Panic",
       "topic": "Pipelines",
       "code": "CI",
       "hue": "cicd",
-      "status": "queued",
-      "issue": 42,
+      "status": "live",
+      "levels": 4,
+      "blurb": "Build a workflow from cards, then pick rolling, blue-green or canary for each release.",
+      "chips": [
+        "paths-ignore",
+        "matrix",
+        "pin a SHA",
+        "canary"
+      ],
+      "facts": [
+        "4 levels",
+        "live YAML preview"
+      ],
       "notes": "topics/cicd/"
     },
     {
