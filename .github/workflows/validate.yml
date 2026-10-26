@@ -475,6 +475,14 @@ jobs:
           python-version: '3.x'
       - name: Validate game scenarios
         run: python3 scripts/check_games.py
+      - name: Install promtool
+        run: |
+          curl -sSLo prometheus.tar.gz \
+            https://github.com/prometheus/prometheus/releases/download/v2.54.1/prometheus-2.54.1.linux-amd64.tar.gz
+          tar xf prometheus.tar.gz prometheus-2.54.1.linux-amd64/promtool
+          sudo install prometheus-2.54.1.linux-amd64/promtool /usr/local/bin/
+      - name: Check the rules the Observability game builds with promtool
+        run: node scripts/check_observability_rules.mjs
       - run: pip install -r requirements-docs.txt
       - name: Build the docs site
         run: |
