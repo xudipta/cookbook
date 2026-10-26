@@ -105,12 +105,23 @@
     },
     {
       "id": "database",
-      "title": "Database",
+      "title": "Index Fund",
       "topic": "SQL and migrations",
       "code": "DB",
       "hue": "db",
-      "status": "queued",
-      "issue": 45,
+      "status": "live",
+      "levels": 3,
+      "blurb": "Read query plans, add only the indexes that pay off, and ship schema changes without downtime.",
+      "chips": [
+        "EXPLAIN",
+        "CREATE INDEX",
+        "migrate up",
+        "migrate down"
+      ],
+      "facts": [
+        "3 levels",
+        "query planner"
+      ],
       "notes": "topics/database/"
     },
     {

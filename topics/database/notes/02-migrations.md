@@ -53,6 +53,19 @@ less than `up` (most teams roll forward with a fix instead of rolling back a pro
 schema change once other migrations depend on it) — but write them anyway; the cost is
 small and they're essential in dev/CI where you rebuild the database from scratch often.
 
+Test the pair, not just the `up`: on a throwaway database run `up`, `down`, `up`. A `down`
+that is empty or wrong does nothing visible until the day you need a rollback, and by then
+the next `up` fails with "column already exists".
+
+## Never edit an applied migration
+
+Once a migration has run anywhere beyond your laptop, its file is history. The tracking
+table says it already ran, so production will never run the new text, while a fresh database
+built from the files will — and the two schemas quietly differ. Some tools (Flyway,
+Liquibase) store a checksum of each applied file and refuse to run when it changed;
+`golang-migrate` does not, so it is a review rule. Put the change in a **new** numbered
+migration, and keep the old file as it was.
+
 ## Running them
 
 Tooling differs by ecosystem but the shape is the same — point a CLI at a database URL
