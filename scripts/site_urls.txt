@@ -7,10 +7,12 @@ about/
 docs/ai-tooling/
 docs/delivery/
 docs/games/
+docs/games/cicd/
 docs/games/demo/
 docs/games/docker/
 docs/games/kubernetes/
 docs/games/mcp/
+docs/games/skills/
 docs/games/terraform/
 docs/infrastructure/
 docs/learn/

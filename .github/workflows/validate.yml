@@ -77,6 +77,8 @@ jobs:
               - 'docs/games/**'
               - 'docs/site/**'
               - 'scripts/check_games.py'
+              - 'scripts/check_skills_game.py'
+              - 'scripts/check_skill.py'
               - 'scripts/games_smoke.cjs'
               - 'scripts/site_quality.cjs'
               - 'scripts/build_docs.sh'
@@ -476,13 +478,19 @@ jobs:
       - name: Validate game scenarios
         run: python3 scripts/check_games.py
       - run: pip install -r requirements-docs.txt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Check the Agent Skills game's lint gate against scripts/check_skill.py
+        run: python3 scripts/check_skills_game.py
       - name: Build the docs site
         run: |
           bash scripts/build_docs.sh
           mkdocs build --strict --site-dir _site
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
+      - name: actionlint the workflow YAML the CI/CD game generates
+        run: |
+          bash <(curl -sSL https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
+          PATH="$PWD:$PATH" node docs/games/cicd/lint-yaml.mjs
       - name: Install Playwright and Chromium
         run: |
           npm install --prefix "$RUNNER_TEMP/pw" playwright@1.49.1 axe-core@4.10.2

@@ -75,12 +75,23 @@
     },
     {
       "id": "cicd",
-      "title": "CI/CD",
+      "title": "Pipeline Panic",
       "topic": "Pipelines",
       "code": "CI",
       "hue": "cicd",
-      "status": "queued",
-      "issue": 42,
+      "status": "live",
+      "levels": 4,
+      "blurb": "Build a workflow from cards, then pick rolling, blue-green or canary for each release.",
+      "chips": [
+        "paths-ignore",
+        "matrix",
+        "pin a SHA",
+        "canary"
+      ],
+      "facts": [
+        "4 levels",
+        "live YAML preview"
+      ],
       "notes": "topics/cicd/"
     },
     {
@@ -115,12 +126,23 @@
     },
     {
       "id": "skills",
-      "title": "Agent Skills",
+      "title": "Skill Issue",
       "topic": "AI tooling",
       "code": "SK",
       "hue": "skills",
-      "status": "queued",
-      "issue": 46,
+      "status": "live",
+      "levels": 3,
+      "blurb": "Author a SKILL.md and see whether an agent would trigger it, inside a limited context window.",
+      "chips": [
+        "description",
+        "frontmatter",
+        "allowed-tools",
+        "check_skill.py"
+      ],
+      "facts": [
+        "3 levels",
+        "trigger simulator"
+      ],
       "notes": "topics/skills/"
     },
     {

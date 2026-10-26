@@ -5,6 +5,10 @@ Notes on pipelines and GitHub Actions, plus reusable workflow examples.
 For git itself and GitHub-the-platform (the `gh` CLI, PRs, repo configuration), see
 [`topics/github/`](../github/README.md).
 
+**Play it:** [Pipeline Panic](../../docs/games/cicd/index.md) is a short game where you build a
+GitHub Actions workflow from cards (with the real YAML shown live), then pick rolling, blue-green
+or canary for each release, using the same ideas these notes teach.
+
 ## What a pipeline actually does
 
 ```mermaid

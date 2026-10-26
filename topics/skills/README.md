@@ -19,6 +19,10 @@ skills costs little. A skill's full body (and any bundled script) loads only onc
 agent decides it's actually relevant, which is why the `description` field is what
 authoring a skill is really about getting right (see `02-authoring-skills.md`).
 
+**Play it:** [Skill Issue](../../docs/games/skills/index.md) is a short game where you author a
+`SKILL.md` and see whether a simulated agent would trigger it, within a limited context
+window, using the same lint rules as `scripts/check_skill.py`.
+
 ## Contents
 
 - `notes/01-what-are-agent-skills.md` — the concept and when to reach for one.
