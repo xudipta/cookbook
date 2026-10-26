@@ -7,6 +7,7 @@ about/
 docs/ai-tooling/
 docs/delivery/
 docs/games/
+docs/games/cicd/
 docs/games/demo/
 docs/games/docker/
 docs/games/kubernetes/
