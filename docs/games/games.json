@@ -125,12 +125,23 @@
     },
     {
       "id": "mcp",
-      "title": "MCP",
+      "title": "Patch Bay",
       "topic": "AI tooling",
       "code": "MC",
       "hue": "mcp",
-      "status": "queued",
-      "issue": 47,
+      "status": "live",
+      "levels": 3,
+      "blurb": "Wire an agent to MCP servers: pick transports and scopes, keep secrets out of version control, vet what you plug in.",
+      "chips": [
+        "claude mcp add",
+        ".mcp.json",
+        "${VAR}",
+        "inspector"
+      ],
+      "facts": [
+        "3 levels",
+        "JSON-RPC wire log"
+      ],
       "notes": "topics/mcp/"
     }
   ]

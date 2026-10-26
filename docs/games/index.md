@@ -13,6 +13,7 @@ sections, and a scripted winning run must actually win.
 | [Chaos Monkey Cluster](kubernetes/index.md) | Kubernetes | Playable: 3 levels, 9 failure types, a `kubectl` prompt |
 | [Layer Cake](docker/index.md) | Docker | Playable: 5 levels, a layer-cache simulator, `docker build`-style logs |
 | [Drift Detective](terraform/index.md) | Terraform | Playable: 3 levels, a plan/apply/state simulator, a `terraform` prompt |
+| [Patch Bay](mcp/index.md) | MCP | Playable: 3 levels, a `claude mcp` simulator, a JSON-RPC wire log |
 | [Replica Rescue (demo)](demo/index.md) | Kubernetes basics | Playable; exists to prove the shell |
 
 Topic games are planned for every topic; follow the

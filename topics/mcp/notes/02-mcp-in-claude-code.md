@@ -34,6 +34,17 @@ first time, since the file is shared.
 - `${VAR}` in `env`, `args`, `url`, and `headers` expands from the environment, so no
   secrets land in the committed file.
 
+## Secrets and authentication
+
+- **Tokens in headers or env.** Pass a bearer token with `headers` (`"Authorization": "Bearer
+  ${GRAFANA_TOKEN}"`) or a stdio server's `env`, and keep the value in your shell, never in a
+  committed `.mcp.json`. Quote `'${VAR}'` on the command line so your shell does not expand it
+  before `claude mcp add` writes it down.
+- **OAuth.** A hosted server that answers `401` with an authorization challenge is signed in
+  from inside a session with `/mcp`.
+- **Least privilege.** Give a server the narrowest token that does its job (a read-only,
+  fine-grained token rather than an org-admin one).
+
 ## CLI
 
 ```bash
