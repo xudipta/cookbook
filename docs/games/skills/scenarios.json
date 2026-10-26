@@ -1,0 +1,569 @@
+{
+  "id": "skills",
+  "title": "Skill Issue",
+  "healthLabel": "Requests served well",
+  "tickLabel": "Request",
+  "manual": true,
+  "stacked": true,
+  "seed": 1,
+  "library": {
+    "pdf-summary": {
+      "description": "Summarize a PDF into a one-page brief with key points, figures, and open questions. Use when the user shares a PDF (or a path to one) and asks for a summary, digest, TL;DR, or \"what does this say\".",
+      "bodyTokens": 220
+    },
+    "docs-helper": {
+      "description": "Helps with documentation, changelogs and notes. Use when the user asks for help with docs, changelogs or notes.",
+      "bodyTokens": 150
+    }
+  },
+  "events": [
+    {
+      "id": "context-overflow",
+      "title": "The context window overflowed",
+      "fix": "The agent loads the conversation, every installed skill's name and description, the body of the skill it picked and any bundled file it opens. Keep the always-loaded layer to name and description, the body to the procedure, and put big references and scripts in bundled files the body points at.",
+      "learn": {
+        "note": "topics/skills/notes/01-what-are-agent-skills.md",
+        "section": "Progressive disclosure"
+      }
+    },
+    {
+      "id": "context-squeeze",
+      "title": "A long conversation shrank the window",
+      "fix": "A skill that only just fits breaks as the conversation grows. Keep bodies short (under about 500 lines) and let bundled files load only when a request needs them.",
+      "learn": {
+        "note": "topics/skills/notes/01-what-are-agent-skills.md",
+        "section": "Progressive disclosure"
+      }
+    },
+    {
+      "id": "stale-script",
+      "title": "A bundled script broke",
+      "fix": "Point at a script instead of pasting its logic into the body: one broken file gets one fix, and the body stays small. A copy pasted into SKILL.md stays broken until you find and fix every copy.",
+      "learn": {
+        "note": "topics/skills/notes/02-authoring-skills.md",
+        "section": "Writing the body"
+      }
+    },
+    {
+      "id": "never-triggered",
+      "title": "The skill never triggered",
+      "fix": "The agent chooses from name and description alone. Say what the skill does and when to use it, using the words a user would type.",
+      "learn": {
+        "note": "topics/skills/notes/02-authoring-skills.md",
+        "section": "SKILL.md frontmatter"
+      }
+    },
+    {
+      "id": "wrong-skill",
+      "title": "A different skill answered",
+      "fix": "When two descriptions overlap, the better match wins. Say what only your skill does, and put the user's own phrases in the \"Use when\" part.",
+      "learn": {
+        "note": "topics/skills/notes/02-authoring-skills.md",
+        "section": "SKILL.md frontmatter"
+      }
+    },
+    {
+      "id": "description-collision",
+      "title": "A new skill with a vague description starts stealing requests",
+      "fix": "A broad description matches many requests. The fix is on your side: a specific what-and-when description outscores a vague one on the requests that are really yours.",
+      "learn": {
+        "note": "topics/skills/notes/02-authoring-skills.md",
+        "section": "SKILL.md frontmatter"
+      }
+    },
+    {
+      "id": "false-trigger",
+      "title": "A skill fired on a request that needed none",
+      "fix": "An over-broad description triggers on anything. One-off requests are better asked directly, so keep the description scoped to the task it is for.",
+      "learn": {
+        "note": "topics/skills/notes/01-what-are-agent-skills.md",
+        "section": "When a skill is the right tool"
+      }
+    },
+    {
+      "id": "hook-not-skill",
+      "title": "\"Whenever I commit, run the linter\" is a hook, not a skill",
+      "fix": "A skill is advisory: the model decides whether to follow it. Something that must run every time on an event is a hook, which the harness runs, not the model.",
+      "learn": {
+        "note": "topics/skills/notes/03-skills-in-claude-code.md",
+        "section": "Relationship to other Claude Code config"
+      }
+    },
+    {
+      "id": "lint-rejected",
+      "title": "The lint gate rejected the skill",
+      "fix": "scripts/check_skill.py is the gate: valid frontmatter, a kebab-case name that matches the folder, a description of at most 1024 characters and a non-empty body. Until it passes, the agent never sees the skill.",
+      "learn": {
+        "note": "topics/skills/notes/03-skills-in-claude-code.md",
+        "section": "Checking a skill"
+      }
+    },
+    {
+      "id": "not-discovered",
+      "title": "The skill is outside every skills directory",
+      "fix": "Claude Code discovers skills in .claude/skills/ (project) and ~/.claude/skills/ (personal), or from a plugin. A folder anywhere else is never scanned.",
+      "learn": {
+        "note": "topics/skills/notes/03-skills-in-claude-code.md",
+        "section": "Discovery"
+      }
+    },
+    {
+      "id": "body-no-pointer",
+      "title": "The body never points at the script",
+      "fix": "A bundled file loads only if the body tells the agent to open or run it. Name it in the steps.",
+      "learn": {
+        "note": "topics/skills/notes/02-authoring-skills.md",
+        "section": "Writing the body"
+      }
+    },
+    {
+      "id": "no-procedure",
+      "title": "The body held no procedure",
+      "fix": "The body is the procedure: what to do, in order. Move detail out to bundled files the body points at, but keep the steps themselves in SKILL.md.",
+      "learn": {
+        "note": "topics/skills/notes/02-authoring-skills.md",
+        "section": "Writing the body"
+      }
+    },
+    {
+      "id": "tool-blocked",
+      "title": "A tool the skill needs was not allowed",
+      "fix": "allowed-tools restricts a skill to the tools it names. Scope it to what the skill really uses: here, Bash for the script and Read.",
+      "learn": {
+        "note": "topics/skills/notes/03-skills-in-claude-code.md",
+        "section": "Gating tools"
+      }
+    },
+    {
+      "id": "scope-creep",
+      "title": "The skill was allowed to write files",
+      "fix": "A skill that should only produce a draft should not hold Write or Edit. allowed-tools is how you scope it, so the request to write the file straight away is stopped.",
+      "learn": {
+        "note": "topics/skills/notes/03-skills-in-claude-code.md",
+        "section": "Gating tools"
+      }
+    }
+  ],
+  "levels": [
+    {
+      "id": "disclosure",
+      "title": "1. Disclosure",
+      "blurb": "Your release-notes skill is one big SKILL.md with everything pasted into the body. Sort its pieces into frontmatter (always loaded), body (loaded when the skill is chosen) and bundled files (loaded only when a request needs them), so every request fits the window, even if the conversation grows and the window shrinks. Then send the requests.",
+      "mode": "layers",
+      "skillName": "release-notes",
+      "winTicks": 7,
+      "minHealth": 80,
+      "penalty": 15,
+      "window": 2400,
+      "base": 500,
+      "installed": [
+        "pdf-summary"
+      ],
+      "chunks": [
+        {
+          "id": "name",
+          "label": "name",
+          "use": "How the agent refers to the skill",
+          "tokens": 6,
+          "fm": "name: release-notes",
+          "body": "name: release-notes"
+        },
+        {
+          "id": "description",
+          "label": "description",
+          "use": "How the agent decides to use it",
+          "tokens": 48,
+          "fm": "description: >-\n  Generate release notes from merged pull requests since the last git tag. Use when the\n  user asks for a changelog, release notes, or \"what changed since <version>\".",
+          "body": "Generate release notes from merged pull requests since the last git tag. Use when the user asks for a changelog, release notes, or \"what changed since <version>\"."
+        },
+        {
+          "id": "steps",
+          "core": true,
+          "label": "The five steps",
+          "use": "What to do once the skill is chosen",
+          "tokens": 240,
+          "body": "# Release notes\n1. Collect the merged PRs. 2. Group by type. 3. One line per PR.\n4. Emit Markdown under a version heading. 5. Ask before writing CHANGELOG.md."
+        },
+        {
+          "id": "script",
+          "label": "The PR-collection logic",
+          "use": "Needed whenever notes are generated",
+          "tokens": 450,
+          "file": "scripts/collect_prs.sh",
+          "pointer": "Run `scripts/collect_prs.sh [<since-tag>]` to list the merged PRs.",
+          "body": "(60 lines of git describe, git log and gh, pasted inline)"
+        },
+        {
+          "id": "labels",
+          "label": "The label-to-section table",
+          "use": "Only when someone asks how PRs are grouped",
+          "tokens": 300,
+          "file": "reference.md",
+          "pointer": "Read `reference.md` for how labels map to sections.",
+          "body": "(a 40-row label to section table, pasted inline)"
+        },
+        {
+          "id": "example",
+          "label": "A full sample changelog",
+          "use": "Only when someone wants the same format as last time",
+          "tokens": 500,
+          "file": "assets/example-changelog.md",
+          "pointer": "Match the format of `assets/example-changelog.md`.",
+          "body": "(a full changelog from the last release, pasted inline)"
+        }
+      ],
+      "start": {
+        "name": "frontmatter",
+        "description": "frontmatter",
+        "steps": "body",
+        "script": "body",
+        "labels": "body",
+        "example": "body"
+      },
+      "requests": [
+        {
+          "text": "What's the weather in Oslo?",
+          "want": null
+        },
+        {
+          "text": "Summarize this PDF for me",
+          "want": "pdf-summary"
+        },
+        {
+          "text": "Write release notes for v2.3",
+          "want": "release-notes",
+          "needs": [
+            "script"
+          ]
+        },
+        {
+          "text": "Group these merged PRs into release notes by label",
+          "want": "release-notes",
+          "needs": [
+            "labels"
+          ]
+        },
+        {
+          "text": "Write release notes for v2.4 in the same format as the v2.3 notes",
+          "want": "release-notes",
+          "needs": [
+            "script",
+            "example"
+          ]
+        },
+        {
+          "text": "What changed since v2.3?",
+          "want": "release-notes",
+          "needs": [
+            "script"
+          ]
+        },
+        {
+          "text": "Thanks, that is all",
+          "want": null
+        }
+      ],
+      "schedule": [
+        {
+          "tick": 3,
+          "event": "context-squeeze",
+          "window": 1900,
+          "detail": "window 2400 to 1900 tokens"
+        },
+        {
+          "tick": 6,
+          "event": "stale-script",
+          "breaks": "script",
+          "detail": "scripts/collect_prs.sh uses a flag that gh removed"
+        }
+      ],
+      "solution": [
+        {
+          "tick": 0,
+          "action": "place",
+          "args": [
+            "script",
+            "bundled"
+          ]
+        },
+        {
+          "tick": 0,
+          "action": "place",
+          "args": [
+            "labels",
+            "bundled"
+          ]
+        },
+        {
+          "tick": 0,
+          "action": "place",
+          "args": [
+            "example",
+            "bundled"
+          ]
+        },
+        {
+          "tick": 1,
+          "action": "send"
+        },
+        {
+          "tick": 2,
+          "action": "send"
+        },
+        {
+          "tick": 3,
+          "action": "send"
+        },
+        {
+          "tick": 4,
+          "action": "send"
+        },
+        {
+          "tick": 5,
+          "action": "send"
+        },
+        {
+          "tick": 6,
+          "action": "send"
+        },
+        {
+          "tick": 7,
+          "action": "send"
+        }
+      ]
+    },
+    {
+      "id": "descriptions",
+      "title": "2. Descriptions",
+      "blurb": "The agent picks a skill from its name and description alone. Yours says \"Helps with notes.\" Rewrite the description so the requests that are yours trigger it and the others do not, then save and check the queue. A rival skill is about to join the shelf.",
+      "mode": "file",
+      "skillName": "release-notes",
+      "winTicks": 7,
+      "minHealth": 80,
+      "penalty": 20,
+      "window": 1600,
+      "base": 500,
+      "installed": [
+        "pdf-summary"
+      ],
+      "skill": {
+        "dir": "release-notes",
+        "location": ".claude/skills",
+        "text": "---\nname: release-notes\ndescription: Helps with notes.\nlicense: MIT\nallowed-tools: [Bash, Read]\n---\n\n# Release notes\n\nTurn merged PRs since the last release into grouped, human-readable notes.\n\n## Steps\n\n1. Run `scripts/collect_prs.sh [<since-tag>]` to get the raw list of merged PRs\n   (title, number, labels, author) since the last tag, as JSON on stdout.\n2. Group entries by type, inferred from the conventional-commit prefix in the title\n   or from labels: **Features**, **Fixes**, **Docs**, **Internal**.\n3. For each entry write: `- <imperative summary> (#<number>)`.\n4. Emit Markdown with an `## <next version>` heading. Ask the user for the version\n   string if it is not obvious from the tags.\n5. Show the draft and ask before writing it to `CHANGELOG.md`.\n",
+        "files": {
+          "scripts/collect_prs.sh": 285
+        }
+      },
+      "requests": [
+        {
+          "text": "Write release notes for v2.3",
+          "want": "release-notes",
+          "needs": [
+            "scripts/collect_prs.sh"
+          ]
+        },
+        {
+          "text": "Summarize this PDF",
+          "want": "pdf-summary"
+        },
+        {
+          "text": "What changed since v2.2?",
+          "want": "release-notes",
+          "needs": [
+            "scripts/collect_prs.sh"
+          ]
+        },
+        {
+          "text": "Draft a changelog for the next release",
+          "want": "release-notes",
+          "needs": [
+            "scripts/collect_prs.sh"
+          ]
+        },
+        {
+          "text": "Write a poem about spring",
+          "want": null
+        },
+        {
+          "text": "Whenever I commit, run the linter",
+          "want": null,
+          "teach": "hook-not-skill"
+        },
+        {
+          "text": "What's the weather in Oslo?",
+          "want": null
+        }
+      ],
+      "schedule": [
+        {
+          "tick": 3,
+          "event": "description-collision",
+          "install": "docs-helper",
+          "detail": "docs-helper joined the shelf"
+        }
+      ],
+      "solution": [
+        {
+          "tick": 0,
+          "action": "save",
+          "args": [
+            "---\nname: release-notes\ndescription: >-\n  Generate release notes from merged pull requests since the last git tag. Use when the\n  user asks for a changelog, release notes, or \"what changed since <version>\".\nlicense: MIT\nallowed-tools: [Bash, Read]\n---\n\n# Release notes\n\nTurn merged PRs since the last release into grouped, human-readable notes.\n\n## Steps\n\n1. Run `scripts/collect_prs.sh [<since-tag>]` to get the raw list of merged PRs\n   (title, number, labels, author) since the last tag, as JSON on stdout.\n2. Group entries by type, inferred from the conventional-commit prefix in the title\n   or from labels: **Features**, **Fixes**, **Docs**, **Internal**.\n3. For each entry write: `- <imperative summary> (#<number>)`.\n4. Emit Markdown with an `## <next version>` heading. Ask the user for the version\n   string if it is not obvious from the tags.\n5. Show the draft and ask before writing it to `CHANGELOG.md`.\n"
+          ]
+        },
+        {
+          "tick": 1,
+          "action": "send"
+        },
+        {
+          "tick": 2,
+          "action": "send"
+        },
+        {
+          "tick": 3,
+          "action": "send"
+        },
+        {
+          "tick": 4,
+          "action": "send"
+        },
+        {
+          "tick": 5,
+          "action": "send"
+        },
+        {
+          "tick": 6,
+          "action": "send"
+        },
+        {
+          "tick": 7,
+          "action": "send"
+        }
+      ]
+    },
+    {
+      "id": "ship-it",
+      "title": "3. Ship it",
+      "blurb": "The skill is drafted but the team gate will reject it, and it is in the wrong place. Fix SKILL.md until the gate is happy, name the folder, put it where Claude Code looks, and give it only the tools it needs: it may run the script and read files, but never write them on its own.",
+      "mode": "file",
+      "skillName": "release-notes",
+      "winTicks": 6,
+      "minHealth": 80,
+      "penalty": 20,
+      "window": 1600,
+      "base": 500,
+      "requireScope": true,
+      "layout": true,
+      "installed": [
+        "pdf-summary"
+      ],
+      "skill": {
+        "dir": "ReleaseNotes",
+        "location": "skills",
+        "text": "---\nname: Release_Notes\ndescription: Generates release notes from merged pull requests since the last git tag. Use when the user asks for a changelog, release notes, or \"what changed since <version>\". Steps: run scripts/collect_prs.sh to get the raw list of merged PRs as JSON, group the entries by type (Features, Fixes, Docs, Internal) using the conventional-commit prefix or the labels, write one line per entry as \"- <imperative summary> (#<number>)\", rewrite terse titles into readable sentences, drop pure chore and CI entries from the user-facing sections, emit Markdown under an \"## <next version>\" heading, ask the user for the version string if it is not obvious from the tags, and show the draft and ask before writing anything to CHANGELOG.md. Always run the script before writing, never invent a PR that the script did not return, and keep the entries in the order the script returned them unless the grouping says otherwise. Format dates as YYYY-MM-DD, link each PR number to its page, put breaking changes first, and when the history is large, stop at the previous tag and say so instead of guessing.\nallowed-tools: [Bash, Read, Write, Edit, Grep]\n---\n\n# Release notes\n\nTurn merged PRs since the last release into grouped, human-readable notes.\n\n## Steps\n\n1. Run `scripts/collect_prs.sh [<since-tag>]` to get the raw list of merged PRs\n   (title, number, labels, author) since the last tag, as JSON on stdout.\n2. Group entries by type, inferred from the conventional-commit prefix in the title\n   or from labels: **Features**, **Fixes**, **Docs**, **Internal**.\n3. For each entry write: `- <imperative summary> (#<number>)`.\n4. Emit Markdown with an `## <next version>` heading. Ask the user for the version\n   string if it is not obvious from the tags.\n5. Show the draft and ask before writing it to `CHANGELOG.md`.\n",
+        "files": {
+          "scripts/collect_prs.sh": 285
+        }
+      },
+      "requests": [
+        {
+          "text": "Write release notes for v3.0",
+          "want": "release-notes",
+          "needs": [
+            "scripts/collect_prs.sh"
+          ],
+          "tools": [
+            "Bash",
+            "Read"
+          ]
+        },
+        {
+          "text": "Summarize this PDF",
+          "want": "pdf-summary"
+        },
+        {
+          "text": "What changed since v2.9?",
+          "want": "release-notes",
+          "needs": [
+            "scripts/collect_prs.sh"
+          ],
+          "tools": [
+            "Bash",
+            "Read"
+          ]
+        },
+        {
+          "text": "Draft the release notes, then write them straight into CHANGELOG.md without asking",
+          "want": "release-notes",
+          "needs": [
+            "scripts/collect_prs.sh"
+          ],
+          "tools": [
+            "Bash",
+            "Read"
+          ],
+          "risky": [
+            "Write",
+            "Edit"
+          ]
+        },
+        {
+          "text": "Whenever I commit, run the linter",
+          "want": null,
+          "teach": "hook-not-skill"
+        },
+        {
+          "text": "What's the weather in Oslo?",
+          "want": null
+        }
+      ],
+      "schedule": [],
+      "solution": [
+        {
+          "tick": 0,
+          "action": "save",
+          "args": [
+            "---\nname: release-notes\ndescription: >-\n  Generate release notes from merged pull requests since the last git tag. Use when the\n  user asks for a changelog, release notes, or \"what changed since <version>\".\nallowed-tools: [Bash, Read]\n---\n\n# Release notes\n\nTurn merged PRs since the last release into grouped, human-readable notes.\n\n## Steps\n\n1. Run `scripts/collect_prs.sh [<since-tag>]` to get the raw list of merged PRs\n   (title, number, labels, author) since the last tag, as JSON on stdout.\n2. Group entries by type, inferred from the conventional-commit prefix in the title\n   or from labels: **Features**, **Fixes**, **Docs**, **Internal**.\n3. For each entry write: `- <imperative summary> (#<number>)`.\n4. Emit Markdown with an `## <next version>` heading. Ask the user for the version\n   string if it is not obvious from the tags.\n5. Show the draft and ask before writing it to `CHANGELOG.md`.\n"
+          ]
+        },
+        {
+          "tick": 0,
+          "action": "setDir",
+          "args": [
+            "release-notes"
+          ]
+        },
+        {
+          "tick": 0,
+          "action": "setLocation",
+          "args": [
+            ".claude/skills"
+          ]
+        },
+        {
+          "tick": 1,
+          "action": "send"
+        },
+        {
+          "tick": 2,
+          "action": "send"
+        },
+        {
+          "tick": 3,
+          "action": "send"
+        },
+        {
+          "tick": 4,
+          "action": "send"
+        },
+        {
+          "tick": 5,
+          "action": "send"
+        },
+        {
+          "tick": 6,
+          "action": "send"
+        }
+      ]
+    }
+  ]
+}

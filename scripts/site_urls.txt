@@ -10,6 +10,7 @@ docs/games/
 docs/games/demo/
 docs/games/docker/
 docs/games/kubernetes/
+docs/games/skills/
 docs/games/terraform/
 docs/infrastructure/
 docs/learn/
