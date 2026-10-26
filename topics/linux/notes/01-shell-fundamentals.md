@@ -17,6 +17,7 @@ name", not "executable".
 
 ```bash
 ps aux | grep nginx     # list processes, filter by name
+ps aux --sort=-%cpu | head  # the biggest CPU users first
 top / htop               # live process viewer
 kill -TERM <pid>         # ask a process to exit cleanly (default signal)
 kill -9 <pid>             # SIGKILL — last resort, the process can't clean up

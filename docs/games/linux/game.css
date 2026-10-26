@@ -1,0 +1,209 @@
+/* Night Shift. Boards use <div>s, never <ul>, so Material's list styling doesn't apply. */
+
+.cg .lx-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.6rem;
+}
+
+/* Pager and server status side by side only when the board itself is wide enough. */
+@container (min-width: 760px) {
+  .cg .lx-top {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  }
+}
+
+.cg .lx-panel {
+  margin-bottom: 0.6rem;
+  min-width: 0;
+}
+
+.cg .lx-h {
+  margin: 0 0 0.35rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--muted);
+}
+
+.cg .lx-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  max-height: 11rem;
+  overflow: auto;
+}
+
+.cg .lx-page {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.1rem 0.6rem;
+  align-items: baseline;
+  padding: 0.35rem 0.55rem;
+  border: 1px solid var(--cg-border);
+  border-left: 4px solid var(--cg-bad);
+  border-radius: 0.3rem;
+  background: var(--surface);
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.cg .lx-page[data-state="cleared"] {
+  border-left-color: var(--cg-ok);
+  color: var(--muted);
+}
+
+.cg .lx-page[data-state="cleared"] .lx-page-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cg .lx-page-state {
+  font: 700 0.7rem/1.3 var(--font-mono);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.cg .lx-page-text {
+  flex: 1 1 14rem;
+  min-width: 0;
+}
+
+.cg .lx-empty {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.cg .lx-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.cg .lx-fact {
+  display: inline-flex;
+  gap: 0.35rem;
+  align-items: baseline;
+  padding: 0.2rem 0.5rem;
+  border: 1px solid var(--cg-border);
+  border-radius: 0.3rem;
+  background: var(--surface);
+  font-size: 0.78rem;
+}
+
+.cg .lx-fact[data-level="bad"] {
+  border-color: var(--cg-bad);
+}
+
+.cg .lx-fact[data-level="warn"] {
+  border-color: var(--cg-warn);
+}
+
+.cg .lx-fact-label {
+  font: 700 0.68rem/1.2 var(--font-mono);
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.cg .lx-term {
+  height: 17rem;
+  margin: 0;
+  padding: 0.5rem;
+  overflow: auto;
+  border: 1px solid var(--cg-border);
+  border-radius: 0.3rem;
+  background: var(--term-bg);
+  color: var(--term-ink);
+  font: 0.72rem/1.4 var(--font-mono);
+  tab-size: 8;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.cg .lx-term:focus-visible,
+.cg .lx-input:focus-visible,
+.cg .lx-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.cg .lx-line-cmd {
+  font-weight: 700;
+}
+
+.cg .lx-line-err {
+  font-style: italic;
+}
+
+.cg .lx-line-hint {
+  opacity: 0.85;
+}
+
+.cg .lx-link {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.cg .lx-prompt,
+.cg .lx-quicks {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.4rem;
+}
+
+.cg .lx-ps1 {
+  font: 700 0.74rem/1.2 var(--font-mono);
+  overflow-wrap: anywhere;
+}
+
+.cg .lx-input {
+  flex: 1 1 12rem;
+  min-width: 0;
+  padding: 0.3rem 0.45rem;
+  border: 1px solid var(--cg-border);
+  border-radius: 0.25rem;
+  background: var(--surface);
+  color: inherit;
+  font: 0.8rem var(--font-mono);
+}
+
+.cg .lx-btn {
+  padding: 0.2rem 0.55rem;
+  border: 1px solid var(--cg-accent);
+  border-radius: 0.2rem;
+  background: transparent;
+  color: var(--cg-accent);
+  font: inherit;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.cg .lx-quick {
+  font-family: var(--font-mono);
+}
+
+.cg .lx-btn:hover:not(:disabled) {
+  background: var(--cg-surface);
+}
+
+.cg .lx-btn:disabled,
+.cg .lx-input:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+@media (max-width: 700px) {
+  .cg .lx-term {
+    height: 14rem;
+  }
+
+  .cg .lx-list {
+    max-height: 8rem;
+  }
+}

@@ -1,0 +1,1817 @@
+{
+  "id": "linux",
+  "title": "Night Shift",
+  "healthLabel": "Service health",
+  "tickLabel": "Minute",
+  "manual": true,
+  "stacked": true,
+  "seed": 1,
+  "base": {
+    "machine": {
+      "host": "web-01",
+      "user": "ops",
+      "ip": "10.0.2.15",
+      "cwd": "/home/ops",
+      "clock": "2026-10-24T02:07:00Z",
+      "uptime": "41 days,  2:14",
+      "cores": 4,
+      "loadBase": 0.35,
+      "nextPid": 4100
+    },
+    "users": {
+      "root": {
+        "uid": 0,
+        "groups": [
+          "root"
+        ]
+      },
+      "ops": {
+        "uid": 1000,
+        "groups": [
+          "ops",
+          "sudo"
+        ]
+      },
+      "deploy": {
+        "uid": 1001,
+        "groups": [
+          "deploy"
+        ]
+      },
+      "www-data": {
+        "uid": 33,
+        "groups": [
+          "www-data"
+        ]
+      },
+      "app": {
+        "uid": 1002,
+        "groups": [
+          "app"
+        ]
+      },
+      "worker": {
+        "uid": 1003,
+        "groups": [
+          "worker"
+        ]
+      },
+      "reports": {
+        "uid": 1004,
+        "groups": [
+          "reports"
+        ]
+      },
+      "postgres": {
+        "uid": 114,
+        "groups": [
+          "postgres"
+        ]
+      },
+      "syslog": {
+        "uid": 107,
+        "groups": [
+          "syslog",
+          "adm"
+        ]
+      }
+    },
+    "dirs": {
+      "/home/ops": {
+        "o": "ops",
+        "g": "ops",
+        "m": "750"
+      },
+      "/tmp": {
+        "m": "1777"
+      },
+      "/var/tmp": {
+        "m": "1777"
+      },
+      "/root": {
+        "m": "700"
+      },
+      "/usr/bin": {},
+      "/usr/sbin": {},
+      "/var/run": {}
+    },
+    "fs": {
+      "/etc/hostname": {
+        "lines": [
+          "web-01"
+        ],
+        "ago": 200
+      },
+      "/etc/passwd": {
+        "lines": [
+          "root:x:0:0:root:/root:/bin/bash",
+          "daemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin",
+          "www-data:x:33:33:www-data:/var/www:/usr/sbin/nologin",
+          "syslog:x:107:113::/home/syslog:/usr/sbin/nologin",
+          "postgres:x:114:120:PostgreSQL administrator:/var/lib/postgresql:/bin/bash",
+          "ops:x:1000:1000:Night ops:/home/ops:/bin/bash",
+          "deploy:x:1001:1001:CI deploy:/home/deploy:/bin/bash",
+          "app:x:1002:1002::/opt/app:/usr/sbin/nologin",
+          "worker:x:1003:1003::/opt/worker:/usr/sbin/nologin",
+          "reports:x:1004:1004::/opt/reports:/usr/sbin/nologin"
+        ],
+        "ago": 90
+      },
+      "/home/ops/README": {
+        "o": "ops",
+        "ago": 30,
+        "lines": [
+          "Night shift runbook",
+          "",
+          "1. systemctl status NAME        is it running, and what did it log?",
+          "2. journalctl -u NAME -n 50     the last log lines",
+          "3. df -h, top, ps aux           disk, load, who is hungry",
+          "4. ss -tlnp, curl -I localhost  is anything listening, does it answer",
+          "",
+          "Look first. Change one thing. Look again."
+        ]
+      },
+      "/var/log/syslog": {
+        "o": "syslog",
+        "g": "adm",
+        "m": "640",
+        "ago": 0.01,
+        "size": "3.1M",
+        "lines": [
+          "Oct 24 02:05:01 web-01 CRON[3921]: (root) CMD (command -v debian-sa1 > /dev/null && debian-sa1 1 1)",
+          "Oct 24 02:06:14 web-01 systemd[1]: Started Session 214 of User ops."
+        ]
+      },
+      "/var/log/auth.log": {
+        "o": "syslog",
+        "g": "adm",
+        "m": "640",
+        "ago": 0.01,
+        "size": "812K",
+        "lines": [
+          "Oct 24 02:06:14 web-01 sshd[3890]: Accepted publickey for ops from 10.0.0.9 port 51822 ssh2"
+        ]
+      }
+    },
+    "procs": [
+      {
+        "pid": 1,
+        "ppid": 0,
+        "user": "root",
+        "cpu": 0,
+        "mem": 0.1,
+        "vsz": 167560,
+        "rss": 11932,
+        "stat": "Ss",
+        "agoDays": 41,
+        "time": "0:09",
+        "cmd": "/lib/systemd/systemd --system --deserialize 38",
+        "critical": true
+      },
+      {
+        "pid": 389,
+        "ppid": 1,
+        "user": "root",
+        "cpu": 0,
+        "mem": 0.4,
+        "vsz": 58232,
+        "rss": 17804,
+        "stat": "Ss",
+        "agoDays": 41,
+        "time": "0:22",
+        "cmd": "/lib/systemd/systemd-journald"
+      },
+      {
+        "pid": 689,
+        "ppid": 1,
+        "user": "root",
+        "cpu": 0,
+        "mem": 0.1,
+        "vsz": 8644,
+        "rss": 2964,
+        "stat": "Ss",
+        "agoDays": 41,
+        "time": "0:03",
+        "cmd": "/usr/sbin/cron -f"
+      },
+      {
+        "pid": 712,
+        "ppid": 1,
+        "user": "root",
+        "cpu": 0,
+        "mem": 0.2,
+        "vsz": 15440,
+        "rss": 8052,
+        "stat": "Ss",
+        "agoDays": 41,
+        "time": "0:01",
+        "cmd": "sshd: /usr/sbin/sshd -D",
+        "listen": {
+          "addr": "0.0.0.0",
+          "port": 22
+        },
+        "critical": true,
+        "fd": 3
+      },
+      {
+        "pid": 1021,
+        "ppid": 1,
+        "user": "postgres",
+        "cpu": 1.2,
+        "mem": 3.1,
+        "vsz": 218444,
+        "rss": 124500,
+        "stat": "Ss",
+        "agoDays": 41,
+        "time": "14:52",
+        "cmd": "/usr/lib/postgresql/16/bin/postgres -D /var/lib/postgresql/16/main",
+        "listen": {
+          "addr": "127.0.0.1",
+          "port": 5432
+        },
+        "critical": true
+      },
+      {
+        "pid": 2190,
+        "ppid": 3890,
+        "user": "ops",
+        "cpu": 0,
+        "mem": 0.1,
+        "vsz": 17108,
+        "rss": 9388,
+        "stat": "S",
+        "agoDays": 0.001,
+        "time": "0:00",
+        "cmd": "sshd: ops@pts/0",
+        "tty": "?"
+      },
+      {
+        "pid": 2201,
+        "ppid": 2190,
+        "user": "ops",
+        "cpu": 0,
+        "mem": 0.1,
+        "vsz": 10112,
+        "rss": 5320,
+        "stat": "Ss",
+        "agoDays": 0.001,
+        "time": "0:00",
+        "cmd": "-bash",
+        "tty": "pts/0"
+      }
+    ]
+  },
+  "events": [
+    {
+      "id": "perm-denied",
+      "title": "CI cannot run the deploy script",
+      "fix": "`ls -l` shows the owner and the `x` bits. The deploy user is \"other\" here, and other had no `x`. `chmod +x` (or `755`) fixes it without opening the file to everyone.",
+      "learn": {
+        "note": "topics/linux/notes/01-shell-fundamentals.md",
+        "section": "Permissions"
+      }
+    },
+    {
+      "id": "runaway",
+      "title": "Load average is 38",
+      "fix": "`ps aux --sort=-%cpu` (or `top`) names the process pinning the CPU. Ask it to stop with `kill PID` (SIGTERM) so it can clean up; `kill -9` is the last resort.",
+      "learn": {
+        "note": "topics/linux/notes/01-shell-fundamentals.md",
+        "section": "Processes"
+      }
+    },
+    {
+      "id": "hung-process",
+      "title": "A job is stuck at 99% CPU and ignores kill",
+      "fix": "SIGTERM is a request, and a wedged process may ignore it. When a plain `kill PID` changes nothing, `kill -9 PID` (SIGKILL) ends it without asking.",
+      "learn": {
+        "note": "topics/linux/notes/01-shell-fundamentals.md",
+        "section": "Processes"
+      }
+    },
+    {
+      "id": "disk-full",
+      "title": "The disk is full and writes are failing",
+      "fix": "`df -h` finds the full filesystem; `du -sh /var/log/*` or `find / -size +1G` finds what filled it. If a process still has the file open, truncate it (`truncate -s 0 FILE`) instead of deleting it.",
+      "learn": {
+        "note": "topics/linux/notes/03-systemd-and-networking.md",
+        "section": "Disk and resource usage"
+      }
+    },
+    {
+      "id": "needle-500s",
+      "title": "Users are seeing 500 errors",
+      "fix": "One client causes most of the 500s. `grep 500 access.log | awk '{print $1}' | sort | uniq -c | sort -rn` counts errors per client. Block the offender, then reload nginx so the running config changes.",
+      "learn": {
+        "note": "topics/linux/notes/02-text-processing.md",
+        "section": "Putting it together"
+      }
+    },
+    {
+      "id": "crash-loop",
+      "title": "A service restarts forever",
+      "fix": "`systemctl status` shows the crash loop and the last log lines; `journalctl -u NAME` shows why. Fix the cause, run `systemctl daemon-reload` if you edited the unit file, and restart.",
+      "learn": {
+        "note": "topics/linux/notes/03-systemd-and-networking.md",
+        "section": "systemd services"
+      }
+    },
+    {
+      "id": "nothing-listening",
+      "title": "Connection refused: nothing is listening",
+      "fix": "`ss -tlnp` shows which address and port each process is bound to. A service on 127.0.0.1 is invisible from outside, and the wrong port is invisible to everyone. Fix the config, restart, and verify with `curl -I`.",
+      "learn": {
+        "note": "topics/linux/notes/03-systemd-and-networking.md",
+        "section": "Networking"
+      }
+    },
+    {
+      "id": "backup-lies",
+      "title": "Backups are empty but the job says success",
+      "fix": "Without `set -euo pipefail` a failing `tar` is ignored and the script goes on to print success. Add it so failures are loud, fix the path cron passes, and check `$?`.",
+      "learn": {
+        "note": "topics/linux/notes/01-shell-fundamentals.md",
+        "section": "Writing scripts that don't surprise you"
+      }
+    },
+    {
+      "id": "unit-perm",
+      "title": "The worker crash-loops after a deploy",
+      "fix": "The journal says \"permission denied\": a deploy left the data directory owned by root. `ls -ld` shows the owner; `chown` it back to the service user and the unit starts on its next retry.",
+      "learn": {
+        "note": "topics/linux/notes/01-shell-fundamentals.md",
+        "section": "Permissions"
+      }
+    },
+    {
+      "id": "killed-init",
+      "title": "You signalled PID 1",
+      "fix": "PID 1 is the parent of every process. Killing it takes the whole host down. Take the PID from `ps`, never from a guess.",
+      "learn": {
+        "note": "topics/linux/notes/01-shell-fundamentals.md",
+        "section": "Processes"
+      }
+    },
+    {
+      "id": "rm-wrong",
+      "title": "rm removed something the system needs",
+      "fix": "Delete the one file that filled the disk, not a directory. Check what you are about to remove with `ls -l` or `find ... -print` first.",
+      "learn": {
+        "note": "topics/linux/notes/02-text-processing.md",
+        "section": "find — locate files, act on them"
+      }
+    },
+    {
+      "id": "deleted-open-file",
+      "title": "You deleted a file a process still has open",
+      "fix": "The space does not come back until the process closes the file. Truncate it (`truncate -s 0 FILE` or `: > FILE`), or restart the process that holds it.",
+      "learn": {
+        "note": "topics/linux/notes/03-systemd-and-networking.md",
+        "section": "Disk and resource usage"
+      }
+    },
+    {
+      "id": "kill-9-first",
+      "title": "SIGKILL before SIGTERM",
+      "fix": "`kill -9` cannot be caught, so the process cannot clean up its locks and temp files. Send a plain `kill PID` first and escalate only if it is ignored.",
+      "learn": {
+        "note": "topics/linux/notes/01-shell-fundamentals.md",
+        "section": "Processes"
+      }
+    },
+    {
+      "id": "killed-service",
+      "title": "You took down a healthy service",
+      "fix": "Match the PID to its command in `ps aux` before you kill it. To restart a service, use `systemctl restart NAME`, not `kill`.",
+      "learn": {
+        "note": "topics/linux/notes/01-shell-fundamentals.md",
+        "section": "Processes"
+      }
+    },
+    {
+      "id": "blocked-healthy",
+      "title": "You blocked a healthy client",
+      "fix": "The busiest client is not the broken one. Filter by status (`grep 500`) before you count, so you block the source of the errors, not of the traffic.",
+      "learn": {
+        "note": "topics/linux/notes/02-text-processing.md",
+        "section": "Putting it together"
+      }
+    },
+    {
+      "id": "wide-open-perms",
+      "title": "chmod gave everyone write access",
+      "fix": "`777` or `o+w` lets any user change the file. Add only what is needed: `chmod +x`, or `755` for a script.",
+      "learn": {
+        "note": "topics/linux/notes/01-shell-fundamentals.md",
+        "section": "Permissions"
+      }
+    },
+    {
+      "id": "blind-fix",
+      "title": "You changed something before looking",
+      "fix": "Follow the order: status, then logs, then resources, then network. Look first, change one thing, look again.",
+      "learn": {
+        "note": "topics/linux/notes/03-systemd-and-networking.md",
+        "section": "Quick troubleshooting order"
+      }
+    }
+  ],
+  "levels": [
+    {
+      "id": "first-night",
+      "title": "1. First night",
+      "blurb": "Three pages in a row: a script that will not run, a pegged CPU and a full disk. Reading is free; each command that changes something costs a move and a minute, and every open incident costs service health.",
+      "seed": 1,
+      "winTicks": 6,
+      "minHealth": 40,
+      "world": {
+        "machine": {
+          "disk": {
+            "dev": "/dev/sda1",
+            "size": "50G",
+            "base": 2572285102,
+            "extra": [
+              {
+                "fs": "tmpfs",
+                "size": "2.0G",
+                "used": "0",
+                "avail": "2.0G",
+                "pct": "0%",
+                "mount": "/dev/shm"
+              }
+            ]
+          }
+        },
+        "dirs": {
+          "/var/log/app": {
+            "o": "app",
+            "g": "app",
+            "m": "750"
+          },
+          "/opt/deploy": {
+            "o": "root",
+            "g": "root"
+          }
+        },
+        "fs": {
+          "/opt/app/bin/app-server": {
+            "m": "755",
+            "ago": 12,
+            "size": "48M"
+          },
+          "/etc/app/app.conf": {
+            "ago": 12,
+            "lines": [
+              "# app server",
+              "bind = 0.0.0.0",
+              "port = 8080",
+              "log_file = /var/log/app/app.log"
+            ]
+          },
+          "/opt/deploy/deploy.sh": {
+            "m": "644",
+            "ago": 2,
+            "run": {
+              "kind": "print",
+              "out": [
+                "Already up to date.",
+                "deployed 4f2a9c1"
+              ]
+            },
+            "lines": [
+              "#!/usr/bin/env bash",
+              "set -euo pipefail",
+              "cd /srv/web && git pull --ff-only",
+              "systemctl restart web",
+              "echo \"deployed $(git rev-parse --short HEAD)\""
+            ]
+          },
+          "/opt/reports/generate.py": {
+            "m": "644",
+            "o": "reports",
+            "ago": 30,
+            "lines": [
+              "# monthly report generator (runs from cron)"
+            ]
+          },
+          "/var/log/app/app.log": {
+            "o": "app",
+            "m": "640",
+            "ago": 0.001,
+            "size": "1.2G",
+            "lines": [
+              "2026-10-24T02:03:41Z INFO  GET /api/items 200 14ms",
+              "2026-10-24T02:03:52Z INFO  GET /api/items/42 200 9ms",
+              "2026-10-24T02:04:07Z DEBUG cache miss key=items:42",
+              "2026-10-24T02:04:07Z INFO  GET /api/cart 200 21ms",
+              "2026-10-24T02:05:19Z INFO  POST /api/login 200 33ms",
+              "2026-10-24T02:06:30Z DEBUG cache miss key=items:7"
+            ]
+          },
+          "/var/log/app/app.log.1": {
+            "o": "app",
+            "m": "640",
+            "ago": 1,
+            "size": "8.3G",
+            "lines": [
+              "2026-10-23T02:00:01Z INFO  rotated"
+            ]
+          },
+          "/var/log/app/app.log.2.gz": {
+            "o": "app",
+            "m": "640",
+            "ago": 2,
+            "size": "640M"
+          },
+          "/var/log/app/app.log.3.gz": {
+            "o": "app",
+            "m": "640",
+            "ago": 3,
+            "size": "210M"
+          },
+          "/var/log/nginx/error.log": {
+            "o": "www-data",
+            "g": "adm",
+            "ago": 0.2,
+            "size": "96K",
+            "lines": [
+              "2026/10/24 01:12:10 [notice] 905#905: signal process started"
+            ]
+          }
+        },
+        "procs": [
+          {
+            "pid": 905,
+            "ppid": 1,
+            "user": "root",
+            "cpu": 0,
+            "mem": 0.1,
+            "vsz": 55200,
+            "rss": 5332,
+            "stat": "Ss",
+            "agoDays": 41,
+            "time": "0:04",
+            "cmd": "nginx: master process /usr/sbin/nginx -g daemon on; master_process on;",
+            "listen": {
+              "addr": "0.0.0.0",
+              "port": 80
+            },
+            "http": {
+              "status": 200,
+              "server": "nginx/1.24.0",
+              "body": "<h1>web-01</h1>"
+            },
+            "critical": true
+          }
+        ],
+        "units": {
+          "app": {
+            "desc": "App server",
+            "unitFile": [
+              "[Unit]",
+              "Description=App server",
+              "After=network.target",
+              "",
+              "[Service]",
+              "ExecStart=/opt/app/bin/app-server --config /etc/app/app.conf",
+              "Restart=always",
+              "User=app",
+              "",
+              "[Install]",
+              "WantedBy=multi-user.target"
+            ],
+            "proc": {
+              "pid": 1432,
+              "cpu": 2.1,
+              "mem": 2.4,
+              "vsz": 1850200,
+              "rss": 96000,
+              "stat": "Ssl",
+              "time": "58:12",
+              "holds": [
+                "/var/log/app/app.log"
+              ],
+              "critical": true,
+              "listen": "conf",
+              "http": {
+                "status": 200,
+                "server": "app/2.14",
+                "body": "ok"
+              }
+            },
+            "confs": [],
+            "upMin": 3200,
+            "journal": [
+              [
+                95,
+                "app",
+                "listening on 0.0.0.0:8080",
+                1432
+              ],
+              [
+                40,
+                "app",
+                "GET /api/items 200 14ms",
+                1432
+              ],
+              [
+                12,
+                "app",
+                "GET /api/items/42 200 9ms",
+                1432
+              ]
+            ]
+          }
+        }
+      },
+      "startWith": [
+        {
+          "event": "perm-denied",
+          "pager": "CI: deploy job failed. Running ./deploy.sh as user deploy in /opt/deploy: Permission denied.",
+          "path": "/opt/deploy/deploy.sh",
+          "user": "deploy"
+        }
+      ],
+      "schedule": [
+        {
+          "tick": 2,
+          "event": "runaway",
+          "pager": "monitor: load average is 38 on web-01 (4 cores).",
+          "spawn": {
+            "pid": 2291,
+            "ppid": 689,
+            "user": "reports",
+            "cpu": 389,
+            "mem": 12.4,
+            "vsz": 2210044,
+            "rss": 497300,
+            "stat": "R",
+            "time": "41:07",
+            "cmd": "/usr/bin/python3 /opt/reports/generate.py --all",
+            "term": "exit",
+            "cleanup": "leaves /var/run/reports.lock behind",
+            "load": 38
+          }
+        },
+        {
+          "tick": 4,
+          "event": "disk-full",
+          "pager": "app: writes are failing on web-01: No space left on device.",
+          "path": "/var/log/app/app.log",
+          "size": "38.4G",
+          "mount": "/"
+        }
+      ],
+      "solution": [
+        {
+          "tick": 0,
+          "action": "sh",
+          "args": [
+            "cat ~/README"
+          ]
+        },
+        {
+          "tick": 0,
+          "action": "sh",
+          "args": [
+            "ls -l /opt/deploy"
+          ]
+        },
+        {
+          "tick": 1,
+          "action": "sh",
+          "args": [
+            "chmod +x /opt/deploy/deploy.sh"
+          ]
+        },
+        {
+          "tick": 2,
+          "action": "wait"
+        },
+        {
+          "tick": 2,
+          "action": "sh",
+          "args": [
+            "uptime"
+          ]
+        },
+        {
+          "tick": 2,
+          "action": "sh",
+          "args": [
+            "ps aux --sort=-%cpu | head -5"
+          ]
+        },
+        {
+          "tick": 3,
+          "action": "sh",
+          "args": [
+            "kill 2291"
+          ]
+        },
+        {
+          "tick": 4,
+          "action": "wait"
+        },
+        {
+          "tick": 4,
+          "action": "sh",
+          "args": [
+            "df -h"
+          ]
+        },
+        {
+          "tick": 4,
+          "action": "sh",
+          "args": [
+            "du -sh /var/log/*"
+          ]
+        },
+        {
+          "tick": 4,
+          "action": "sh",
+          "args": [
+            "ls -lh /var/log/app"
+          ]
+        },
+        {
+          "tick": 5,
+          "action": "sh",
+          "args": [
+            "truncate -s 0 /var/log/app/app.log"
+          ]
+        },
+        {
+          "tick": 6,
+          "action": "wait"
+        }
+      ]
+    },
+    {
+      "id": "web-tier",
+      "title": "2. The web tier",
+      "blurb": "A service that crash-loops, a flood of 500s and a port nobody can reach. Use the logs and the sockets to find the cause, then change the one thing that fixes it.",
+      "seed": 2,
+      "winTicks": 8,
+      "minHealth": 40,
+      "world": {
+        "machine": {
+          "clock": "2026-10-24T03:12:00Z",
+          "disk": {
+            "dev": "/dev/sda1",
+            "size": "50G",
+            "base": "9.4G",
+            "extra": [
+              {
+                "fs": "tmpfs",
+                "size": "2.0G",
+                "used": "0",
+                "avail": "2.0G",
+                "pct": "0%",
+                "mount": "/dev/shm"
+              }
+            ]
+          }
+        },
+        "dirs": {
+          "/opt/web": {
+            "o": "root",
+            "g": "root"
+          },
+          "/etc/web": {
+            "o": "root",
+            "g": "root"
+          },
+          "/etc/api": {
+            "o": "root",
+            "g": "root"
+          }
+        },
+        "fs": {
+          "/usr/sbin/nginx": {
+            "m": "755",
+            "ago": 60,
+            "size": "1.3M"
+          },
+          "/etc/nginx/nginx.conf": {
+            "ago": 60,
+            "lines": [
+              "user www-data;",
+              "worker_processes auto;",
+              "events { worker_connections 768; }",
+              "http {",
+              "  include /etc/nginx/conf.d/*.conf;",
+              "  server { listen 80; location / { proxy_pass http://127.0.0.1:3000; } }",
+              "}"
+            ]
+          },
+          "/etc/nginx/conf.d/blocklist.conf": {
+            "ago": 9,
+            "lines": [
+              "# one 'deny IP;' per line",
+              "deny 192.0.2.99;"
+            ]
+          },
+          "/var/log/nginx/access.log": {
+            "o": "www-data",
+            "g": "adm",
+            "m": "640",
+            "ago": 0.001,
+            "gen": {
+              "kind": "access",
+              "lines": 120,
+              "seed": 7,
+              "spanMin": 25,
+              "busy": "10.0.0.5",
+              "bad": "10.0.3.17",
+              "clients": [
+                "203.0.113.9",
+                "203.0.113.44",
+                "198.51.100.23",
+                "198.51.100.77",
+                "192.0.2.15",
+                "192.0.2.201"
+              ]
+            }
+          },
+          "/var/log/nginx/error.log": {
+            "o": "www-data",
+            "g": "adm",
+            "ago": 0.001,
+            "size": "40K",
+            "lines": [
+              "2026/10/24 03:08:44 [error] 906#906: *4411 connect() failed (111: Connection refused) while connecting to upstream, upstream: \"http://127.0.0.1:3000/\""
+            ]
+          },
+          "/opt/web/bin/web": {
+            "m": "755",
+            "ago": 3,
+            "size": "22M"
+          },
+          "/etc/web/conf.yml": {
+            "ago": 3,
+            "lines": [
+              "# web frontend",
+              "bind: 127.0.0.1",
+              "port: 3000",
+              "upstream: http://127.0.0.1:8080"
+            ]
+          },
+          "/opt/api/bin/api": {
+            "m": "755",
+            "ago": 5,
+            "size": "31M"
+          },
+          "/etc/api/api.conf": {
+            "ago": 5,
+            "lines": [
+              "# api service",
+              "bind = 0.0.0.0",
+              "port = 8080",
+              "workers = 4"
+            ]
+          }
+        },
+        "units": {
+          "nginx": {
+            "desc": "A high performance web server",
+            "unitFile": [
+              "[Unit]",
+              "Description=A high performance web server",
+              "After=network.target",
+              "",
+              "[Service]",
+              "ExecStart=/usr/sbin/nginx -g daemon_off;",
+              "Restart=on-failure",
+              "User=root",
+              "",
+              "[Install]",
+              "WantedBy=multi-user.target"
+            ],
+            "proc": {
+              "pid": 905,
+              "cpu": 0.3,
+              "mem": 0.2,
+              "vsz": 55200,
+              "rss": 5332,
+              "stat": "Ss",
+              "time": "0:04",
+              "critical": true,
+              "listen": {
+                "addr": "0.0.0.0",
+                "port": 80
+              },
+              "http": {
+                "status": 200,
+                "server": "nginx/1.24.0",
+                "body": "<h1>web-01</h1>"
+              },
+              "children": [
+                {
+                  "pid": 906,
+                  "cpu": 0.2,
+                  "mem": 0.3,
+                  "vsz": 55864,
+                  "rss": 3412,
+                  "stat": "S",
+                  "time": "0:21",
+                  "cmd": "nginx: worker process",
+                  "user": "www-data"
+                },
+                {
+                  "pid": 907,
+                  "cpu": 0.2,
+                  "mem": 0.3,
+                  "vsz": 55864,
+                  "rss": 3412,
+                  "stat": "S",
+                  "time": "0:19",
+                  "cmd": "nginx: worker process",
+                  "user": "www-data"
+                }
+              ]
+            },
+            "confs": [
+              "/etc/nginx/conf.d/blocklist.conf"
+            ],
+            "reloadable": true,
+            "upMin": 40000,
+            "journal": [
+              [
+                600,
+                "systemd",
+                "Started A high performance web server.",
+                1
+              ]
+            ]
+          },
+          "web": {
+            "desc": "Web frontend",
+            "unitFile": [
+              "[Unit]",
+              "Description=Web frontend",
+              "After=network.target",
+              "",
+              "[Service]",
+              "ExecStart=/opt/web/bin/web --config /opt/web/conf.yml",
+              "Restart=on-failure",
+              "User=www-data",
+              "",
+              "[Install]",
+              "WantedBy=multi-user.target"
+            ],
+            "fileAgo": 1,
+            "proc": {
+              "cpu": 0.4,
+              "mem": 0.9,
+              "vsz": 612000,
+              "rss": 36000,
+              "stat": "Ssl",
+              "time": "0:02",
+              "listen": "conf",
+              "http": {
+                "status": 200,
+                "server": "web/3.1",
+                "body": "<h1>shop</h1>"
+              }
+            },
+            "restarts": 30,
+            "journal": [
+              [
+                17,
+                "web",
+                "fatal: cannot open config /opt/web/conf.yml: no such file or directory",
+                4041
+              ],
+              [
+                17,
+                "systemd",
+                "web.service: Main process exited, code=exited, status=1/FAILURE",
+                1
+              ],
+              [
+                17,
+                "systemd",
+                "web.service: Failed with result 'exit-code'.",
+                1
+              ],
+              [
+                17,
+                "systemd",
+                "web.service: Scheduled restart job, restart counter is at 23.",
+                1
+              ],
+              [
+                15,
+                "web",
+                "fatal: cannot open config /opt/web/conf.yml: no such file or directory",
+                4044
+              ],
+              [
+                15,
+                "systemd",
+                "web.service: Main process exited, code=exited, status=1/FAILURE",
+                1
+              ],
+              [
+                15,
+                "systemd",
+                "web.service: Failed with result 'exit-code'.",
+                1
+              ],
+              [
+                15,
+                "systemd",
+                "web.service: Scheduled restart job, restart counter is at 24.",
+                1
+              ],
+              [
+                13,
+                "web",
+                "fatal: cannot open config /opt/web/conf.yml: no such file or directory",
+                4047
+              ],
+              [
+                13,
+                "systemd",
+                "web.service: Main process exited, code=exited, status=1/FAILURE",
+                1
+              ],
+              [
+                13,
+                "systemd",
+                "web.service: Failed with result 'exit-code'.",
+                1
+              ],
+              [
+                13,
+                "systemd",
+                "web.service: Scheduled restart job, restart counter is at 25.",
+                1
+              ],
+              [
+                11,
+                "web",
+                "fatal: cannot open config /opt/web/conf.yml: no such file or directory",
+                4050
+              ],
+              [
+                11,
+                "systemd",
+                "web.service: Main process exited, code=exited, status=1/FAILURE",
+                1
+              ],
+              [
+                11,
+                "systemd",
+                "web.service: Failed with result 'exit-code'.",
+                1
+              ],
+              [
+                11,
+                "systemd",
+                "web.service: Scheduled restart job, restart counter is at 26.",
+                1
+              ],
+              [
+                9,
+                "web",
+                "fatal: cannot open config /opt/web/conf.yml: no such file or directory",
+                4053
+              ],
+              [
+                9,
+                "systemd",
+                "web.service: Main process exited, code=exited, status=1/FAILURE",
+                1
+              ],
+              [
+                9,
+                "systemd",
+                "web.service: Failed with result 'exit-code'.",
+                1
+              ],
+              [
+                9,
+                "systemd",
+                "web.service: Scheduled restart job, restart counter is at 27.",
+                1
+              ],
+              [
+                7,
+                "web",
+                "fatal: cannot open config /opt/web/conf.yml: no such file or directory",
+                4056
+              ],
+              [
+                7,
+                "systemd",
+                "web.service: Main process exited, code=exited, status=1/FAILURE",
+                1
+              ],
+              [
+                7,
+                "systemd",
+                "web.service: Failed with result 'exit-code'.",
+                1
+              ],
+              [
+                7,
+                "systemd",
+                "web.service: Scheduled restart job, restart counter is at 28.",
+                1
+              ],
+              [
+                5,
+                "web",
+                "fatal: cannot open config /opt/web/conf.yml: no such file or directory",
+                4059
+              ],
+              [
+                5,
+                "systemd",
+                "web.service: Main process exited, code=exited, status=1/FAILURE",
+                1
+              ],
+              [
+                5,
+                "systemd",
+                "web.service: Failed with result 'exit-code'.",
+                1
+              ],
+              [
+                5,
+                "systemd",
+                "web.service: Scheduled restart job, restart counter is at 29.",
+                1
+              ],
+              [
+                3,
+                "web",
+                "fatal: cannot open config /opt/web/conf.yml: no such file or directory",
+                4062
+              ],
+              [
+                3,
+                "systemd",
+                "web.service: Main process exited, code=exited, status=1/FAILURE",
+                1
+              ],
+              [
+                3,
+                "systemd",
+                "web.service: Failed with result 'exit-code'.",
+                1
+              ],
+              [
+                3,
+                "systemd",
+                "web.service: Scheduled restart job, restart counter is at 30.",
+                1
+              ]
+            ]
+          },
+          "api": {
+            "desc": "API service",
+            "unitFile": [
+              "[Unit]",
+              "Description=API service",
+              "After=network.target",
+              "",
+              "[Service]",
+              "ExecStart=/opt/api/bin/api --config /etc/api/api.conf",
+              "Restart=on-failure",
+              "User=app",
+              "",
+              "[Install]",
+              "WantedBy=multi-user.target"
+            ],
+            "proc": {
+              "cpu": 0.8,
+              "mem": 1.4,
+              "vsz": 842000,
+              "rss": 58000,
+              "stat": "Ssl",
+              "time": "3:41",
+              "listen": "conf",
+              "http": {
+                "status": 200,
+                "server": "api/1.9.2",
+                "body": "{\"status\":\"ok\"}"
+              }
+            },
+            "upMin": 5000,
+            "journal": [
+              [
+                300,
+                "api",
+                "listening on 0.0.0.0:8080",
+                1290
+              ]
+            ]
+          }
+        }
+      },
+      "startWith": [
+        {
+          "event": "crash-loop",
+          "pager": "monitor: web.service is down (health check on :3000 refused).",
+          "unit": "web",
+          "targets": [
+            "/opt/web",
+            "/etc/web",
+            "/etc/systemd/system/web.service"
+          ]
+        }
+      ],
+      "schedule": [
+        {
+          "tick": 2,
+          "event": "needle-500s",
+          "pager": "support: customers are seeing 500 errors from the site.",
+          "unit": "nginx",
+          "conf": "/etc/nginx/conf.d/blocklist.conf",
+          "log": "/var/log/nginx/access.log",
+          "ip": "10.0.3.17",
+          "legit": [
+            "10.0.0.5"
+          ]
+        },
+        {
+          "tick": 4,
+          "event": "nothing-listening",
+          "pager": "load balancer: health check to 10.0.2.15:8080 failed (connection refused).",
+          "unit": "api",
+          "conf": "/etc/api/api.conf",
+          "set": {
+            "bind": "127.0.0.1",
+            "port": "18080"
+          },
+          "port": 8080
+        }
+      ],
+      "solution": [
+        {
+          "tick": 0,
+          "action": "sh",
+          "args": [
+            "systemctl status web"
+          ]
+        },
+        {
+          "tick": 0,
+          "action": "sh",
+          "args": [
+            "journalctl -u web -n 5"
+          ]
+        },
+        {
+          "tick": 0,
+          "action": "sh",
+          "args": [
+            "ls /etc/web /opt/web"
+          ]
+        },
+        {
+          "tick": 1,
+          "action": "sh",
+          "args": [
+            "sed -i 's#/opt/web/conf.yml#/etc/web/conf.yml#' /etc/systemd/system/web.service && systemctl daemon-reload && systemctl restart web"
+          ]
+        },
+        {
+          "tick": 1,
+          "action": "sh",
+          "args": [
+            "systemctl status web"
+          ]
+        },
+        {
+          "tick": 2,
+          "action": "wait"
+        },
+        {
+          "tick": 2,
+          "action": "sh",
+          "args": [
+            "wc -l /var/log/nginx/access.log"
+          ]
+        },
+        {
+          "tick": 2,
+          "action": "sh",
+          "args": [
+            "awk '{print $1}' /var/log/nginx/access.log | sort | uniq -c | sort -rn | head -3"
+          ]
+        },
+        {
+          "tick": 2,
+          "action": "sh",
+          "args": [
+            "grep 500 /var/log/nginx/access.log | awk '{print $1}' | sort | uniq -c | sort -rn | head -3"
+          ]
+        },
+        {
+          "tick": 3,
+          "action": "sh",
+          "args": [
+            "echo 'deny 10.0.3.17;' >> /etc/nginx/conf.d/blocklist.conf && systemctl reload nginx"
+          ]
+        },
+        {
+          "tick": 4,
+          "action": "wait"
+        },
+        {
+          "tick": 4,
+          "action": "sh",
+          "args": [
+            "ss -tlnp"
+          ]
+        },
+        {
+          "tick": 4,
+          "action": "sh",
+          "args": [
+            "curl -I 10.0.2.15:8080"
+          ]
+        },
+        {
+          "tick": 4,
+          "action": "sh",
+          "args": [
+            "cat /etc/api/api.conf"
+          ]
+        },
+        {
+          "tick": 5,
+          "action": "sh",
+          "args": [
+            "sed -i 's/127.0.0.1/0.0.0.0/;s/18080/8080/' /etc/api/api.conf && systemctl restart api"
+          ]
+        },
+        {
+          "tick": 5,
+          "action": "sh",
+          "args": [
+            "curl -I 10.0.2.15:8080"
+          ]
+        },
+        {
+          "tick": 6,
+          "action": "wait"
+        },
+        {
+          "tick": 7,
+          "action": "wait"
+        },
+        {
+          "tick": 8,
+          "action": "wait"
+        }
+      ]
+    },
+    {
+      "id": "bad-friday",
+      "title": "3. Bad Friday",
+      "blurb": "Four problems overlap, and one is silent: the backups. A job ignores a polite kill, a deploy broke a directory, and the biggest file on the disk is not the one to delete.",
+      "seed": 3,
+      "winTicks": 10,
+      "minHealth": 40,
+      "world": {
+        "machine": {
+          "clock": "2026-10-23T17:55:00Z",
+          "uptime": "41 days, 17:02",
+          "disk": {
+            "dev": "/dev/sda1",
+            "size": "50G",
+            "base": 5634808721,
+            "extra": [
+              {
+                "fs": "tmpfs",
+                "size": "2.0G",
+                "used": "0",
+                "avail": "2.0G",
+                "pct": "0%",
+                "mount": "/dev/shm"
+              }
+            ]
+          }
+        },
+        "users": {
+          "exports": {
+            "uid": 1005,
+            "groups": [
+              "exports"
+            ]
+          }
+        },
+        "dirs": {
+          "/srv/data": {
+            "o": "app",
+            "g": "app"
+          },
+          "/backups": {
+            "o": "root",
+            "g": "root"
+          },
+          "/var/lib/worker": {
+            "o": "worker",
+            "g": "worker"
+          },
+          "/opt/scripts": {
+            "o": "root",
+            "g": "root"
+          }
+        },
+        "fs": {
+          "/srv/data/customers.db": {
+            "ago": 1,
+            "size": "812M",
+            "o": "app"
+          },
+          "/srv/data/orders.db": {
+            "ago": 1,
+            "size": "1.1G",
+            "o": "app"
+          },
+          "/srv/data/uploads/2026-09.tar": {
+            "ago": 1,
+            "size": "230M",
+            "o": "app"
+          },
+          "/srv/data/uploads/2026-10.tar": {
+            "ago": 1,
+            "size": "96M",
+            "o": "app"
+          },
+          "/srv/data/reports/q3.csv": {
+            "ago": 1,
+            "size": "12M",
+            "o": "app"
+          },
+          "/opt/scripts/backup.sh": {
+            "m": "755",
+            "ago": 120,
+            "run": {
+              "kind": "backup",
+              "defaultSrc": "/srv/data",
+              "defaultDest": "/backups",
+              "name": "data"
+            },
+            "lines": [
+              "#!/usr/bin/env bash",
+              "# nightly backup: archive /srv/data into /backups",
+              "src=${1:-/srv/data}",
+              "dest=${2:-/backups}",
+              "stamp=$(date +%Y%m%d)",
+              "tar -czf \"$dest/data-$stamp.tar.gz\" -C \"$src\" .",
+              "echo \"backup ok: $dest/data-$stamp.tar.gz\""
+            ]
+          },
+          "/etc/cron.d/backup": {
+            "ago": 20,
+            "lines": [
+              "# nightly backup at 02:00",
+              "0 2 * * * root /opt/scripts/backup.sh /srv/dta /backups >> /var/log/backup.log 2>&1"
+            ]
+          },
+          "/var/log/backup.log": {
+            "ago": 0.6,
+            "lines": [
+              "tar: /srv/dta: Cannot open: No such file or directory",
+              "tar: Error is not recoverable: exiting now",
+              "backup ok: /backups/data-20261021.tar.gz",
+              "tar: /srv/dta: Cannot open: No such file or directory",
+              "tar: Error is not recoverable: exiting now",
+              "backup ok: /backups/data-20261022.tar.gz",
+              "tar: /srv/dta: Cannot open: No such file or directory",
+              "tar: Error is not recoverable: exiting now",
+              "backup ok: /backups/data-20261023.tar.gz"
+            ]
+          },
+          "/backups/data-20261021.tar.gz": {
+            "ago": 3,
+            "size": 45
+          },
+          "/backups/data-20261022.tar.gz": {
+            "ago": 2,
+            "size": 45
+          },
+          "/backups/data-20261023.tar.gz": {
+            "ago": 1,
+            "size": 45
+          },
+          "/opt/worker/bin/worker": {
+            "m": "755",
+            "ago": 6,
+            "size": "14M"
+          },
+          "/etc/worker/worker.conf": {
+            "ago": 6,
+            "lines": [
+              "# queue worker",
+              "queue = jobs",
+              "data_dir = /var/lib/worker"
+            ]
+          },
+          "/var/lib/worker/state.db": {
+            "o": "worker",
+            "ago": 0.01,
+            "size": "4.2M"
+          },
+          "/var/lib/postgresql/16/main/base/16384/2619": {
+            "o": "postgres",
+            "m": "600",
+            "ago": 0.001,
+            "size": "9.4G",
+            "crit": true
+          },
+          "/var/tmp/export-20261020.tmp": {
+            "o": "exports",
+            "ago": 3.4,
+            "size": "3.1G"
+          },
+          "/opt/export/export-worker.jar": {
+            "ago": 9,
+            "size": "86M"
+          }
+        },
+        "procs": [
+          {
+            "pid": 905,
+            "ppid": 1,
+            "user": "root",
+            "cpu": 0,
+            "mem": 0.1,
+            "vsz": 55200,
+            "rss": 5332,
+            "stat": "Ss",
+            "agoDays": 41,
+            "time": "0:04",
+            "cmd": "nginx: master process /usr/sbin/nginx -g daemon on; master_process on;",
+            "listen": {
+              "addr": "0.0.0.0",
+              "port": 80
+            },
+            "http": {
+              "status": 200,
+              "server": "nginx/1.24.0",
+              "body": "<h1>web-01</h1>"
+            },
+            "critical": true
+          },
+          {
+            "pid": 2871,
+            "ppid": 1,
+            "user": "exports",
+            "cpu": 0.6,
+            "mem": 6.2,
+            "vsz": 4210000,
+            "rss": 243000,
+            "stat": "Sl",
+            "agoDays": 0.3,
+            "time": "1:12",
+            "cmd": "/usr/bin/java -jar /opt/export/export-worker.jar --job reports"
+          }
+        ],
+        "units": {
+          "worker": {
+            "desc": "Queue worker",
+            "unitFile": [
+              "[Unit]",
+              "Description=Queue worker",
+              "After=network.target",
+              "",
+              "[Service]",
+              "ExecStart=/opt/worker/bin/worker --config /etc/worker/worker.conf",
+              "Restart=on-failure",
+              "User=worker",
+              "",
+              "[Install]",
+              "WantedBy=multi-user.target"
+            ],
+            "checks": {
+              "writes": [
+                "/var/lib/worker"
+              ]
+            },
+            "proc": {
+              "cpu": 1,
+              "mem": 0.8,
+              "vsz": 410000,
+              "rss": 31000,
+              "stat": "Ssl",
+              "time": "6:03"
+            },
+            "upMin": 3000,
+            "journal": [
+              [
+                40,
+                "worker",
+                "processed 118 jobs",
+                1930
+              ]
+            ]
+          }
+        }
+      },
+      "startWith": [
+        {
+          "event": "backup-lies",
+          "pager": "backups: last three nightly archives in /backups are 45 bytes, but the job reports success.",
+          "script": "/opt/scripts/backup.sh",
+          "cron": "/etc/cron.d/backup"
+        }
+      ],
+      "schedule": [
+        {
+          "tick": 2,
+          "event": "hung-process",
+          "pager": "monitor: load average is 14, export-worker is not responding.",
+          "spawn": {
+            "pid": 3310,
+            "ppid": 1,
+            "user": "exports",
+            "cpu": 99,
+            "mem": 8.8,
+            "vsz": 4310000,
+            "rss": 346000,
+            "stat": "Rl",
+            "time": "63:41",
+            "cmd": "/usr/bin/java -jar /opt/export/export-worker.jar --job nightly",
+            "term": "ignore",
+            "load": 13
+          }
+        },
+        {
+          "tick": 3,
+          "event": "unit-perm",
+          "pager": "queue: jobs are piling up, worker.service is not running.",
+          "unit": "worker",
+          "dir": "/var/lib/worker"
+        },
+        {
+          "tick": 5,
+          "event": "disk-full",
+          "pager": "monitor: / is 100% full on web-01, writes are failing.",
+          "path": "/var/tmp/export-20261020.tmp",
+          "size": "33G",
+          "mount": "/",
+          "keepMtime": true,
+          "targets": [
+            "/var/tmp",
+            "/var/lib",
+            "/srv",
+            "/backups",
+            "/var/log"
+          ]
+        }
+      ],
+      "solution": [
+        {
+          "tick": 0,
+          "action": "sh",
+          "args": [
+            "cat /etc/cron.d/backup"
+          ]
+        },
+        {
+          "tick": 0,
+          "action": "sh",
+          "args": [
+            "cat /opt/scripts/backup.sh"
+          ]
+        },
+        {
+          "tick": 0,
+          "action": "sh",
+          "args": [
+            "ls -l /backups"
+          ]
+        },
+        {
+          "tick": 0,
+          "action": "sh",
+          "args": [
+            "tail -n 3 /var/log/backup.log"
+          ]
+        },
+        {
+          "tick": 1,
+          "action": "sh",
+          "args": [
+            "sed -i '2i set -euo pipefail' /opt/scripts/backup.sh && sed -i 's#/srv/dta#/srv/data#' /etc/cron.d/backup"
+          ]
+        },
+        {
+          "tick": 2,
+          "action": "sh",
+          "args": [
+            "/opt/scripts/backup.sh /srv/data /backups; echo $?"
+          ]
+        },
+        {
+          "tick": 2,
+          "action": "sh",
+          "args": [
+            "ls -l /backups"
+          ]
+        },
+        {
+          "tick": 2,
+          "action": "sh",
+          "args": [
+            "ps aux --sort=-%cpu | head -4"
+          ]
+        },
+        {
+          "tick": 3,
+          "action": "sh",
+          "args": [
+            "kill 3310"
+          ]
+        },
+        {
+          "tick": 3,
+          "action": "sh",
+          "args": [
+            "ps aux --sort=-%cpu | head -4"
+          ]
+        },
+        {
+          "tick": 4,
+          "action": "sh",
+          "args": [
+            "kill -9 3310"
+          ]
+        },
+        {
+          "tick": 4,
+          "action": "sh",
+          "args": [
+            "systemctl status worker"
+          ]
+        },
+        {
+          "tick": 4,
+          "action": "sh",
+          "args": [
+            "journalctl -u worker -n 4"
+          ]
+        },
+        {
+          "tick": 4,
+          "action": "sh",
+          "args": [
+            "ls -ld /var/lib/worker"
+          ]
+        },
+        {
+          "tick": 5,
+          "action": "sh",
+          "args": [
+            "chown worker:worker /var/lib/worker"
+          ]
+        },
+        {
+          "tick": 5,
+          "action": "sh",
+          "args": [
+            "df -h"
+          ]
+        },
+        {
+          "tick": 5,
+          "action": "sh",
+          "args": [
+            "find / -type f -size +1G -mtime +2"
+          ]
+        },
+        {
+          "tick": 6,
+          "action": "sh",
+          "args": [
+            "rm /var/tmp/export-20261020.tmp"
+          ]
+        },
+        {
+          "tick": 7,
+          "action": "wait"
+        },
+        {
+          "tick": 8,
+          "action": "wait"
+        },
+        {
+          "tick": 9,
+          "action": "wait"
+        },
+        {
+          "tick": 10,
+          "action": "wait"
+        }
+      ]
+    }
+  ]
+}

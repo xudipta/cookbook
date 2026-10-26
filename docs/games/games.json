@@ -65,12 +65,23 @@
     },
     {
       "id": "linux",
-      "title": "Linux",
+      "title": "Night Shift",
       "topic": "Linux / Shell",
       "code": "LX",
       "hue": "linux",
-      "status": "queued",
-      "issue": 41,
+      "status": "live",
+      "levels": 3,
+      "blurb": "Answer the pager on a simulated server: find the cause with real shell commands, then fix it.",
+      "chips": [
+        "ls -l",
+        "ps aux",
+        "df -h",
+        "systemctl status"
+      ],
+      "facts": [
+        "3 levels",
+        "a shell you type into"
+      ],
       "notes": "topics/linux/"
     },
     {
