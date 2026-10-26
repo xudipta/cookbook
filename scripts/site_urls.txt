@@ -9,6 +9,7 @@ docs/delivery/
 docs/games/
 docs/games/demo/
 docs/games/docker/
+docs/games/github/
 docs/games/kubernetes/
 docs/games/terraform/
 docs/infrastructure/

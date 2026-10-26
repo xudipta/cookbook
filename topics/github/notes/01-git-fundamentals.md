@@ -25,6 +25,21 @@ rewrites history; anyone else's checkout of that branch would diverge).
 - A repo's `main`/`master` is typically merge- (or squash-merge-) only from PRs, never
   rebased or force-pushed to directly.
 
+## Resolving conflicts
+
+When two branches change the same lines, `git merge` and `git rebase` stop and write both
+versions into the file between `<<<<<<<`, `=======` and `>>>>>>>` markers. Edit the file to
+what the code should say, delete the markers, then tell git it is resolved:
+
+```bash
+git add config.yml            # marks the file resolved (git does not check for leftover markers)
+git commit                     # finishes a merge
+git rebase --continue          # finishes the current step of a rebase
+git merge --abort              # or: git rebase --abort, to back out and start over
+```
+
+Committing a file that still contains markers is how a conflict ends up on `main`.
+
 ## Staging, stashing, and inspecting
 
 ```bash
@@ -52,6 +67,14 @@ git cherry-pick <sha>                # apply one commit from another branch onto
 Prefer `git revert` over `git reset --hard` + force-push on anything already pushed and
 shared — revert adds a new commit instead of rewriting history others may have based work
 on.
+
+## Force-pushing safely
+
+After a rebase (or `commit --amend`) the branch has new commit IDs, so a plain `git push` of an
+already-pushed branch is rejected as non-fast-forward. Use `git push --force-with-lease`: it
+overwrites the remote branch only if it is still where your last fetch saw it, so it refuses to
+destroy a teammate's newer push. Plain `--force` has no such check. Never force-push a shared
+branch such as `main`; protected branches refuse it anyway.
 
 ## Commit messages
 

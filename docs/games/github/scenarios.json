@@ -1,0 +1,810 @@
+{
+  "id": "github",
+  "title": "Merge Conflict Rush",
+  "healthLabel": "Team trust",
+  "tickLabel": "Step",
+  "manual": true,
+  "stacked": true,
+  "seed": 1,
+  "events": [
+    {
+      "id": "bad-message",
+      "title": "Commit message breaks the conventions",
+      "fix": "Write the subject in the imperative mood, under about 50 characters, and say what changed: \"Add retry to the fetch client\", not \"Added\" or \"fix\". The body explains why.",
+      "learn": {
+        "note": "topics/github/notes/01-git-fundamentals.md",
+        "section": "Commit messages"
+      }
+    },
+    {
+      "id": "markers-committed",
+      "title": "Conflict markers were committed",
+      "fix": "git add does not check the file. Search for <<<<<<< before you stage a resolved file, or the markers land in the repo and break the build.",
+      "learn": {
+        "note": "topics/github/notes/01-git-fundamentals.md",
+        "section": "Resolving conflicts"
+      }
+    },
+    {
+      "id": "conflict",
+      "title": "Merge conflict",
+      "fix": "Both sides changed the same lines. Edit the file to what the code should say, delete the <<<<<<<, ======= and >>>>>>> lines, git add it, then git commit (merge) or git rebase --continue. git merge --abort or git rebase --abort starts over.",
+      "learn": {
+        "note": "topics/github/notes/01-git-fundamentals.md",
+        "section": "Resolving conflicts"
+      }
+    },
+    {
+      "id": "force-without-lease",
+      "title": "Force-push without --force-with-lease",
+      "fix": "A plain --force overwrites whatever is on the remote branch, even a teammate's newer push. --force-with-lease refuses when the remote moved since your last fetch.",
+      "learn": {
+        "note": "topics/github/notes/01-git-fundamentals.md",
+        "section": "Force-pushing safely"
+      }
+    },
+    {
+      "id": "rewrote-shared",
+      "title": "History rewritten on a shared branch",
+      "fix": "Every clone of main now disagrees with origin. To undo a bad commit on a shared branch, add a new commit with git revert instead of resetting and force-pushing.",
+      "learn": {
+        "note": "topics/github/notes/01-git-fundamentals.md",
+        "section": "Undoing things"
+      }
+    },
+    {
+      "id": "overwrote-teammate",
+      "title": "A force-push destroyed a teammate's commits",
+      "fix": "The remote branch had commits you had not fetched, and --force replaced them. Use --force-with-lease so the push fails when the remote has work you have not seen.",
+      "learn": {
+        "note": "topics/github/notes/01-git-fundamentals.md",
+        "section": "Force-pushing safely"
+      }
+    },
+    {
+      "id": "work-lost",
+      "title": "git reset --hard threw away uncommitted work",
+      "fix": "--hard discards changes in the working tree and index that were never committed. Commit or git stash push first, then reset.",
+      "learn": {
+        "note": "topics/github/notes/01-git-fundamentals.md",
+        "section": "Undoing things"
+      }
+    },
+    {
+      "id": "orphaned-commit",
+      "title": "A commit is no longer on any branch",
+      "fix": "The commit still exists: git reflog lists where HEAD has been, and git branch <name> <sha> brings it back. Before you move a branch with reset, put a branch on the commits you want to keep.",
+      "learn": {
+        "note": "topics/github/notes/01-git-fundamentals.md",
+        "section": "Undoing things"
+      }
+    },
+    {
+      "id": "review-approved",
+      "title": "A code owner approved your pull request",
+      "fix": "CODEOWNERS auto-requests the owners of the files you changed, and with \"require review from code owners\" their approval is what unlocks the merge.",
+      "learn": {
+        "note": "topics/github/notes/03-repo-configuration.md",
+        "section": "CODEOWNERS"
+      }
+    },
+    {
+      "id": "owner-review-missing",
+      "title": "Merge blocked: code-owner review required",
+      "fix": "The PR waits for approval from the owner of a path it changes. GitHub requested them when you opened the PR (not for a draft). Check gh pr view, then wait for the review.",
+      "learn": {
+        "note": "topics/github/notes/03-repo-configuration.md",
+        "section": "Branch protection"
+      }
+    },
+    {
+      "id": "checks-failing",
+      "title": "Merge blocked: a required check is failing",
+      "fix": "A required status check must pass before merge. Read gh pr checks, fix the cause on your branch (or rebase onto the fix that landed on main), and push again.",
+      "learn": {
+        "note": "topics/github/notes/03-repo-configuration.md",
+        "section": "Branch protection"
+      }
+    },
+    {
+      "id": "admin-bypass",
+      "title": "Branch protection bypassed with --admin",
+      "fix": "An admin can merge past the rules, but the rules exist so a broken or unreviewed change cannot reach main. Fix what blocks the merge instead.",
+      "learn": {
+        "note": "topics/github/notes/03-repo-configuration.md",
+        "section": "Branch protection"
+      }
+    },
+    {
+      "id": "draft-pr",
+      "title": "The pull request is a draft",
+      "fix": "A draft is not ready for review: code owners are not requested and it cannot be merged. gh pr ready flips it and requests reviewers.",
+      "learn": {
+        "note": "topics/github/notes/02-github-cli-and-prs.md",
+        "section": "Draft PRs and review requests"
+      }
+    },
+    {
+      "id": "protected-push",
+      "title": "Direct push to a protected branch refused",
+      "fix": "Branch protection requires a pull request, so main only changes by merging a PR. Push your work to a branch and open one with gh pr create.",
+      "learn": {
+        "note": "topics/github/notes/03-repo-configuration.md",
+        "section": "Branch protection"
+      }
+    },
+    {
+      "id": "push-rejected",
+      "title": "Push rejected: the remote has newer commits",
+      "fix": "origin has commits you do not. git fetch, bring them in with git merge origin/<branch> or git rebase origin/<branch>, then push again.",
+      "learn": {
+        "note": "topics/github/notes/01-git-fundamentals.md",
+        "section": "Everyday flow"
+      }
+    },
+    {
+      "id": "lease-rejected",
+      "title": "--force-with-lease refused to push",
+      "fix": "The remote branch moved since your last fetch, so the lease check failed. That is the safety working: fetch, look at what arrived, integrate it, then push again.",
+      "learn": {
+        "note": "topics/github/notes/01-git-fundamentals.md",
+        "section": "Force-pushing safely"
+      }
+    },
+    {
+      "id": "divergent-pull",
+      "title": "git pull on diverged branches asks how to reconcile",
+      "fix": "Local and remote both have new commits. Choose git pull --no-rebase (a merge commit) or git pull --rebase (replays yours on top, with new commit IDs).",
+      "learn": {
+        "note": "topics/github/notes/01-git-fundamentals.md",
+        "section": "Merge vs. rebase"
+      }
+    },
+    {
+      "id": "squash-merged",
+      "title": "Squash merge: one new commit on main",
+      "fix": "GitHub collapsed the branch into a single new commit on main. The branch's own commits are not in main's history, so git branch -d calls it unmerged; gh pr merge --delete-branch cleans up.",
+      "learn": {
+        "note": "topics/github/notes/01-git-fundamentals.md",
+        "section": "Merge vs. rebase"
+      }
+    },
+    {
+      "id": "rebase-rewrote",
+      "title": "Rebase rewrote commits you had already pushed",
+      "fix": "Rebased commits have new IDs, so a plain git push is rejected. On your own branch use git push --force-with-lease; never force-push a shared branch.",
+      "learn": {
+        "note": "topics/github/notes/01-git-fundamentals.md",
+        "section": "Force-pushing safely"
+      }
+    },
+    {
+      "id": "teammate-push",
+      "title": "A teammate pushed to origin",
+      "fix": "origin/* in your graph is only your last fetch. git fetch shows what changed before you integrate it.",
+      "learn": {
+        "note": "topics/github/notes/01-git-fundamentals.md",
+        "section": "Everyday flow"
+      }
+    },
+    {
+      "id": "main-red",
+      "title": "CI is failing on main",
+      "fix": "A commit on shared main broke the build for everyone. Undo it with git revert on a branch and a pull request: a new commit that keeps history intact, not reset plus force-push.",
+      "learn": {
+        "note": "topics/github/notes/01-git-fundamentals.md",
+        "section": "Undoing things"
+      }
+    }
+  ],
+  "levels": [
+    {
+      "id": "first-pr",
+      "title": "1. Everyday flow",
+      "blurb": "A fresh clone of acme/site. Add a line to README.md that points at CONTRIBUTING.md and ship it the normal way: branch, commit, push, open a pull request, merge it. Reading is free; each change to the repo takes a step.",
+      "seed": 1,
+      "winTicks": 12,
+      "minHealth": 50,
+      "protection": {},
+      "owners": [],
+      "nextPr": 8,
+      "repo": {
+        "commits": [
+          {
+            "key": "a",
+            "msg": "Initial commit",
+            "author": "dana",
+            "files": {
+              "README.md": "# site\nA tiny web service.",
+              "app.py": "def handle(request):\n    return fetch(request.url)"
+            }
+          },
+          {
+            "key": "b",
+            "msg": "Add the service config",
+            "author": "dana",
+            "set": {
+              "config.yml": "service: web\ntimeout: 30\nlog_level: info"
+            }
+          }
+        ],
+        "remote": {
+          "refs": {
+            "main": "b"
+          }
+        },
+        "local": {
+          "head": "main",
+          "branches": {
+            "main": "b"
+          },
+          "tracking": {
+            "origin/main": "b"
+          },
+          "upstream": {
+            "main": "origin/main"
+          }
+        }
+      },
+      "goals": [
+        {
+          "id": "readme",
+          "type": "remote-file",
+          "path": "README.md",
+          "has": [
+            "CONTRIBUTING"
+          ],
+          "text": "The README change is on origin/main",
+          "hint": "Branch first (git switch -c docs/contributing), edit README.md in the editor, then git add and git commit -m \"...\" with a short imperative subject."
+        },
+        {
+          "id": "pr",
+          "type": "pr-merged",
+          "text": "It got there through a merged pull request",
+          "hint": "git push -u origin HEAD, then gh pr create --fill, then gh pr merge --squash --delete-branch."
+        },
+        {
+          "id": "synced",
+          "type": "main-synced",
+          "text": "Local main matches origin/main",
+          "hint": "git switch main and git pull (gh pr merge --delete-branch already does both)."
+        },
+        {
+          "id": "clean",
+          "type": "clean",
+          "text": "Nothing left uncommitted",
+          "hint": "Commit or restore what is left in the working tree."
+        }
+      ],
+      "schedule": [
+        {
+          "tick": 3,
+          "event": "teammate-push",
+          "detail": "eli pushed \"Log each request\" to main",
+          "push": {
+            "branch": "main",
+            "msg": "Log each request",
+            "author": "eli",
+            "set": {
+              "app.py": "def handle(request):\n    log(request)\n    return fetch(request.url)"
+            }
+          }
+        }
+      ],
+      "solution": [
+        {
+          "tick": 0,
+          "action": "terminal",
+          "args": [
+            "git switch -c docs/contributing"
+          ]
+        },
+        {
+          "tick": 1,
+          "action": "edit",
+          "args": [
+            "README.md",
+            "# site\nA tiny web service.\nSee CONTRIBUTING.md before you open a pull request."
+          ]
+        },
+        {
+          "tick": 2,
+          "action": "terminal",
+          "args": [
+            "git add README.md"
+          ]
+        },
+        {
+          "tick": 3,
+          "action": "terminal",
+          "args": [
+            "git commit -m \"Link CONTRIBUTING from the README\""
+          ]
+        },
+        {
+          "tick": 4,
+          "action": "terminal",
+          "args": [
+            "git push -u origin HEAD"
+          ]
+        },
+        {
+          "tick": 5,
+          "action": "terminal",
+          "args": [
+            "gh pr create --fill"
+          ]
+        },
+        {
+          "tick": 6,
+          "action": "terminal",
+          "args": [
+            "gh pr merge --squash --delete-branch"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "behind-main",
+      "title": "2. Behind main",
+      "blurb": "Your branch feature/retries has an open PR (#7), but teammates merged to main while you worked, and one of them changed the line you edited. Bring the branch up to date (merge or rebase, your call), resolve the conflict in config.yml (ops raised the timeout to 60: keep 60 and keep your retries: 3), and get the PR merged.",
+      "seed": 2,
+      "winTicks": 14,
+      "minHealth": 50,
+      "protection": {
+        "branch": "main",
+        "requirePr": true
+      },
+      "owners": [],
+      "nextPr": 8,
+      "repo": {
+        "commits": [
+          {
+            "key": "a",
+            "msg": "Initial commit",
+            "author": "dana",
+            "files": {
+              "README.md": "# site\nA tiny web service.",
+              "app.py": "def handle(request):\n    return fetch(request.url)",
+              "config.yml": "service: web\ntimeout: 30\nlog_level: info"
+            }
+          },
+          {
+            "key": "t1",
+            "parents": [
+              "a"
+            ],
+            "msg": "Raise the default timeout to 60",
+            "author": "dana",
+            "set": {
+              "config.yml": "service: web\ntimeout: 60\nlog_level: info"
+            }
+          },
+          {
+            "key": "t2",
+            "parents": [
+              "t1"
+            ],
+            "msg": "Document the health endpoint",
+            "author": "eli",
+            "set": {
+              "README.md": "# site\nA tiny web service.\nHealth check: GET /health"
+            }
+          },
+          {
+            "key": "f1",
+            "parents": [
+              "a"
+            ],
+            "msg": "Add the retries setting",
+            "author": "you",
+            "set": {
+              "config.yml": "service: web\ntimeout: 30\nretries: 3\nlog_level: info"
+            }
+          },
+          {
+            "key": "f2",
+            "parents": [
+              "f1"
+            ],
+            "msg": "Retry failed upstream calls",
+            "author": "you",
+            "set": {
+              "app.py": "def handle(request):\n    return retry(fetch, request.url)"
+            }
+          }
+        ],
+        "remote": {
+          "refs": {
+            "main": "t2",
+            "feature/retries": "f2"
+          }
+        },
+        "local": {
+          "head": "feature/retries",
+          "branches": {
+            "main": "a",
+            "feature/retries": "f2"
+          },
+          "tracking": {
+            "origin/main": "a",
+            "origin/feature/retries": "f2"
+          },
+          "upstream": {
+            "main": "origin/main",
+            "feature/retries": "origin/feature/retries"
+          }
+        },
+        "prs": [
+          {
+            "n": 7,
+            "title": "Retry failed upstream calls",
+            "head": "feature/retries",
+            "author": "you"
+          }
+        ]
+      },
+      "goals": [
+        {
+          "id": "config",
+          "type": "remote-file",
+          "path": "config.yml",
+          "has": [
+            "timeout: 60",
+            "retries: 3"
+          ],
+          "hasNot": [
+            "<<<<<<<",
+            ">>>>>>>"
+          ],
+          "text": "origin/main has timeout 60 and your retries: 3, no markers",
+          "hint": "git fetch, then git merge origin/main (or git rebase origin/main). Edit config.yml to keep both changes, git add it, then git commit (or git rebase --continue)."
+        },
+        {
+          "id": "pr",
+          "type": "pr-merged",
+          "text": "PR #7 is merged",
+          "hint": "Push the updated branch (after a rebase: git push --force-with-lease), then gh pr merge --squash --delete-branch."
+        },
+        {
+          "id": "synced",
+          "type": "main-synced",
+          "text": "Local main matches origin/main",
+          "hint": "git switch main and git pull."
+        },
+        {
+          "id": "clean",
+          "type": "clean",
+          "text": "No merge or rebase left half-finished",
+          "hint": "Finish or abort the merge or rebase, and commit what is left."
+        }
+      ],
+      "schedule": [
+        {
+          "tick": 3,
+          "event": "teammate-push",
+          "detail": "marc pushed \"Add a LICENSE\" to main",
+          "push": {
+            "branch": "main",
+            "msg": "Add a LICENSE",
+            "author": "marc",
+            "set": {
+              "LICENSE": "MIT License"
+            }
+          }
+        }
+      ],
+      "solution": [
+        {
+          "tick": 0,
+          "action": "terminal",
+          "args": [
+            "git fetch"
+          ]
+        },
+        {
+          "tick": 1,
+          "action": "terminal",
+          "args": [
+            "git rebase origin/main"
+          ]
+        },
+        {
+          "tick": 2,
+          "action": "edit",
+          "args": [
+            "config.yml",
+            "service: web\ntimeout: 60\nretries: 3\nlog_level: info"
+          ]
+        },
+        {
+          "tick": 3,
+          "action": "terminal",
+          "args": [
+            "git add config.yml"
+          ]
+        },
+        {
+          "tick": 4,
+          "action": "terminal",
+          "args": [
+            "git rebase --continue"
+          ]
+        },
+        {
+          "tick": 5,
+          "action": "terminal",
+          "args": [
+            "git push --force-with-lease"
+          ]
+        },
+        {
+          "tick": 6,
+          "action": "terminal",
+          "args": [
+            "gh pr merge --squash --delete-branch"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "protected-main",
+      "title": "3. Protected main",
+      "blurb": "main is protected: a pull request, a code-owner approval and a passing build. Marc's commit on main broke the build. You also committed a typo fix to your local main by mistake, and README.md has half-finished edits. Undo the bad commit without rewriting history, land the typo fix, and lose nothing.",
+      "seed": 3,
+      "winTicks": 30,
+      "minHealth": 50,
+      "protection": {
+        "branch": "main",
+        "requirePr": true,
+        "approvals": "codeowner",
+        "checks": [
+          "build"
+        ]
+      },
+      "owners": [
+        {
+          "pattern": "/deploy.sh",
+          "owners": [
+            "@dana"
+          ]
+        },
+        {
+          "pattern": "/docs/",
+          "owners": [
+            "@eli"
+          ]
+        }
+      ],
+      "buildRules": [
+        {
+          "check": "build",
+          "file": "deploy.sh",
+          "forbid": "bild\\.sh",
+          "message": "deploy.sh: line 3: ./bild.sh: No such file or directory"
+        }
+      ],
+      "nextPr": 12,
+      "repo": {
+        "commits": [
+          {
+            "key": "a",
+            "msg": "Initial commit",
+            "author": "dana",
+            "files": {
+              "README.md": "# site\nA tiny web service.",
+              "deploy.sh": "#!/bin/sh\nset -e\n./build.sh\n./push-image.sh",
+              "docs/runbook.md": "# Runbook\nIf the site is down, restart the sevice."
+            }
+          },
+          {
+            "key": "c",
+            "parents": [
+              "a"
+            ],
+            "msg": "Speed up the deploy step",
+            "author": "marc",
+            "set": {
+              "deploy.sh": "#!/bin/sh\nset -e\n./bild.sh\n./push-image.sh"
+            }
+          },
+          {
+            "key": "d",
+            "parents": [
+              "c"
+            ],
+            "msg": "Fix a typo in the runbook",
+            "author": "you",
+            "set": {
+              "docs/runbook.md": "# Runbook\nIf the site is down, restart the service."
+            }
+          }
+        ],
+        "remote": {
+          "refs": {
+            "main": "c"
+          }
+        },
+        "local": {
+          "head": "main",
+          "branches": {
+            "main": "d"
+          },
+          "tracking": {
+            "origin/main": "c"
+          },
+          "upstream": {
+            "main": "origin/main"
+          }
+        },
+        "worktree": {
+          "README.md": "# site\nA tiny web service.\nWIP: on-call section (half done)"
+        }
+      },
+      "goals": [
+        {
+          "id": "revert",
+          "type": "remote-file",
+          "path": "deploy.sh",
+          "hasNot": [
+            "bild.sh"
+          ],
+          "text": "origin/main builds again: the bad commit is undone",
+          "hint": "Branch from origin/main, git revert the bad commit, push, gh pr create --fill, wait for the code owner, gh pr merge."
+        },
+        {
+          "id": "history",
+          "type": "ancestor",
+          "commit": "c",
+          "of": "main",
+          "text": "History not rewritten: the bad commit is still in origin/main",
+          "hint": "Undo with git revert. Resetting main and force-pushing is refused, and costs trust anyway."
+        },
+        {
+          "id": "typo",
+          "type": "remote-file",
+          "path": "docs/runbook.md",
+          "has": [
+            "restart the service"
+          ],
+          "text": "Your typo fix is on origin/main",
+          "hint": "Keep the typo commit on its own branch (git branch fix/runbook-typo) before you move main, and open its PR once the revert has merged."
+        },
+        {
+          "id": "synced",
+          "type": "main-synced",
+          "text": "Local main matches origin/main",
+          "hint": "git switch main and git pull."
+        },
+        {
+          "id": "wip",
+          "type": "wip-safe",
+          "text": "Your half-finished README.md edit is safe, and not in any PR",
+          "hint": "git stash push before anything that resets or switches, git stash pop afterwards.",
+          "marker": "WIP: on-call"
+        }
+      ],
+      "schedule": [
+        {
+          "tick": 1,
+          "event": "main-red",
+          "detail": "build failing on main: deploy.sh"
+        }
+      ],
+      "solution": [
+        {
+          "tick": 0,
+          "action": "terminal",
+          "args": [
+            "git stash push -m wip"
+          ]
+        },
+        {
+          "tick": 1,
+          "action": "terminal",
+          "args": [
+            "git branch fix/runbook-typo"
+          ]
+        },
+        {
+          "tick": 2,
+          "action": "terminal",
+          "args": [
+            "git reset --hard origin/main"
+          ]
+        },
+        {
+          "tick": 3,
+          "action": "terminal",
+          "args": [
+            "git switch -c revert/speed-up-deploy"
+          ]
+        },
+        {
+          "tick": 4,
+          "action": "terminal",
+          "args": [
+            "git revert --no-edit HEAD"
+          ]
+        },
+        {
+          "tick": 5,
+          "action": "terminal",
+          "args": [
+            "git push -u origin HEAD"
+          ]
+        },
+        {
+          "tick": 6,
+          "action": "terminal",
+          "args": [
+            "gh pr create --fill"
+          ]
+        },
+        {
+          "tick": 7,
+          "action": "terminal",
+          "args": [
+            "git switch fix/runbook-typo"
+          ]
+        },
+        {
+          "tick": 8,
+          "action": "terminal",
+          "args": [
+            "gh pr merge 12 --squash --delete-branch"
+          ]
+        },
+        {
+          "tick": 9,
+          "action": "terminal",
+          "args": [
+            "git fetch"
+          ]
+        },
+        {
+          "tick": 10,
+          "action": "terminal",
+          "args": [
+            "git rebase origin/main"
+          ]
+        },
+        {
+          "tick": 11,
+          "action": "terminal",
+          "args": [
+            "git push -u origin HEAD"
+          ]
+        },
+        {
+          "tick": 12,
+          "action": "terminal",
+          "args": [
+            "gh pr create --fill"
+          ]
+        },
+        {
+          "tick": 13,
+          "action": "terminal",
+          "args": [
+            "git switch main"
+          ]
+        },
+        {
+          "tick": 14,
+          "action": "terminal",
+          "args": [
+            "gh pr merge 13 --squash --delete-branch"
+          ]
+        },
+        {
+          "tick": 15,
+          "action": "terminal",
+          "args": [
+            "git pull"
+          ]
+        }
+      ]
+    }
+  ]
+}

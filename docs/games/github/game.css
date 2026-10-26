@@ -1,0 +1,531 @@
+/* Merge Conflict Rush. Boards use <div>s, never <ul>, so Material's list styling doesn't apply. */
+
+.cg .gh {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.75rem;
+}
+
+/* Two columns only when the board itself is wide enough. */
+@container (min-width: 860px) {
+  .cg .gh {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas:
+      "goals graph"
+      "term graph"
+      "edit tree"
+      "edit repo";
+  }
+
+  .cg .gh-p-goals {
+    grid-area: goals;
+  }
+
+  .cg .gh-p-term {
+    grid-area: term;
+  }
+
+  .cg .gh-p-graph {
+    grid-area: graph;
+  }
+
+  .cg .gh-p-tree {
+    grid-area: tree;
+  }
+
+  .cg .gh-p-edit {
+    grid-area: edit;
+  }
+
+  .cg .gh-p-repo {
+    grid-area: repo;
+  }
+}
+
+.cg .gh-panel {
+  min-width: 0;
+}
+
+.cg .gh-h {
+  margin: 0 0 0.4rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--muted);
+}
+
+.cg .gh-h5 {
+  margin: 0.5rem 0 0.25rem;
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--muted);
+}
+
+.cg .gh-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ---- goals */
+
+.cg .gh-goals {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--cg-border);
+  border-radius: 0.3rem;
+  background: var(--surface);
+  font-size: 0.8rem;
+}
+
+.cg .gh-goal {
+  display: flex;
+  gap: 0.45rem;
+  align-items: baseline;
+}
+
+.cg .gh-mark {
+  flex: none;
+  width: 1rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.cg .gh-goal-done .gh-mark {
+  color: var(--cg-ok);
+}
+
+.cg .gh-goal-done {
+  color: var(--muted);
+}
+
+/* ---- terminal */
+
+.cg .gh-term {
+  height: 15rem;
+  margin: 0;
+  padding: 0.5rem;
+  overflow: auto;
+  border: 1px solid var(--cg-border);
+  border-radius: 0.3rem;
+  background: var(--term-bg);
+  color: var(--term-ink);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  line-height: 1.35;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.cg .gh-tl-cmd {
+  font-weight: 700;
+}
+
+.cg .gh-tl-note {
+  color: var(--term-dim);
+}
+
+.cg .gh-tl-err {
+  box-shadow: inset 2px 0 0 var(--bad);
+}
+
+.cg .gh-prompt,
+.cg .gh-quicks,
+.cg .gh-editrow,
+.cg .gh-markers {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.4rem;
+}
+
+.cg .gh-input {
+  flex: 1 1 10rem;
+  min-width: 0;
+  padding: 0.25rem 0.4rem;
+  border: 1px solid var(--cg-border);
+  border-radius: 0.25rem;
+  background: var(--surface);
+  color: inherit;
+  font: inherit;
+  font-size: 0.78rem;
+}
+
+.cg .gh-cmd {
+  font-family: var(--font-mono);
+}
+
+.cg .gh-ps1 {
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+
+.cg .gh-btn {
+  padding: 0.2rem 0.55rem;
+  border: 1px solid var(--cg-accent);
+  border-radius: 0.2rem;
+  background: transparent;
+  color: var(--cg-accent);
+  font: inherit;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.cg .gh-btn:hover:not(:disabled) {
+  background: var(--cg-surface);
+}
+
+.cg .gh-btn:disabled,
+.cg .gh-input:disabled,
+.cg .gh-area:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.cg .gh-btn:focus-visible,
+.cg .gh-input:focus-visible,
+.cg .gh-area:focus-visible,
+.cg .gh-term:focus-visible,
+.cg .gh-graph:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.cg .gh-quick {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+}
+
+/* ---- commit graph */
+
+.cg .gh-graph {
+  max-height: 22rem;
+  padding: 0.25rem 0.4rem;
+  overflow: auto;
+  border: 1px solid var(--cg-border);
+  border-radius: 0.3rem;
+  background: var(--surface);
+  font-size: 0.78rem;
+}
+
+.cg .gh-row {
+  display: flex;
+  gap: 0.45rem;
+  min-height: 1.75rem;
+}
+
+.cg .gh-gfx {
+  position: relative;
+  flex: none;
+}
+
+.cg .gh-svg {
+  position: absolute;
+  left: 0;
+  overflow: visible;
+}
+
+.cg .gh-svg-top {
+  top: 0;
+}
+
+.cg .gh-svg-bottom {
+  top: 14px;
+  height: calc(100% - 14px);
+}
+
+.cg .gh-edge {
+  fill: none;
+  stroke: var(--gh-c, var(--accent));
+  stroke-width: 2;
+}
+
+.cg .gh-l0 {
+  --gh-c: var(--accent);
+}
+
+.cg .gh-l1 {
+  --gh-c: var(--h-git);
+}
+
+.cg .gh-l2 {
+  --gh-c: var(--h-tf);
+}
+
+.cg .gh-l3 {
+  --gh-c: var(--h-docker);
+}
+
+.cg .gh-l4 {
+  --gh-c: var(--h-obs);
+}
+
+.cg .gh-l5 {
+  --gh-c: var(--h-cicd);
+}
+
+.cg .gh-node {
+  position: absolute;
+  top: 8px;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--surface);
+  border-radius: 50%;
+  background: var(--gh-c, var(--accent));
+}
+
+.cg .gh-node-merge {
+  border-radius: 2px;
+  transform: rotate(45deg) scale(0.85);
+}
+
+.cg .gh-node-head {
+  box-shadow: 0 0 0 2px var(--ink);
+}
+
+.cg .gh-info {
+  flex: 1;
+  min-width: 0;
+  padding: 0.2rem 0 0.3rem;
+}
+
+.cg .gh-line {
+  display: flex;
+  gap: 0.45rem;
+  align-items: baseline;
+  min-width: 0;
+}
+
+.cg .gh-sha {
+  flex: none;
+  padding: 0;
+  background: transparent;
+  font-size: 0.72rem;
+}
+
+.cg .gh-subj {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.cg .gh-who {
+  flex: none;
+  margin-left: auto;
+  font-size: 0.68rem;
+  color: var(--muted);
+}
+
+.cg .gh-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem;
+  margin-top: 0.1rem;
+}
+
+.cg .gh-pill {
+  padding: 0 0.4rem;
+  border: 1px solid var(--ink);
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  line-height: 1.5;
+}
+
+.cg .gh-pill-head {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 700;
+}
+
+.cg .gh-pill-remote {
+  border-style: dashed;
+  border-color: var(--muted);
+  color: var(--muted);
+}
+
+.cg .gh-pill-tag {
+  border-color: var(--warn);
+  color: var(--warn);
+}
+
+.cg .gh-more {
+  padding: 0.25rem 0;
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .cg .gh-new {
+    animation: gh-pop 0.7s ease-out;
+  }
+}
+
+@keyframes gh-pop {
+  from {
+    background: color-mix(in srgb, var(--accent) 28%, transparent);
+    opacity: 0.2;
+    transform: translateY(-6px);
+  }
+
+  to {
+    background: transparent;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ---- working tree and repo */
+
+.cg .gh-where {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.7rem;
+  margin: 0 0 0.3rem;
+  font-size: 0.8rem;
+}
+
+.cg .gh-track,
+.cg .gh-note {
+  margin: 0.25rem 0;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.cg .gh-op {
+  margin: 0.3rem 0;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--warn);
+  border-radius: 0.25rem;
+  font-size: 0.78rem;
+}
+
+.cg .gh-files {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.cg .gh-file {
+  display: flex;
+  gap: 0.5rem;
+  align-items: baseline;
+  font-size: 0.76rem;
+}
+
+.cg .gh-kind {
+  flex: none;
+  min-width: 6.5rem;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.cg .gh-file-conflict .gh-kind {
+  color: var(--cg-bad);
+  font-weight: 700;
+}
+
+.cg .gh-file code {
+  padding: 0;
+  background: transparent;
+  word-break: break-all;
+}
+
+.cg .gh-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.cg .gh-badge {
+  padding: 0 0.45rem;
+  border: 1px solid var(--cg-border);
+  border-radius: 999px;
+  background: var(--surface);
+  font-size: 0.7rem;
+}
+
+.cg .gh-bad {
+  color: var(--cg-bad);
+}
+
+.cg .gh-pre {
+  margin: 0;
+  padding: 0.35rem 0.5rem;
+  overflow: auto;
+  border: 1px solid var(--cg-border);
+  border-radius: 0.25rem;
+  background: var(--surface);
+  font-size: 0.72rem;
+}
+
+.cg .gh-prs {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.cg .gh-pr {
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--cg-border);
+  border-left: 4px solid var(--cg-accent);
+  border-radius: 0.25rem;
+  background: var(--surface);
+  font-size: 0.76rem;
+}
+
+.cg .gh-pr-merged {
+  border-left-style: dotted;
+}
+
+.cg .gh-pr-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.1rem 0.6rem;
+  justify-content: space-between;
+}
+
+.cg .gh-pr-state {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.cg .gh-pr-meta {
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+.cg .gh-pr-block {
+  margin-top: 0.15rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--cg-bad);
+}
+
+/* ---- editor */
+
+.cg .gh-area {
+  display: block;
+  width: 100%;
+  margin-top: 0.4rem;
+  padding: 0.4rem;
+  border: 1px solid var(--cg-border);
+  border-radius: 0.25rem;
+  background: var(--surface);
+  color: inherit;
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  line-height: 1.4;
+  resize: vertical;
+}
