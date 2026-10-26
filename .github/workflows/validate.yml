@@ -483,6 +483,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
+      - name: actionlint the workflow YAML the CI/CD game generates
+        run: |
+          bash <(curl -sSL https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
+          PATH="$PWD:$PATH" node docs/games/cicd/lint-yaml.mjs
       - name: Install Playwright and Chromium
         run: |
           npm install --prefix "$RUNNER_TEMP/pw" playwright@1.49.1 axe-core@4.10.2

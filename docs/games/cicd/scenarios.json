@@ -1,0 +1,873 @@
+{
+  "id": "cicd",
+  "title": "Pipeline Panic",
+  "healthLabel": "Delivery health",
+  "tickLabel": "Event",
+  "manual": true,
+  "stacked": true,
+  "seed": 1,
+  "events": [
+    {
+      "id": "docs-only-pr",
+      "title": "A docs-only PR runs the whole suite",
+      "fix": "on.<event>.paths and paths-ignore decide whether the whole workflow runs at all. Skip it when only Markdown and docs change, and the minutes are never spent.",
+      "learn": {
+        "note": "topics/cicd/notes/02-workflow-patterns.md",
+        "section": "Path filtering — skip irrelevant runs"
+      }
+    },
+    {
+      "id": "cold-install",
+      "title": "Every run downloads the dependencies again",
+      "fix": "Key a cache on a hash of the lockfile (or use the cache: input of setup-node) so installs only repeat when the dependencies change.",
+      "learn": {
+        "note": "topics/cicd/notes/02-workflow-patterns.md",
+        "section": "Caching dependencies"
+      }
+    },
+    {
+      "id": "lint-fail",
+      "title": "A PR fails lint, and the full test suite runs anyway",
+      "fix": "Jobs run in parallel by default. needs: lint makes the test job wait for lint and skip itself when lint fails, so a PR that cannot merge costs one minute.",
+      "learn": {
+        "note": "topics/cicd/notes/01-github-actions-basics.md",
+        "section": "Anatomy of a workflow"
+      }
+    },
+    {
+      "id": "push-burst",
+      "title": "Five pushes to one PR in a minute",
+      "fix": "Without concurrency every push starts its own full run. A concurrency group per branch with cancel-in-progress keeps only the newest run.",
+      "learn": {
+        "note": "topics/cicd/notes/02-workflow-patterns.md",
+        "section": "Concurrency — cancel superseded runs"
+      }
+    },
+    {
+      "id": "node18-bug",
+      "title": "A change that only breaks on Node 18",
+      "fix": "A single-version job only proves the change on that version. strategy.matrix runs one job per version, so the failure shows up before merge, at the price of more minutes.",
+      "learn": {
+        "note": "topics/cicd/notes/02-workflow-patterns.md",
+        "section": "Matrix builds"
+      }
+    },
+    {
+      "id": "dup-lint",
+      "title": "The same lint job is copy-pasted into four workflows",
+      "fix": "A reusable workflow (workflow_call) is a whole set of jobs, called with uses: ./.github/workflows/x.yml. Change it once and every caller follows.",
+      "learn": {
+        "note": "topics/cicd/notes/02-workflow-patterns.md",
+        "section": "Reusable vs. composite"
+      }
+    },
+    {
+      "id": "dup-setup",
+      "title": "The same three setup steps are pasted into every job",
+      "fix": "A composite action reuses a handful of steps inside an existing job, on the same runner, without a whole extra job. Check the repository out first, then call it.",
+      "learn": {
+        "note": "topics/cicd/notes/02-workflow-patterns.md",
+        "section": "Reusable vs. composite"
+      }
+    },
+    {
+      "id": "fork-pr-secret",
+      "title": "A fork PR tries to read your secrets",
+      "fix": "pull_request from a fork runs with a read-only token and no secrets. pull_request_target runs with them, so it must never check out and run the PR's own code. The trigger alone is not the danger: privileged context plus untrusted code is.",
+      "learn": {
+        "note": "topics/cicd/notes/01-github-actions-basics.md",
+        "section": "Security basics"
+      }
+    },
+    {
+      "id": "untested-fork-pr",
+      "title": "A fork PR with a failing test is not tested",
+      "fix": "pull_request_target checks out the base branch by default, so the PR's code never runs and the check goes green for nothing. Test fork PRs with pull_request, which is safe by default.",
+      "learn": {
+        "note": "topics/cicd/notes/01-github-actions-basics.md",
+        "section": "Security basics"
+      }
+    },
+    {
+      "id": "compromised-action",
+      "title": "A third-party action is compromised upstream",
+      "fix": "A branch like @main moves whenever upstream pushes, and a tag can be moved too. A full commit SHA cannot be repointed, so pin third-party actions to one.",
+      "learn": {
+        "note": "topics/cicd/notes/01-github-actions-basics.md",
+        "section": "Security basics"
+      }
+    },
+    {
+      "id": "token-abuse",
+      "title": "A dependency tries to push to the repo with the job token",
+      "fix": "Scope GITHUB_TOKEN to what the job needs: permissions: contents: read for CI. Widen it per job only where a job really writes.",
+      "learn": {
+        "note": "topics/cicd/notes/01-github-actions-basics.md",
+        "section": "Anatomy of a workflow"
+      }
+    },
+    {
+      "id": "bad-rolling",
+      "title": "A bad release is rolling out",
+      "fix": "A rolling deployment replaces pods in batches, so the errors grow with every batch before anyone can react. Rolling back is another rollout, one batch at a time.",
+      "learn": {
+        "note": "topics/cicd/notes/03-deployment-strategies.md",
+        "section": "Rolling deployment"
+      }
+    },
+    {
+      "id": "bad-bluegreen",
+      "title": "A bad release took 100% of traffic at the cutover",
+      "fix": "Blue-green sends all traffic to the new version at once: a big spike. The rollback is the strength: flip the router back and the old version is serving again instantly.",
+      "learn": {
+        "note": "topics/cicd/notes/03-deployment-strategies.md",
+        "section": "Blue-green deployment"
+      }
+    },
+    {
+      "id": "bad-canary",
+      "title": "The canary slice shows errors",
+      "fix": "A canary exposes a small slice of real traffic first. The graph shows the problem while only about 5% of users are affected, and aborting shifts the weight back to 0%.",
+      "learn": {
+        "note": "topics/cicd/notes/03-deployment-strategies.md",
+        "section": "Canary deployment"
+      }
+    },
+    {
+      "id": "smoke-caught",
+      "title": "Smoke tests failed on the idle green environment",
+      "fix": "Blue-green lets you run smoke tests against the new environment directly before any user is routed to it. Tearing it down costs nobody anything.",
+      "learn": {
+        "note": "topics/cicd/notes/03-deployment-strategies.md",
+        "section": "Blue-green deployment"
+      }
+    },
+    {
+      "id": "staging-gate",
+      "title": "Staging caught the bug",
+      "fix": "Each environment adds confidence before the next. A red staging soak is the gate doing its job: reject the release and prod never sees it.",
+      "learn": {
+        "note": "topics/cicd/notes/03-deployment-strategies.md",
+        "section": "Environments and promotion"
+      }
+    },
+    {
+      "id": "skipped-staging",
+      "title": "A release skipped staging and the bug reached prod",
+      "fix": "Promotion goes dev, staging, prod for a reason. Skipping or overriding the staging gate removes the cheapest place to find a bug.",
+      "learn": {
+        "note": "topics/cicd/notes/03-deployment-strategies.md",
+        "section": "Environments and promotion"
+      }
+    },
+    {
+      "id": "breaking-migration",
+      "title": "A migration drops a column the running version still reads",
+      "fix": "During a rollout old and new versions run side by side, so the schema must work for both: adding a column is safe, dropping one needs the code to stop using it in an earlier release (expand, then contract). After a destructive migration there is nothing to roll back to.",
+      "learn": {
+        "note": "topics/database/notes/02-migrations.md",
+        "section": "In CI/CD"
+      }
+    },
+    {
+      "id": "hotfix-drift",
+      "title": "Someone hot-fixed prod by hand",
+      "fix": "The cluster no longer matches git, and the next deploy silently reverts the patch. With GitOps the repo is the source of truth: commit the change and let the operator reconcile, instead of applying it from a laptop.",
+      "learn": {
+        "note": "topics/cicd/notes/03-deployment-strategies.md",
+        "section": "GitOps, briefly"
+      }
+    }
+  ],
+  "cardDefs": {
+    "on-push": {
+      "group": "trigger",
+      "label": "on: push (main)",
+      "tip": "Runs on every push to main."
+    },
+    "on-pr": {
+      "group": "trigger",
+      "label": "on: pull_request",
+      "tip": "Runs on PRs. From a fork it gets a read-only token and no secrets."
+    },
+    "on-prt": {
+      "group": "trigger",
+      "label": "on: pull_request_target",
+      "tip": "Runs in the base repo's context: secrets and a write token are available."
+    },
+    "on-dispatch": {
+      "group": "trigger",
+      "label": "on: workflow_dispatch",
+      "tip": "A manual Run workflow button."
+    },
+    "on-schedule": {
+      "group": "trigger",
+      "label": "on: schedule (nightly)",
+      "tip": "A cron run every night: it bills a full run each event."
+    },
+    "paths-ignore": {
+      "group": "filter",
+      "label": "paths-ignore: **.md, docs/**",
+      "tip": "Skip the workflow when only these files change."
+    },
+    "cache-setup": {
+      "group": "cache",
+      "exclusive": true,
+      "label": "setup-node with cache: npm",
+      "tip": "The built-in cache input of setup-node."
+    },
+    "cache-action": {
+      "group": "cache",
+      "exclusive": true,
+      "label": "actions/cache@v4 (lockfile key)",
+      "tip": "Hand-rolled cache keyed on hashFiles(package-lock.json)."
+    },
+    "matrix": {
+      "group": "matrix",
+      "label": "strategy.matrix: node 18, 20",
+      "tip": "One test job per Node version: twice the minutes."
+    },
+    "needs-lint": {
+      "group": "needs",
+      "label": "test needs: lint",
+      "tip": "The test job waits for lint, and is skipped if lint fails."
+    },
+    "concurrency": {
+      "group": "concurrency",
+      "label": "concurrency: cancel-in-progress",
+      "tip": "One run per branch; a newer push cancels the older run."
+    },
+    "perms-read": {
+      "group": "perms",
+      "label": "permissions: contents: read",
+      "tip": "Least privilege for the job token."
+    },
+    "ref-main": {
+      "group": "ref",
+      "exclusive": true,
+      "label": "notify-slack@main",
+      "tip": "A branch ref: it moves whenever upstream pushes."
+    },
+    "ref-tag": {
+      "group": "ref",
+      "exclusive": true,
+      "label": "notify-slack@v2",
+      "tip": "A tag ref: readable, but a tag can be moved."
+    },
+    "ref-sha": {
+      "group": "ref",
+      "exclusive": true,
+      "label": "notify-slack@<full commit SHA>",
+      "tip": "A full commit SHA: it cannot be repointed."
+    },
+    "reusable-lint": {
+      "group": "reuse-lint",
+      "label": "lint: uses reusable-lint.yml",
+      "tip": "Call the reusable workflow (workflow_call) instead of pasting the lint job."
+    },
+    "composite-setup": {
+      "group": "reuse-setup",
+      "label": "setup: composite action",
+      "tip": "Fold the setup steps into a composite action, called after checkout."
+    },
+    "checkout-head": {
+      "group": "checkout",
+      "label": "checkout the PR head (ref: head.sha)",
+      "tip": "Check out the pull request's own code instead of the base branch."
+    }
+  },
+  "levels": [
+    {
+      "id": "fast-feedback",
+      "title": "1. Fast feedback",
+      "blurb": "Pipeline Tycoon. The team ships through one slow workflow. Add cards so each PR gets fast feedback without burning the monthly runner minutes. The next event is shown before you run it.",
+      "mode": "pipeline",
+      "tickLabel": "Event",
+      "seed": 1,
+      "winTicks": 6,
+      "minHealth": 50,
+      "budget": 50,
+      "goal": {
+        "maxFeedback": 6
+      },
+      "costs": {
+        "lint": 1,
+        "installCold": 3,
+        "installWarm": 0.5,
+        "tests": 4
+      },
+      "cards": [
+        "on-push",
+        "on-pr",
+        "on-dispatch",
+        "on-schedule",
+        "paths-ignore",
+        "cache-setup",
+        "cache-action",
+        "matrix",
+        "needs-lint",
+        "concurrency"
+      ],
+      "placed": [
+        "on-push",
+        "on-pr"
+      ],
+      "schedule": [
+        {
+          "tick": 1,
+          "event": "cold-install",
+          "kind": "pr",
+          "lint": "ok",
+          "bug": null,
+          "files": "src",
+          "fork": false,
+          "malicious": false,
+          "pr": 201,
+          "title": "Retry failed fetches",
+          "desc": "PR #201 changes src/fetch.js. The first run of the month."
+        },
+        {
+          "tick": 2,
+          "event": "docs-only-pr",
+          "kind": "pr",
+          "lint": "ok",
+          "bug": null,
+          "files": "docs",
+          "fork": false,
+          "malicious": false,
+          "pr": 202,
+          "title": "Fix typos in the README",
+          "desc": "PR #202 only edits README.md."
+        },
+        {
+          "tick": 3,
+          "event": "lint-fail",
+          "kind": "pr",
+          "lint": "fail",
+          "bug": null,
+          "files": "src",
+          "fork": false,
+          "malicious": false,
+          "pr": 203,
+          "title": "Add a rate limiter",
+          "desc": "PR #203 changes src/limiter.js and has a style error."
+        },
+        {
+          "tick": 4,
+          "event": "push-burst",
+          "kind": "burst",
+          "pr": 204,
+          "n": 5,
+          "desc": "Five quick pushes to the branch of PR #204 within a minute."
+        },
+        {
+          "tick": 5,
+          "event": "node18-bug",
+          "kind": "pr",
+          "lint": "ok",
+          "bug": "node18",
+          "files": "src",
+          "fork": false,
+          "malicious": false,
+          "pr": 205,
+          "title": "Sort results with toSorted()",
+          "desc": "PR #205 changes src/results.js. Production runs Node 18 and Node 20."
+        },
+        {
+          "tick": 6,
+          "event": "docs-only-pr",
+          "kind": "pr",
+          "lint": "ok",
+          "bug": null,
+          "files": "docs",
+          "fork": false,
+          "malicious": false,
+          "pr": 206,
+          "title": "Update the changelog",
+          "desc": "PR #206 only edits CHANGELOG.md."
+        }
+      ],
+      "solution": [
+        {
+          "tick": 0,
+          "action": "place",
+          "args": [
+            "paths-ignore"
+          ]
+        },
+        {
+          "tick": 1,
+          "action": "place",
+          "args": [
+            "cache-setup"
+          ]
+        },
+        {
+          "tick": 2,
+          "action": "place",
+          "args": [
+            "needs-lint"
+          ]
+        },
+        {
+          "tick": 3,
+          "action": "place",
+          "args": [
+            "concurrency"
+          ]
+        },
+        {
+          "tick": 4,
+          "action": "place",
+          "args": [
+            "matrix"
+          ]
+        },
+        {
+          "tick": 5,
+          "action": "runNext"
+        },
+        {
+          "tick": 6,
+          "action": "runNext"
+        },
+        {
+          "tick": 7,
+          "action": "runNext"
+        },
+        {
+          "tick": 8,
+          "action": "runNext"
+        },
+        {
+          "tick": 9,
+          "action": "runNext"
+        },
+        {
+          "tick": 10,
+          "action": "runNext"
+        }
+      ]
+    },
+    {
+      "id": "locked-down",
+      "title": "2. Locked down",
+      "blurb": "Pipeline Tycoon. Someone switched the workflow to pull_request_target to get secrets into fork builds. Make it safe, pin what you do not control, and stop the copy-paste before the next fork PR arrives.",
+      "mode": "pipeline",
+      "tickLabel": "Event",
+      "seed": 2,
+      "winTicks": 6,
+      "minHealth": 50,
+      "budget": 60,
+      "goal": {
+        "minSecurity": 95
+      },
+      "thirdParty": true,
+      "usesSecret": true,
+      "costs": {
+        "lint": 1,
+        "installCold": 3,
+        "installWarm": 0.5,
+        "tests": 4
+      },
+      "cards": [
+        "on-push",
+        "on-pr",
+        "on-prt",
+        "checkout-head",
+        "paths-ignore",
+        "cache-setup",
+        "matrix",
+        "needs-lint",
+        "concurrency",
+        "perms-read",
+        "ref-main",
+        "ref-tag",
+        "ref-sha",
+        "reusable-lint",
+        "composite-setup"
+      ],
+      "placed": [
+        "on-push",
+        "on-prt",
+        "checkout-head",
+        "paths-ignore",
+        "cache-setup",
+        "matrix",
+        "needs-lint",
+        "concurrency",
+        "ref-main"
+      ],
+      "schedule": [
+        {
+          "tick": 1,
+          "event": "dup-lint",
+          "kind": "maintenance",
+          "what": "lint",
+          "title": "The lint rules changed",
+          "desc": "The lint rules changed. Four workflows paste the same lint job."
+        },
+        {
+          "tick": 2,
+          "event": "untested-fork-pr",
+          "kind": "pr",
+          "lint": "ok",
+          "bug": "any",
+          "files": "src",
+          "fork": true,
+          "malicious": false,
+          "pr": 310,
+          "title": "Fix the pagination off-by-one",
+          "desc": "PR #310 comes from a fork and fixes a bug, but one of its tests fails."
+        },
+        {
+          "tick": 3,
+          "event": "fork-pr-secret",
+          "kind": "pr",
+          "lint": "ok",
+          "bug": null,
+          "files": "src",
+          "fork": true,
+          "malicious": true,
+          "pr": 311,
+          "title": "Update dependencies",
+          "desc": "PR #311 comes from a fork. Its package.json test script prints the environment."
+        },
+        {
+          "tick": 4,
+          "event": "dup-setup",
+          "kind": "maintenance",
+          "what": "setup",
+          "title": "The Node setup changed",
+          "desc": "The Node setup changed. The same three steps are pasted into every job."
+        },
+        {
+          "tick": 5,
+          "event": "compromised-action",
+          "kind": "compromise",
+          "title": "acme-ci/notify-slack was compromised: its main branch got a malicious commit",
+          "desc": "Upstream, the maintainer's account was phished and acme-ci/notify-slack was tampered with."
+        },
+        {
+          "tick": 6,
+          "event": "token-abuse",
+          "kind": "token",
+          "title": "A postinstall script runs git push with GITHUB_TOKEN (repo setting: read and write)",
+          "desc": "A dependency's postinstall script tries to push to the repo with the job token."
+        }
+      ],
+      "solution": [
+        {
+          "tick": 0,
+          "action": "remove",
+          "args": [
+            "on-prt"
+          ]
+        },
+        {
+          "tick": 1,
+          "action": "remove",
+          "args": [
+            "checkout-head"
+          ]
+        },
+        {
+          "tick": 2,
+          "action": "place",
+          "args": [
+            "on-pr"
+          ]
+        },
+        {
+          "tick": 3,
+          "action": "place",
+          "args": [
+            "perms-read"
+          ]
+        },
+        {
+          "tick": 4,
+          "action": "place",
+          "args": [
+            "ref-sha"
+          ]
+        },
+        {
+          "tick": 5,
+          "action": "place",
+          "args": [
+            "reusable-lint"
+          ]
+        },
+        {
+          "tick": 6,
+          "action": "place",
+          "args": [
+            "composite-setup"
+          ]
+        },
+        {
+          "tick": 7,
+          "action": "runNext"
+        },
+        {
+          "tick": 8,
+          "action": "runNext"
+        },
+        {
+          "tick": 9,
+          "action": "runNext"
+        },
+        {
+          "tick": 10,
+          "action": "runNext"
+        },
+        {
+          "tick": 11,
+          "action": "runNext"
+        },
+        {
+          "tick": 12,
+          "action": "runNext"
+        }
+      ]
+    },
+    {
+      "id": "deploy-day",
+      "title": "3. Deploy Day",
+      "blurb": "Deploy Day. Three releases wait in dev. Promote each through staging, then pick rolling, blue-green or canary for prod. Watch the error graph and roll back before users notice. Keep delivery health at 70 or more.",
+      "mode": "deploy",
+      "tickLabel": "Minute",
+      "seed": 3,
+      "winTicks": 40,
+      "minHealth": 70,
+      "failScale": 600,
+      "releases": [
+        {
+          "id": "r1",
+          "version": "v1.4.1",
+          "title": "Footer link colours",
+          "notes": [
+            "CSS only",
+            "No migration"
+          ],
+          "bug": null,
+          "migration": null
+        },
+        {
+          "id": "r2",
+          "version": "v1.5.0",
+          "title": "Checkout redesign",
+          "notes": [
+            "New cart client",
+            "CI and the staging smoke tests are green"
+          ],
+          "bug": {
+            "err": 0.3,
+            "smoke": false,
+            "staging": false
+          },
+          "migration": null
+        },
+        {
+          "id": "r3",
+          "version": "v1.6.0",
+          "title": "Search rewrite",
+          "notes": [
+            "Reworked search index",
+            "CI is green"
+          ],
+          "bug": {
+            "err": 0.3,
+            "smoke": true,
+            "staging": false
+          },
+          "migration": null
+        }
+      ],
+      "schedule": [],
+      "solution": [
+        {
+          "tick": 0,
+          "action": "promote"
+        },
+        {
+          "tick": 1,
+          "action": "wait"
+        },
+        {
+          "tick": 2,
+          "action": "deploy",
+          "args": [
+            "rolling"
+          ]
+        },
+        {
+          "tick": 3,
+          "action": "wait"
+        },
+        {
+          "tick": 4,
+          "action": "wait"
+        },
+        {
+          "tick": 5,
+          "action": "wait"
+        },
+        {
+          "tick": 6,
+          "action": "wait"
+        },
+        {
+          "tick": 7,
+          "action": "wait"
+        },
+        {
+          "tick": 8,
+          "action": "wait"
+        },
+        {
+          "tick": 9,
+          "action": "promote"
+        },
+        {
+          "tick": 10,
+          "action": "wait"
+        },
+        {
+          "tick": 11,
+          "action": "deploy",
+          "args": [
+            "canary"
+          ]
+        },
+        {
+          "tick": 12,
+          "action": "wait"
+        },
+        {
+          "tick": 13,
+          "action": "rollback"
+        },
+        {
+          "tick": 14,
+          "action": "promote"
+        },
+        {
+          "tick": 15,
+          "action": "wait"
+        },
+        {
+          "tick": 16,
+          "action": "deploy",
+          "args": [
+            "bluegreen"
+          ]
+        },
+        {
+          "tick": 17,
+          "action": "wait"
+        },
+        {
+          "tick": 18,
+          "action": "rollback"
+        }
+      ]
+    },
+    {
+      "id": "gates-and-drift",
+      "title": "4. Gates and drift",
+      "blurb": "Deploy Day. A release that staging would catch, someone hot-fixing prod by hand, and a migration that drops a column. Use the gates, keep prod matching git, and never ship a change you cannot undo.",
+      "mode": "deploy",
+      "tickLabel": "Minute",
+      "seed": 4,
+      "winTicks": 40,
+      "minHealth": 70,
+      "failScale": 600,
+      "releases": [
+        {
+          "id": "r4",
+          "version": "v1.7.0",
+          "title": "Promo banner",
+          "notes": [
+            "Banner reads promo codes",
+            "Touches /checkout"
+          ],
+          "bug": {
+            "err": 0.3,
+            "smoke": false,
+            "staging": true
+          },
+          "migration": null
+        },
+        {
+          "id": "r5",
+          "version": "v1.8.0",
+          "title": "Order totals",
+          "notes": [
+            "Migration 0042 drops the legacy_total column",
+            "Totals now come from line items"
+          ],
+          "bug": {
+            "err": 0.3,
+            "smoke": false,
+            "staging": false
+          },
+          "migration": "breaking"
+        }
+      ],
+      "schedule": [
+        {
+          "tick": 2,
+          "event": "hotfix-drift",
+          "kind": "drift"
+        }
+      ],
+      "solution": [
+        {
+          "tick": 0,
+          "action": "promote"
+        },
+        {
+          "tick": 1,
+          "action": "wait"
+        },
+        {
+          "tick": 2,
+          "action": "reject"
+        },
+        {
+          "tick": 3,
+          "action": "expand"
+        },
+        {
+          "tick": 4,
+          "action": "promote"
+        },
+        {
+          "tick": 5,
+          "action": "wait"
+        },
+        {
+          "tick": 6,
+          "action": "commit"
+        },
+        {
+          "tick": 7,
+          "action": "deploy",
+          "args": [
+            "canary"
+          ]
+        },
+        {
+          "tick": 8,
+          "action": "wait"
+        },
+        {
+          "tick": 9,
+          "action": "rollback"
+        }
+      ]
+    }
+  ]
+}
