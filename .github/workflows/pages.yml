@@ -33,6 +33,8 @@ jobs:
         run: mkdocs build --strict --site-dir _site
       - name: Check every local asset the pages reference was published
         run: python3 scripts/check_site_assets.py _site
+      - name: Check every previously published page still exists
+        run: python3 scripts/check_site_urls.py _site
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site

@@ -84,6 +84,16 @@ three, then run `python3 scripts/check_contrast.py`, which fails on drift or on 
 WCAG AA (4.5:1). Pages outside Material use `docs/site/theme.js`, which reads and writes the same
 stored theme choice as Material's own toggle.
 
+## Site checks
+
+Beyond the strict build, CI checks the built site: `scripts/check_site_urls.py` fails if a page listed
+in `scripts/site_urls.txt` disappears (links to the site live elsewhere, so remove a page only on
+purpose, and delete its line in the same change; add new pages to the list), and
+`scripts/site_quality.cjs` opens the home page, the Learn overview, a note, and every game at 390px
+(dark) and 1280px (light), failing on sideways scrolling or any serious or critical axe-core violation.
+Run it locally against a built site with
+`SITE_URL=http://localhost:8000/ NODE_PATH=<dir with playwright and axe-core> node scripts/site_quality.cjs`.
+
 ## Game page layout
 
 Every game page gets the same frame from the shared shell, so a game's own code only draws its board:

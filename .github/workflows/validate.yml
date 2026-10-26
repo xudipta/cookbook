@@ -70,12 +70,15 @@ jobs:
               - 'scripts/build_docs.sh'
               - 'scripts/check_site_assets.py'
               - 'scripts/check_contrast.py'
+              - 'scripts/check_site_urls.py'
+              - 'scripts/site_urls.txt'
               - 'scripts/play_banners.py'
             games:
               - 'docs/games/**'
               - 'docs/site/**'
               - 'scripts/check_games.py'
               - 'scripts/games_smoke.cjs'
+              - 'scripts/site_quality.cjs'
               - 'scripts/build_docs.sh'
               - 'mkdocs.yml'
               - 'requirements-docs.txt'
@@ -454,6 +457,8 @@ jobs:
         run: mkdocs build --strict --site-dir _site
       - name: Check every local asset the pages reference was published
         run: python3 scripts/check_site_assets.py _site
+      - name: Check every previously published page still exists
+        run: python3 scripts/check_site_urls.py _site
       - name: Check the design tokens meet WCAG AA in both themes
         run: python3 scripts/check_contrast.py
 
@@ -480,9 +485,9 @@ jobs:
           node-version: '20'
       - name: Install Playwright and Chromium
         run: |
-          npm install --prefix "$RUNNER_TEMP/pw" playwright@1.49.1
+          npm install --prefix "$RUNNER_TEMP/pw" playwright@1.49.1 axe-core@4.10.2
           "$RUNNER_TEMP/pw/node_modules/.bin/playwright" install --with-deps chromium
-      - name: Play every game against the built site
+      - name: Play every game, then check layout and accessibility on the built site
         env:
           NODE_PATH: ${{ runner.temp }}/pw/node_modules
           SITE_URL: http://localhost:8000/
@@ -490,3 +495,4 @@ jobs:
           python3 -m http.server 8000 --directory _site >/dev/null 2>&1 &
           timeout 30 sh -c 'until curl -sf http://localhost:8000/ >/dev/null; do sleep 1; done'
           node scripts/games_smoke.cjs
+          node scripts/site_quality.cjs

@@ -97,7 +97,7 @@ function wireDropZones(state, ctx) {
 
 function layerRows(state) {
   const last = state.last;
-  if (!last) return [el('p', { class: 'dk-empty', text: 'Press Build to see which layers are cached and which rebuild.' })];
+  if (!last) return [el('p', { class: 'dk-empty', role: 'listitem', text: 'Press Build to see which layers are cached and which rebuild.' })];
   const rows = [];
   if (!last.ok) rows.push(el('div', { class: 'dk-layer dk-layer-error', role: 'listitem' }, el('span', { class: 'dk-badge', text: 'failed' }), el('span', { class: 'dk-ltext', text: `Build failed: ${last.error.short}. Read the output below.` })));
   let stage = -1;
@@ -136,9 +136,9 @@ function goalItems(state) {
 function render(state, ctx) {
   const d = state.dom;
   d.deck.replaceChildren(...state.order.map((id) => cardEl(state, ctx, id, 'deck')));
-  if (!state.order.length) d.deck.append(el('p', { class: 'dk-empty', text: 'Empty. Add cards from the tray below.' }));
+  if (!state.order.length) d.deck.append(el('p', { class: 'dk-empty', role: 'listitem', text: 'Empty. Add cards from the tray below.' }));
   const free = trayIds(state);
-  d.tray.replaceChildren(...(free.length ? free.map((id) => cardEl(state, ctx, id, 'tray')) : [el('p', { class: 'dk-empty', text: 'Every card is in the Dockerfile.' })]));
+  d.tray.replaceChildren(...(free.length ? free.map((id) => cardEl(state, ctx, id, 'tray')) : [el('p', { class: 'dk-empty', role: 'listitem', text: 'Every card is in the Dockerfile.' })]));
   d.layers.replaceChildren(...layerRows(state));
   d.goals.replaceChildren(
     ...goalItems(state).map((g) => el('div', { class: `dk-goal dk-goal-${g.ok ? 'ok' : 'todo'}`, role: 'listitem' }, el('span', { class: 'dk-goal-mark', text: g.ok ? 'done' : 'todo' }), el('span', { text: g.text }))),
