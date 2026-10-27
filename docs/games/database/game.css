@@ -1,0 +1,402 @@
+/* Index Fund. Boards use <div>s, never <ul>, so Material's list styling doesn't apply. State is always
+   spelled out in text (SLOW / OK, waiting / shipped); the border colour only repeats it. */
+
+.cg .db-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1.1rem;
+  margin-bottom: 0.75rem;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--cg-border);
+  border-radius: 0.3rem;
+  background: var(--cg-surface);
+  font-size: 0.8rem;
+}
+
+.cg .db-fact {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.1rem 0.4rem;
+  align-items: baseline;
+}
+
+.cg .db-fact-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.cg .db-fact-note {
+  font-size: 0.74rem;
+  color: var(--muted);
+}
+
+.cg .db-fact-bad strong {
+  text-decoration: underline wavy var(--cg-bad);
+  text-underline-offset: 3px;
+}
+
+.cg .db-cols {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.75rem;
+}
+
+/* Two panes side by side only when the board itself is wide enough. */
+@container (min-width: 820px) {
+  .cg .db-cols {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.cg .db-panel {
+  margin-bottom: 0.75rem;
+  min-width: 0;
+}
+
+.cg .db-h {
+  margin: 0 0 0.4rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--muted);
+}
+
+.cg .db-list,
+.cg .db-releases,
+.cg .db-ixs {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.cg .db-t,
+.cg .db-q,
+.cg .db-m,
+.cg .db-app,
+.cg .db-rel {
+  min-width: 0;
+  padding: 0.4rem 0.55rem;
+  border: 1px solid var(--cg-border);
+  border-left: 4px solid var(--cg-accent);
+  border-radius: 0.25rem;
+  background: var(--surface);
+  font-size: 0.8rem;
+}
+
+.cg .db-q[data-state="slow"] {
+  border-left-color: var(--cg-bad);
+}
+
+.cg .db-q[data-state="ok"] {
+  border-left-color: var(--cg-ok);
+}
+
+.cg .db-q[data-state="batch"],
+.cg .db-q[data-state="write"] {
+  border-left-style: dashed;
+}
+
+.cg .db-t-head,
+.cg .db-q-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.15rem 0.6rem;
+}
+
+.cg .db-t-rows,
+.cg .db-q-meta,
+.cg .db-ix-meta,
+.cg .db-app-note,
+.cg .db-app-reads,
+.cg .db-m-state {
+  font-size: 0.74rem;
+  color: var(--muted);
+}
+
+.cg .db-q-ms {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.cg .db-badge,
+.cg .db-tag {
+  padding: 0 0.35rem;
+  border: 1px solid currentcolor;
+  border-radius: 0.2rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.cg .db-tag {
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.cg .db-tag-warn {
+  color: var(--ink);
+  border-color: var(--cg-warn);
+}
+
+.cg .db-ixs {
+  gap: 0.15rem;
+  margin-top: 0.3rem;
+}
+
+.cg .db-ix {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.05rem 0.5rem;
+  padding-left: 0.5rem;
+  border-left: 2px solid var(--cg-border);
+  font-size: 0.76rem;
+}
+
+.cg .db-ix-name {
+  font-family: var(--font-mono);
+  overflow-wrap: anywhere;
+}
+
+.cg .db-ix-cols {
+  font-family: var(--font-mono);
+  color: var(--muted);
+}
+
+.cg .db-sql {
+  display: block;
+  margin: 0.3rem 0 0.2rem;
+  padding: 0.25rem 0.4rem;
+  border-radius: 0.2rem;
+  background: var(--cg-surface);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  line-height: 1.35;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.cg .db-bar {
+  position: relative;
+  height: 0.5rem;
+  margin: 0.3rem 0;
+  border-radius: 0.25rem;
+  background: var(--cg-surface);
+  border: 1px solid var(--cg-border);
+  overflow: hidden;
+}
+
+.cg .db-bar-fill {
+  display: block;
+  height: 100%;
+  background: var(--cg-ok);
+}
+
+.cg .db-q[data-state="slow"] .db-bar-fill {
+  background: var(--cg-bad);
+}
+
+/* the budget line: bars are scaled so the budget sits at the middle */
+.cg .db-bar-mark {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 2px;
+  background: var(--ink);
+}
+
+.cg .db-q-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.3rem;
+}
+
+.cg .db-m {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.1rem 0.7rem;
+  align-items: baseline;
+}
+
+.cg .db-m-name {
+  font-family: var(--font-mono);
+  overflow-wrap: anywhere;
+}
+
+.cg .db-app {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  margin-bottom: 0.4rem;
+}
+
+.cg .db-app[data-state="broken"] {
+  border-left-color: var(--cg-bad);
+}
+
+.cg .db-app-state {
+  font-weight: 600;
+}
+
+.cg .db-rel {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.2rem 0.6rem;
+}
+
+.cg .db-rel[data-state="shipped"] {
+  border-left-color: var(--cg-ok);
+}
+
+.cg .db-rel[data-state="waiting to ship"] {
+  border-left-color: var(--cg-warn);
+}
+
+.cg .db-empty {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.cg .db-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-top: 0.5rem;
+}
+
+.cg .db-code {
+  max-height: 18rem;
+  margin: 0;
+  padding: 0.5rem;
+  overflow: auto;
+  border: 1px solid var(--cg-border);
+  border-radius: 0.3rem;
+  background: var(--cg-surface);
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+
+.cg .db-prompt,
+.cg .db-quicks {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.35rem;
+  margin-top: 0.4rem;
+}
+
+.cg .db-ps1 {
+  padding-top: 0.3rem;
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+
+.cg .db-select,
+.cg .db-input {
+  flex: 1 1 12rem;
+  min-width: 0;
+  padding: 0.25rem 0.4rem;
+  border: 1px solid var(--cg-border);
+  border-radius: 0.25rem;
+  background: var(--surface);
+  color: inherit;
+  font: inherit;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+}
+
+.cg .db-input {
+  resize: vertical;
+}
+
+.cg .db-editor .db-select {
+  flex: none;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.cg .db-file {
+  flex: none;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.cg .db-btn {
+  padding: 0.2rem 0.55rem;
+  border: 1px solid var(--cg-accent);
+  border-radius: 0.2rem;
+  background: transparent;
+  color: var(--cg-accent);
+  font: inherit;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.cg .db-quick {
+  font-family: var(--font-mono);
+}
+
+.cg .db-btn-main {
+  background: var(--cg-accent);
+  color: var(--accent-ink);
+}
+
+.cg .db-btn:hover:not(:disabled) {
+  background: var(--cg-surface);
+  color: var(--ink);
+}
+
+.cg .db-btn-main:hover:not(:disabled) {
+  background: var(--cg-accent);
+  color: var(--accent-ink);
+  filter: brightness(1.1);
+}
+
+.cg .db-btn:disabled,
+.cg .db-input:disabled,
+.cg .db-select:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.cg .db-btn:focus-visible,
+.cg .db-input:focus-visible,
+.cg .db-select:focus-visible,
+.cg .db-term:focus-visible,
+.cg .db-code:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.cg .db-term {
+  height: 20rem;
+  margin: 0;
+  padding: 0.5rem;
+  overflow: auto;
+  border: 1px solid var(--cg-border);
+  border-radius: 0.3rem;
+  background: var(--term-bg);
+  color: var(--term-ink);
+  font-size: 0.72rem;
+  line-height: 1.35;
+  white-space: pre;
+}
+
+.cg .db-line-cmd {
+  font-weight: 700;
+}
+
+.cg .db-line-note {
+  color: var(--term-dim);
+}
