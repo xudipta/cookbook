@@ -23,6 +23,10 @@ Prometheus does two jobs at once: it's both the thing storing your metrics *and*
 thing evaluating alerting rules against them — Grafana and Alertmanager are separate
 processes that sit on top, for visualization and notification respectively.
 
+**Play it:** [Quiet Hours](../../docs/games/observability/index.md) is a night on call: build
+alerting rules from PromQL blocks, replay them against a week of history, and tune them until real
+incidents page you and noise does not.
+
 ## Contents
 
 - `notes/01-prometheus-basics.md` — pull-based scraping, the four metric types, enough

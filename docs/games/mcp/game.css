@@ -1,0 +1,376 @@
+/* Patch Bay. Boards use <div>s, never <ul>, so Material's list styling doesn't apply. */
+
+.cg .mc-status-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1.1rem;
+  margin-bottom: 0.75rem;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--cg-border);
+  border-radius: 0.3rem;
+  background: var(--cg-surface);
+  font-size: 0.8rem;
+}
+
+.cg .mc-fact {
+  display: inline-flex;
+  gap: 0.35rem;
+  align-items: baseline;
+}
+
+.cg .mc-fact-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.cg .mc-cols {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.75rem;
+}
+
+/* Two columns only when the board itself is wide enough. */
+@container (min-width: 820px) {
+  .cg .mc-cols {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.cg .mc-col,
+.cg .mc-panel {
+  min-width: 0;
+}
+
+.cg .mc-panel {
+  margin-bottom: 0.75rem;
+}
+
+.cg .mc-h {
+  margin: 0 0 0.4rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--muted);
+}
+
+.cg .mc-h-sub {
+  margin-top: 0.6rem;
+}
+
+.cg .mc-list,
+.cg .mc-files {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.cg .mc-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.15rem 0.5rem;
+  padding: 0.4rem 0.55rem;
+  border: 1px solid var(--cg-border);
+  border-left: 4px solid var(--cg-border);
+  border-radius: 0.25rem;
+  background: var(--surface);
+  font-size: 0.82rem;
+}
+
+.cg .mc-req {
+  flex-wrap: nowrap;
+  align-items: flex-start;
+}
+
+.cg .mc-req[data-state="now"] {
+  border-left-color: var(--cg-accent);
+}
+
+.cg .mc-req[data-state="done"] {
+  border-left-color: var(--cg-ok);
+}
+
+.cg .mc-req[data-state="todo"] {
+  opacity: 0.85;
+}
+
+.cg .mc-n {
+  flex: none;
+  min-width: 1.2rem;
+  font: 700 0.8rem/1.4 var(--font-mono);
+  color: var(--muted);
+}
+
+.cg .mc-req-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.cg .mc-sub {
+  font-size: 0.74rem;
+  color: var(--muted);
+}
+
+.cg .mc-state {
+  font-size: 0.78rem;
+  overflow-wrap: anywhere;
+}
+
+.cg .mc-card[data-state="connected"] {
+  border-left-color: var(--cg-ok);
+}
+
+.cg .mc-card[data-state="failed"],
+.cg .mc-card[data-state="auth"] {
+  border-left-color: var(--cg-bad);
+}
+
+.cg .mc-card[data-state="pending"] {
+  border-left-color: var(--cg-warn);
+}
+
+.cg .mc-card-head {
+  display: flex;
+  flex-wrap: wrap;
+  flex-basis: 100%;
+  align-items: baseline;
+  gap: 0.3rem 0.5rem;
+}
+
+.cg .mc-name {
+  font-size: 0.85rem;
+}
+
+.cg .mc-tag {
+  padding: 0 0.35rem;
+  border: 1px solid var(--cg-border);
+  border-radius: 0.2rem;
+  font: 600 0.68rem/1.5 var(--font-mono);
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.cg .mc-status {
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+
+.cg .mc-what,
+.cg .mc-error,
+.cg .mc-prim code {
+  font-size: 0.74rem;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.cg .mc-what {
+  flex-basis: 100%;
+}
+
+.cg .mc-error {
+  flex-basis: 100%;
+  color: var(--cg-bad);
+}
+
+.cg .mc-prim {
+  display: inline-flex;
+  flex-basis: 100%;
+  gap: 0.4rem;
+  align-items: baseline;
+}
+
+.cg .mc-card-actions {
+  display: flex;
+  flex-basis: 100%;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.3rem;
+}
+
+.cg .mc-hint {
+  margin: 0.5rem 0 0;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.cg .mc-empty {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.cg .mc-code {
+  margin: 0.2rem 0 0;
+  padding: 0.5rem;
+  max-height: 14rem;
+  overflow: auto;
+  border: 1px solid var(--cg-border);
+  border-radius: 0.3rem;
+  background: var(--cg-surface);
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+
+.cg .mc-knobs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.cg .mc-knob {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.cg .mc-select,
+.cg .mc-input {
+  flex: 1 1 10rem;
+  min-width: 0;
+  padding: 0.25rem 0.4rem;
+  border: 1px solid var(--cg-border);
+  border-radius: 0.25rem;
+  background: var(--surface);
+  color: inherit;
+  font: inherit;
+  font-size: 0.78rem;
+}
+
+.cg .mc-prompt,
+.cg .mc-quicks {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.4rem;
+}
+
+.cg .mc-cmd,
+.cg .mc-ps1,
+.cg .mc-quick {
+  font-family: var(--font-mono);
+}
+
+.cg .mc-ps1 {
+  font-weight: 700;
+}
+
+.cg .mc-btn {
+  padding: 0.2rem 0.55rem;
+  border: 1px solid var(--cg-accent);
+  border-radius: 0.2rem;
+  background: transparent;
+  color: var(--cg-accent);
+  font: inherit;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.cg .mc-btn:hover:not(:disabled) {
+  background: var(--cg-surface);
+}
+
+.cg .mc-btn:disabled,
+.cg .mc-input:disabled,
+.cg .mc-select:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.cg .mc-btn:focus-visible,
+.cg .mc-input:focus-visible,
+.cg .mc-select:focus-visible,
+.cg .mc-code:focus-visible,
+.cg .mc-term:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.cg .mc-term {
+  height: 15rem;
+  margin: 0;
+  padding: 0.5rem;
+  overflow: auto;
+  border: 1px solid var(--cg-border);
+  border-radius: 0.3rem;
+  background: var(--term-bg);
+  color: var(--term-ink);
+  font-size: 0.72rem;
+  line-height: 1.35;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.cg .mc-wire {
+  height: 18rem;
+}
+
+.cg .mc-line-cmd,
+.cg .mc-line-out {
+  color: #9fd0ff;
+}
+
+.cg .mc-line-cmd {
+  font-weight: 700;
+}
+
+.cg .mc-line-in {
+  color: #9be3b0;
+}
+
+.cg .mc-line-note {
+  color: #b8c4cd;
+}
+
+.cg .mc-line-err,
+.cg .mc-line-stderr {
+  color: #ff9d95;
+}
+
+/* The terminal prints plain output in the default ink; only wire arrows are blue. */
+.cg .mc-term:not(.mc-wire) .mc-line-out {
+  color: var(--term-ink);
+}
+
+/* Material styles <details> as an admonition; a game fold is plain. */
+.md-typeset .cg details.mc-fold {
+  margin: 0 0 0.75rem;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.md-typeset .cg details.mc-fold > summary {
+  position: relative;
+  margin: 0;
+  padding: 0 1.6rem 0.4rem 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.md-typeset .cg details.mc-fold > summary::before {
+  display: none;
+}
+
+.md-typeset .cg details.mc-fold > summary::after {
+  top: 0.15em;
+  right: 0.2rem;
+}
+
+.md-typeset .cg details.mc-fold > :not(summary) {
+  margin-inline: 0;
+}
+
+.cg .mc-knob .mc-select {
+  flex: none;
+}

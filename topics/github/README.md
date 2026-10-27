@@ -21,6 +21,10 @@ flowchart LR
 review, issues, and everything in `03-repo-configuration.md` (CODEOWNERS, branch
 protection, templates).
 
+**Play it:** [Merge Conflict Rush](../../docs/games/github/index.md) puts you on a shared
+repo with real `git` and `gh` commands: update a branch that fell behind, resolve a conflict,
+and undo a bad commit on a protected `main`, all while a commit graph redraws.
+
 ## Contents
 
 - `notes/01-git-fundamentals.md` — everyday flow, merge vs. rebase, staging/stashing,

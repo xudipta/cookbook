@@ -66,7 +66,15 @@ http_requests_total                          # the raw counter, all label combin
 rate(http_requests_total[5m])                 # per-second rate over a 5-minute window — always rate() a counter before graphing it
 sum(rate(http_requests_total[5m])) by (job)   # aggregate the rate across instances, grouped by job
 histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))  # p95 latency
+increase(http_requests_total[1h])             # how many requests in the last hour
+avg_over_time(queue_depth[10m])               # smooth a gauge (never rate() a gauge)
+sum(rate(http_requests_total{code=~"5.."}[5m])) / sum(rate(http_requests_total[5m]))   # error ratio
 ```
+
+With several instances, add up the buckets first so the quantile covers all of them:
+`histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))`.
+A histogram also keeps `_sum` and `_count`, so `rate(..._sum[5m]) / rate(..._count[5m])` gives the
+mean — but a mean barely moves when a small share of requests gets very slow, while p95 does.
 
 `rate()` matters: graphing a raw counter shows a line that only goes up and resets to
 zero on restart — `rate()` turns it into the per-second value you actually want to look
