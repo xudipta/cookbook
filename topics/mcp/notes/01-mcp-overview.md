@@ -26,6 +26,23 @@ Host application (Claude Code, an IDE, a desktop app)
 Older docs mention a separate "HTTP+SSE" transport; it has been folded into Streamable
 HTTP.
 
+## The handshake
+
+Every connection starts with the same short exchange. The client sends `initialize` (the
+protocol version it speaks, its capabilities and `clientInfo`); the server answers with its own
+version, capabilities and `serverInfo`; the client confirms with a `notifications/initialized`
+notification. Only then does it ask what the server offers: `tools/list`, plus `resources/list`
+and `prompts/list` for the capabilities the server declared. Later calls are `tools/call`,
+`resources/read` and `prompts/get`.
+
+```json
+{"jsonrpc":"2.0","id":0,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"claude-code","version":"2.0.0"}}}
+```
+
+If the process cannot start, exits early or answers the first request with an error, the
+client reports the server as failed (a stdio process that died shows up as
+`MCP error -32000: Connection closed`) and none of its tools exist for the model.
+
 ## The three primitives
 
 A server can expose any of:

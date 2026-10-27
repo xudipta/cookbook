@@ -15,6 +15,7 @@ sections, and a scripted winning run must actually win.
 | [Drift Detective](terraform/index.md) | Terraform | Playable: 3 levels, a plan/apply/state simulator, a `terraform` prompt |
 | [Pipeline Panic](cicd/index.md) | CI/CD | Playable: 4 levels, workflow cards with a live YAML preview, then Deploy Day with rolling, blue-green and canary releases |
 | [Skill Issue](skills/index.md) | Agent Skills | Playable: 3 levels, a context-window and trigger simulator, the `check_skill.py` lint gate |
+| [Patch Bay](mcp/index.md) | MCP | Playable: 3 levels, a `claude mcp` simulator, a JSON-RPC wire log |
 | [Replica Rescue (demo)](demo/index.md) | Kubernetes basics | Playable; exists to prove the shell |
 
 Topic games are planned for every topic; follow the
