@@ -73,6 +73,20 @@ Runs one job per combination (4 here). Add `fail-fast: false` under `strategy` i
 combination failing shouldn't cancel the others — useful when you want the full picture
 of which OS/version pairs actually broke.
 
+## Concurrency — cancel superseded runs
+
+```yaml
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+```
+
+Runs that share a `group` queue behind each other, and `cancel-in-progress: true` cancels the
+older run when a newer one starts. Five quick pushes to one PR branch then cost one full run
+(plus a few seconds each for the cancelled ones) instead of five. Keep the group per branch or
+PR (`github.ref`), and don't set `cancel-in-progress` on a deploy workflow: cancelling a deploy
+half-way is worse than letting it finish.
+
 ## Reusable vs. composite
 
 - **Reusable workflow** (`workflow_call`, like `examples/workflows/reusable-lint.yml`) —
