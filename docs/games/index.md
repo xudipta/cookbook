@@ -22,7 +22,7 @@ sections, and a scripted winning run must actually win.
 | [Night Shift](linux/index.md) | Linux / Shell | Playable: 3 levels, a simulated server, a shell you type real commands into |
 | [Replica Rescue (demo)](demo/index.md) | Kubernetes basics | Playable; exists to prove the shell |
 
-Topic games are planned for every topic; follow the
-[epic on GitHub](https://github.com/xudipta/cookbook/issues/36) for progress.
+Every topic has a game. Follow the
+[epic on GitHub](https://github.com/xudipta/cookbook/issues/36) for what comes next.
 
 Building one yourself? See "Adding a game" in [`CONTRIBUTING.md`](../../CONTRIBUTING.md).
