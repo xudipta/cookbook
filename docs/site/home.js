@@ -68,6 +68,12 @@ async function board() {
     set('live', live.length);
     set('levels', live.reduce((sum, g) => sum + g.levels, 0));
     set('live-word', WORDS[live.length] || String(live.length));
+    // Only mention a queue while there is one.
+    if (live.length < games.length) {
+      document.getElementById('board-note').append(' The rest of the board is queued, in the order it ships.');
+    } else {
+      document.getElementById('board-h').textContent = 'One game for every topic.';
+    }
   } catch (err) {
     root.replaceChildren(el('p', {}, 'The board could not load. The games are listed on the ', el('a', { href: 'docs/games/', text: 'Play page' }), '.'));
     console.error(err);
