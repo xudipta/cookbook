@@ -3,6 +3,8 @@
 // wiring. The game is turn-based: nothing happens until you press Build.
 import { registerGame } from '../shared/engine.js';
 import { el } from '../shared/ui.js';
+import * as compose from './compose.js';
+import { initCompose, renderCompose } from './compose-ui.js';
 import {
   createWorld,
   isLost as simIsLost,
@@ -134,6 +136,7 @@ function goalItems(state) {
 // ---------------------------------------------------------------- render
 
 function render(state, ctx) {
+  if (state.mode === 'compose') return renderCompose(state, ctx);
   const d = state.dom;
   d.deck.replaceChildren(...state.order.map((id) => cardEl(state, ctx, id, 'deck')));
   if (!state.order.length) d.deck.append(el('p', { class: 'dk-empty', role: 'listitem', text: 'Empty. Add cards from the tray below.' }));
@@ -162,6 +165,11 @@ registerGame({
   styles: 'game.css',
 
   init(state, ctx) {
+    // The Compose level has its own model and board (compose.js, compose-ui.js).
+    if (ctx.scenario.mode === 'compose') {
+      Object.assign(state, compose.createComposeWorld(ctx.scenario));
+      return initCompose(state, ctx);
+    }
     Object.assign(state, createWorld(ctx.scenario));
     state.focus = null;
     const deck = el('div', { class: 'dk-deck', role: 'list', 'aria-label': 'Dockerfile, top to bottom' });
@@ -189,14 +197,25 @@ registerGame({
     ctx.log('Arrange the Dockerfile, then press Build. The first build is free; later ones cost budget in proportion to the layers that rebuild.');
   },
 
-  tick: (state, ctx) => simTick(state, ctx),
+  tick: (state, ctx) => (state.mode === 'compose' ? compose.tick(state, ctx) : simTick(state, ctx)),
 
   actions: {
     build: {
       label: 'Build',
       key: 'b',
       run(state, ctx) {
-        state.last = runBuild(state, ctx);
+        // In the Compose level this button is "Up": docker compose up -d.
+        if (state.mode === 'compose') compose.runUp(state, ctx);
+        else state.last = runBuild(state, ctx);
+      },
+    },
+    choose: { hidden: true, run: (state, ctx, slot, option) => (compose.choose(state, slot, option) ? 'free' : false) },
+    recreate: {
+      hidden: true,
+      run(state, ctx) {
+        if (compose.runRecreate(state, ctx)) return undefined;
+        renderCompose(state, ctx); // the engine does not re-render after `false`
+        return false;
       },
     },
     moveCard: { hidden: true, run: (state, ctx, id, to) => (moveCard(state, id, to) ? 'free' : false) },
@@ -204,8 +223,8 @@ registerGame({
     arrange: { hidden: true, run: (state, ctx, ids) => (arrange(state, ids) ? 'free' : false) },
   },
 
-  isWon: (state) => simIsWon(state),
-  isLost: (state) => simIsLost(state),
+  isWon: (state) => (state.mode === 'compose' ? compose.isWon(state) : simIsWon(state)),
+  isLost: (state) => (state.mode === 'compose' ? compose.isLost(state) : simIsLost(state)),
   render,
 });
 

@@ -233,3 +233,82 @@
   line-height: 1.35;
   white-space: pre-wrap;
 }
+
+/* ---- Compose level ---- */
+
+.cg .dk-slots {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.cg .dk-slot {
+  margin: 0;
+  padding: 0.4rem 0.6rem 0.5rem;
+  border: 1px solid var(--cg-border);
+  border-radius: 0.3rem;
+  background: var(--surface);
+}
+
+.cg .dk-slot-name {
+  padding: 0 0.3rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.cg .dk-slot-name strong {
+  color: var(--ink);
+}
+
+.cg .dk-opt {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.2rem 0.3rem;
+  border-radius: 0.2rem;
+  cursor: pointer;
+}
+
+.cg .dk-opt:hover {
+  background: var(--cg-surface);
+}
+
+.cg .dk-opt input {
+  margin-top: 0.3rem;
+  accent-color: var(--accent);
+}
+
+.cg .dk-opt code {
+  min-width: 0;
+  background: transparent;
+  font-size: 0.76rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.cg .dk-opt:has(input:checked) {
+  background: var(--cg-surface);
+  outline: 1px solid var(--cg-accent);
+}
+
+.cg .dk-opt:has(input:focus-visible) {
+  outline: 2px solid var(--accent);
+}
+
+.cg .dk-yaml {
+  max-height: 28rem;
+  margin: 0;
+  padding: 0.6rem;
+  overflow: auto;
+  border: 1px solid var(--cg-border);
+  border-radius: 0.3rem;
+  background: var(--cg-surface);
+  font-size: 0.74rem;
+  line-height: 1.4;
+}
+
+.cg .dk-btn-wide {
+  margin-bottom: 0.5rem;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.78rem;
+}

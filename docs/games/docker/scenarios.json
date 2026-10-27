@@ -131,6 +131,78 @@
         "note": "topics/docker/notes/01-images-and-dockerfiles.md",
         "section": "Dockerfile tips"
       }
+    },
+    {
+      "id": "cmp-localhost",
+      "title": "The api cannot reach the database: it connects to localhost",
+      "fix": "Inside a container, localhost is the container itself. Services in a Compose project reach each other by service name, so point the api at db:5432.",
+      "learn": {
+        "note": "topics/docker/notes/03-compose-and-networking.md",
+        "section": "Networking"
+      }
+    },
+    {
+      "id": "cmp-db-not-ready",
+      "title": "The api started before the database accepted connections",
+      "fix": "depends_on only orders container start, not readiness. Give db a healthcheck and make the api wait with condition: service_healthy.",
+      "learn": {
+        "note": "topics/docker/notes/03-compose-and-networking.md",
+        "section": "Compose basics"
+      }
+    },
+    {
+      "id": "cmp-no-healthcheck",
+      "title": "The api waits for a healthy database, but db has no healthcheck",
+      "fix": "condition: service_healthy needs a healthcheck on the service it waits for. Add one (pg_isready for Postgres).",
+      "learn": {
+        "note": "topics/docker/notes/03-compose-and-networking.md",
+        "section": "Compose basics"
+      }
+    },
+    {
+      "id": "cmp-undefined-volume",
+      "title": "Compose rejected the project: the volume is not declared",
+      "fix": "A named volume used by a service must also be declared in the top-level volumes: section.",
+      "learn": {
+        "note": "topics/docker/notes/03-compose-and-networking.md",
+        "section": "Volumes"
+      }
+    },
+    {
+      "id": "cmp-data-lost",
+      "title": "The database lost its data after down and up",
+      "fix": "Data written to a container's writable layer is gone when the container is removed. Keep database data in a named volume.",
+      "learn": {
+        "note": "topics/docker/notes/03-compose-and-networking.md",
+        "section": "Volumes"
+      }
+    },
+    {
+      "id": "cmp-published-db",
+      "title": "The database port is published to the host",
+      "fix": "Container-to-container traffic never needs a published port. Publish only what something outside Docker needs (web), and keep db off the host.",
+      "learn": {
+        "note": "topics/docker/notes/03-compose-and-networking.md",
+        "section": "Networking"
+      }
+    },
+    {
+      "id": "cmp-no-web-port",
+      "title": "The web service is not reachable from the host",
+      "fix": "A service is only reachable from outside Docker when it publishes a port, for example ports: [\"8080:80\"].",
+      "learn": {
+        "note": "topics/docker/notes/03-compose-and-networking.md",
+        "section": "Networking"
+      }
+    },
+    {
+      "id": "cmp-bind-mount",
+      "title": "The database data lives in a bind mount",
+      "fix": "A bind mount survives down, but it ties the stack to one host path and is not portable or reproducible in CI. Use a named volume for data you want to keep.",
+      "learn": {
+        "note": "topics/docker/notes/03-compose-and-networking.md",
+        "section": "Volumes"
+      }
     }
   ],
   "levels": [
@@ -946,6 +1018,265 @@
         {
           "tick": 1,
           "action": "build"
+        }
+      ]
+    },
+    {
+      "id": "compose",
+      "title": "6. Compose wiring",
+      "blurb": "A web, api and db stack that does not work yet. Pick one line for each slot of compose.yaml so api reaches db by name, waits for it, and the data survives a down and up, without publishing anything that only containers need.",
+      "mode": "compose",
+      "tickLabel": "Run",
+      "actionLabels": {
+        "build": "Up"
+      },
+      "minHealth": 50,
+      "failPenalty": 12,
+      "runCost": 4,
+      "compose": {
+        "project": "app",
+        "rows": 3,
+        "services": {
+          "web": [
+            "build: ./web"
+          ],
+          "api": [
+            "build: ./api"
+          ],
+          "db": [
+            "image: postgres:16-alpine",
+            "environment:",
+            "  - POSTGRES_PASSWORD=devpass"
+          ]
+        },
+        "slots": [
+          {
+            "id": "web-ports",
+            "service": "web",
+            "label": "ports",
+            "initial": "none",
+            "options": [
+              {
+                "id": "none",
+                "yaml": null,
+                "set": {
+                  "webPort": false
+                }
+              },
+              {
+                "id": "p8080",
+                "yaml": "ports:\n  - \"8080:80\"",
+                "set": {
+                  "webPort": true
+                }
+              }
+            ]
+          },
+          {
+            "id": "api-env",
+            "service": "api",
+            "label": "environment",
+            "initial": "localhost",
+            "options": [
+              {
+                "id": "localhost",
+                "yaml": "environment:\n  - DB_HOST=localhost",
+                "set": {
+                  "dbHost": "localhost"
+                }
+              },
+              {
+                "id": "db",
+                "yaml": "environment:\n  - DB_HOST=db",
+                "set": {
+                  "dbHost": "db"
+                }
+              }
+            ]
+          },
+          {
+            "id": "api-depends",
+            "service": "api",
+            "label": "depends_on",
+            "initial": "plain",
+            "options": [
+              {
+                "id": "plain",
+                "yaml": "depends_on:\n  - db",
+                "set": {
+                  "waitHealthy": false
+                }
+              },
+              {
+                "id": "healthy",
+                "yaml": "depends_on:\n  db:\n    condition: service_healthy",
+                "set": {
+                  "waitHealthy": true
+                }
+              }
+            ]
+          },
+          {
+            "id": "db-health",
+            "service": "db",
+            "label": "healthcheck",
+            "initial": "none",
+            "options": [
+              {
+                "id": "none",
+                "yaml": null,
+                "set": {
+                  "healthcheck": false
+                }
+              },
+              {
+                "id": "pg",
+                "yaml": "healthcheck:\n  test: [\"CMD-SHELL\", \"pg_isready -U postgres\"]\n  interval: 2s\n  retries: 10",
+                "set": {
+                  "healthcheck": true
+                }
+              }
+            ]
+          },
+          {
+            "id": "db-volumes",
+            "service": "db",
+            "label": "volumes",
+            "initial": "none",
+            "options": [
+              {
+                "id": "none",
+                "yaml": null,
+                "set": {
+                  "dbVolume": "none"
+                }
+              },
+              {
+                "id": "named",
+                "yaml": "volumes:\n  - db-data:/var/lib/postgresql/data",
+                "set": {
+                  "dbVolume": "named"
+                }
+              },
+              {
+                "id": "bind",
+                "yaml": "volumes:\n  - ./pgdata:/var/lib/postgresql/data",
+                "set": {
+                  "dbVolume": "bind"
+                }
+              }
+            ]
+          },
+          {
+            "id": "db-ports",
+            "service": "db",
+            "label": "ports",
+            "initial": "pub",
+            "options": [
+              {
+                "id": "none",
+                "yaml": null,
+                "set": {
+                  "dbPort": false
+                }
+              },
+              {
+                "id": "pub",
+                "yaml": "ports:\n  - \"5432:5432\"",
+                "set": {
+                  "dbPort": true
+                }
+              }
+            ]
+          },
+          {
+            "id": "vol-decl",
+            "service": null,
+            "label": "top-level volumes",
+            "initial": "none",
+            "options": [
+              {
+                "id": "none",
+                "yaml": null,
+                "set": {
+                  "volumeDeclared": false
+                }
+              },
+              {
+                "id": "decl",
+                "yaml": "volumes:\n  db-data:",
+                "set": {
+                  "volumeDeclared": true
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "solution": [
+        {
+          "tick": 0,
+          "action": "choose",
+          "args": [
+            "web-ports",
+            "p8080"
+          ]
+        },
+        {
+          "tick": 0,
+          "action": "choose",
+          "args": [
+            "api-env",
+            "db"
+          ]
+        },
+        {
+          "tick": 0,
+          "action": "choose",
+          "args": [
+            "api-depends",
+            "healthy"
+          ]
+        },
+        {
+          "tick": 0,
+          "action": "choose",
+          "args": [
+            "db-health",
+            "pg"
+          ]
+        },
+        {
+          "tick": 0,
+          "action": "choose",
+          "args": [
+            "db-volumes",
+            "named"
+          ]
+        },
+        {
+          "tick": 0,
+          "action": "choose",
+          "args": [
+            "db-ports",
+            "none"
+          ]
+        },
+        {
+          "tick": 0,
+          "action": "choose",
+          "args": [
+            "vol-decl",
+            "decl"
+          ]
+        },
+        {
+          "tick": 0,
+          "action": "build"
+        },
+        {
+          "tick": 1,
+          "action": "recreate"
         }
       ]
     }

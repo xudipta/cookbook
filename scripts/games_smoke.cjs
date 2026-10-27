@@ -68,11 +68,12 @@ async function checkHome(browser) {
   }
   const k8s = await page.locator('a.tile[href="docs/games/kubernetes/"]').innerText();
   if (!k8s.includes('1234')) problems.push('the board lost a score saved under the legacy key');
+  const dockerLevels = manifest.find((g) => g.id === 'docker').levels;
   const docker = await page.locator('a.tile[href="docs/games/docker/"]').innerText();
-  if (!docker.includes('1 of 5 levels done') || !docker.includes('900')) problems.push('the board does not show saved per-level progress');
+  if (!docker.includes(`1 of ${dockerLevels} levels done`) || !docker.includes('900')) problems.push('the board does not show saved per-level progress');
   await page.click('#reset-progress');
   await page.click('#reset-progress');
-  await page.waitForFunction(() => document.querySelector('a.tile[href="docs/games/docker/"]').innerText.includes('0 of 5 levels done'));
+  await page.waitForFunction((n) => document.querySelector('a.tile[href="docs/games/docker/"]').innerText.includes(`0 of ${n} levels done`), dockerLevels);
   const cleared = await page.evaluate(() => Object.keys(localStorage).filter((k) => k.startsWith('cookbook-game-')));
   if (cleared.length) problems.push(`reset left saved progress behind: ${cleared.join(', ')}`);
   const crashed = page.locator('.pod[data-s="crash"]').first();

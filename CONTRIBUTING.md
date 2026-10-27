@@ -178,6 +178,8 @@ the meter it shows. A few rules keep the games consistent:
   `ctx.step()`. In `solution`, the steps run in order and `tick` is just a sort key. An action may
   return `'free'` to be valid but unscored (rearranging cards); `ctx.over` is true once the game
   has ended, so a game's own controls can disable themselves.
+- **Per-level labels**: a level may set `actionLabels: { build: "Up" }` to relabel a visible action for that
+  level (the Compose level of Layer Cake turns Build into Up).
 - **Hidden actions** (`hidden: true`) get no button, for games that drive the pipeline from their
   own UI. From that UI call `ctx.act('name', ...args)` so the action is still counted, scored and
   blocked while paused. An action that returns `false` is not counted, which is how a game keeps
