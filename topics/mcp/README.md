@@ -16,6 +16,10 @@ One host can run many clients at once, each talking to a different server — th
 an agent ends up with tools spanning a database, a ticketing system, and your local
 filesystem simultaneously, all through the same protocol.
 
+**Play it:** [Patch Bay](../../docs/games/mcp/index.md) is a short game where you wire an agent
+to MCP servers with `claude mcp` commands, read the JSON-RPC on the wire, and keep secrets and
+untrusted servers out, using the same config these notes teach.
+
 ## Contents
 
 - `notes/01-mcp-overview.md` — architecture, transports, and the three primitives.

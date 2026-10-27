@@ -1,0 +1,1727 @@
+{
+  "id": "database",
+  "title": "Index Fund",
+  "healthLabel": "Error budget",
+  "tickLabel": "Day",
+  "manual": true,
+  "stacked": true,
+  "seed": 11,
+  "events": [
+    {
+      "id": "login-seq-scan",
+      "title": "Logins are crawling",
+      "fix": "EXPLAIN shows a Seq Scan on users: the planner reads every row to find one email. A UNIQUE index on users (email) turns that into an Index Scan and also enforces one account per email.",
+      "learn": {
+        "note": "topics/database/notes/03-queries-and-indexing.md",
+        "section": "Why an index"
+      }
+    },
+    {
+      "id": "fk-unindexed",
+      "title": "The order history page is slow",
+      "fix": "orders.user_id is a foreign key, but Postgres does not index foreign keys for you, so WHERE user_id = ... is a Seq Scan. Index the column you filter and join on.",
+      "learn": {
+        "note": "topics/database/notes/03-queries-and-indexing.md",
+        "section": "What to index"
+      }
+    },
+    {
+      "id": "sort-after-index",
+      "title": "Recent orders for a user is still slowish",
+      "fix": "The user_id index finds the rows, then Postgres sorts them. An index on (user_id, created_at) hands them back already in order, so ORDER BY ... LIMIT 10 reads ten entries. Column order matters: (created_at, user_id) would not help.",
+      "learn": {
+        "note": "topics/database/notes/03-queries-and-indexing.md",
+        "section": "What to index"
+      }
+    },
+    {
+      "id": "product-seq-scan",
+      "title": "\"Who bought this product\" is scanning order_items",
+      "fix": "The primary key is (order_id, product_id): it serves lookups by order_id, not by product_id alone. A filter on the second column needs its own index.",
+      "learn": {
+        "note": "topics/database/notes/03-queries-and-indexing.md",
+        "section": "What to index"
+      }
+    },
+    {
+      "id": "n-plus-one",
+      "title": "The order page runs one query per line item",
+      "fix": "One query for the items, then one per item for its product: 1 + N round trips. Fetch it with a single JOIN and deploy that statement.",
+      "learn": {
+        "note": "topics/database/notes/03-queries-and-indexing.md",
+        "section": "The N+1 query problem"
+      }
+    },
+    {
+      "id": "over-indexed",
+      "title": "Writes are slow or the disk is filling up",
+      "fix": "Every index is updated on every INSERT, UPDATE and DELETE and takes storage. Look at SELECT * FROM pg_stat_user_indexes, and drop indexes whose idx_scan stays at 0.",
+      "learn": {
+        "note": "topics/database/notes/03-queries-and-indexing.md",
+        "section": "What to index"
+      }
+    },
+    {
+      "id": "report-seq-scan",
+      "title": "Finance asks for an index on orders.status",
+      "fix": "status = 'shipped' matches most of the table, so the planner correctly reads the table instead. An index pays off when a filter keeps a small share of the rows; check EXPLAIN first, and drop an index that does not help.",
+      "learn": {
+        "note": "topics/database/notes/03-queries-and-indexing.md",
+        "section": "When an index does not help"
+      }
+    },
+    {
+      "id": "traffic-growth",
+      "title": "Traffic grew: the table is much bigger",
+      "fix": "A seq scan costs time in proportion to the rows, so a query that was fine at 20,000 rows is slow at 300,000. An index lookup grows with the log of the rows.",
+      "learn": {
+        "note": "topics/database/notes/03-queries-and-indexing.md",
+        "section": "Why an index"
+      }
+    },
+    {
+      "id": "order-page-launch",
+      "title": "Marketing launches the order page",
+      "fix": "A new page ships with its own queries. Run EXPLAIN on each before traffic arrives, and count how many queries one request makes.",
+      "learn": {
+        "note": "topics/database/notes/03-queries-and-indexing.md",
+        "section": "EXPLAIN"
+      }
+    },
+    {
+      "id": "release-add-column",
+      "title": "Release 1: orders.currency (migration 0006, app v2)",
+      "fix": "An additive change: run the migration first, then roll out the app that uses the column. During a rolling deploy old and new app versions run side by side, so the schema must work for both.",
+      "learn": {
+        "note": "topics/database/notes/02-migrations.md",
+        "section": "In CI/CD"
+      }
+    },
+    {
+      "id": "deploy-before-migrate",
+      "title": "The app started before its migration ran",
+      "fix": "The new app reads a column the schema does not have yet. Migrations run as a separate step before the new application version starts.",
+      "learn": {
+        "note": "topics/database/notes/02-migrations.md",
+        "section": "In CI/CD"
+      }
+    },
+    {
+      "id": "release-new-column",
+      "title": "Release 2: orders.shipped_at (migration 0007, app v3)",
+      "fix": "Test the pair in a throwaway database before production: up, down, up. A down that does not undo its up is otherwise found at rollback time, the worst moment.",
+      "learn": {
+        "note": "topics/database/notes/02-migrations.md",
+        "section": "up/down"
+      }
+    },
+    {
+      "id": "broken-down",
+      "title": "A down migration did not undo its up",
+      "fix": "The down file left the column behind, so the next up fails with \"already exists\" and a rollback leaves a schema nobody can reproduce. Write the down, then run up, down, up in staging.",
+      "learn": {
+        "note": "topics/database/notes/02-migrations.md",
+        "section": "up/down"
+      }
+    },
+    {
+      "id": "bad-deploy",
+      "title": "App v3 is failing in production",
+      "fix": "Roll back: put the previous app version back, then migrate down 1. A working down file is what makes a rollback one command instead of an improvised ALTER TABLE.",
+      "learn": {
+        "note": "topics/database/notes/02-migrations.md",
+        "section": "Running them"
+      }
+    },
+    {
+      "id": "release-drop-column",
+      "title": "Release 3: drop users.legacy_username (migration 0008, app v4)",
+      "fix": "A destructive change: deploy the app that stops reading the column first, and drop the column afterwards. Dropping it in the same step as the code that stops using it leaves a window where the old code is still running.",
+      "learn": {
+        "note": "topics/database/notes/02-migrations.md",
+        "section": "In CI/CD"
+      }
+    },
+    {
+      "id": "drop-in-use",
+      "title": "A column disappeared while the running app still reads it",
+      "fix": "The old app version was still live when the migration ran. \"Drop a column\" needs the code to stop using it in an earlier release. Rolling back with a down puts the column back, but not its data.",
+      "learn": {
+        "note": "topics/database/notes/02-migrations.md",
+        "section": "In CI/CD"
+      }
+    },
+    {
+      "id": "edited-applied",
+      "title": "A teammate edited migration 0003, which has already run",
+      "fix": "An applied migration is history: production never re-runs 0003, so the edit would only reach fresh databases. Restore the file and put the change in a new numbered migration.",
+      "learn": {
+        "note": "topics/database/notes/02-migrations.md",
+        "section": "Never edit an applied migration"
+      }
+    },
+    {
+      "id": "schema-drift",
+      "title": "Production no longer matches its migrations",
+      "fix": "Someone changed the schema by hand. A fresh database built from the migrations would differ from production. Make every change a migration so each environment gets the same one.",
+      "learn": {
+        "note": "topics/database/notes/02-migrations.md",
+        "section": "Why not just hand-edit the schema"
+      }
+    }
+  ],
+  "levels": [
+    {
+      "id": "seq-scans",
+      "title": "1. Seq scans",
+      "blurb": "A small shop on Postgres: logins and order history get slower as the tables grow. EXPLAIN a query to see its plan, add the indexes that help, and keep reads under 20 ms without making writes or storage pay for indexes nobody uses.",
+      "seed": 11,
+      "mode": "tuning",
+      "winTicks": 5,
+      "minHealth": 45,
+      "targetMs": 20,
+      "writeBudgetMs": 0.42,
+      "storageBudgetMb": 300,
+      "dailyGrowth": 0.06,
+      "rttMs": 0.8,
+      "catalog": {
+        "tables": [
+          {
+            "name": "users",
+            "rows": 150000,
+            "cols": [
+              {
+                "name": "id",
+                "type": "bigint",
+                "stat": {
+                  "unique": true
+                },
+                "notNull": true,
+                "default": "nextval('users_id_seq')"
+              },
+              {
+                "name": "email",
+                "type": "text",
+                "stat": {
+                  "unique": true
+                },
+                "notNull": true
+              },
+              {
+                "name": "created_at",
+                "type": "timestamptz",
+                "stat": {
+                  "frac": 0.0005
+                },
+                "notNull": true,
+                "default": "now()"
+              }
+            ]
+          },
+          {
+            "name": "products",
+            "rows": 5000,
+            "cols": [
+              {
+                "name": "id",
+                "type": "bigint",
+                "stat": {
+                  "unique": true
+                },
+                "notNull": true,
+                "default": "nextval('products_id_seq')"
+              },
+              {
+                "name": "sku",
+                "type": "text",
+                "stat": {
+                  "unique": true
+                },
+                "notNull": true
+              },
+              {
+                "name": "name",
+                "type": "text",
+                "stat": {
+                  "frac": 0.0005
+                },
+                "notNull": true
+              },
+              {
+                "name": "price_cents",
+                "type": "integer",
+                "stat": {
+                  "frac": 0.01
+                },
+                "notNull": true
+              }
+            ]
+          },
+          {
+            "name": "orders",
+            "rows": 20000,
+            "fks": [
+              {
+                "cols": [
+                  "user_id"
+                ],
+                "ref": "users(id)"
+              }
+            ],
+            "cols": [
+              {
+                "name": "id",
+                "type": "bigint",
+                "stat": {
+                  "unique": true
+                },
+                "notNull": true,
+                "default": "nextval('orders_id_seq')"
+              },
+              {
+                "name": "user_id",
+                "type": "bigint",
+                "stat": {
+                  "per": 2
+                },
+                "notNull": true
+              },
+              {
+                "name": "status",
+                "type": "text",
+                "stat": {
+                  "frac": 0.25,
+                  "values": {
+                    "pending": 0.002,
+                    "paid": 0.03,
+                    "shipped": 0.6,
+                    "cancelled": 0.05
+                  }
+                },
+                "notNull": true,
+                "default": "'pending'"
+              },
+              {
+                "name": "created_at",
+                "type": "timestamptz",
+                "stat": {
+                  "frac": 0.0001
+                },
+                "notNull": true,
+                "default": "now()"
+              }
+            ]
+          },
+          {
+            "name": "order_items",
+            "rows": 80000,
+            "fks": [
+              {
+                "cols": [
+                  "order_id"
+                ],
+                "ref": "orders(id)"
+              },
+              {
+                "cols": [
+                  "product_id"
+                ],
+                "ref": "products(id)"
+              }
+            ],
+            "cols": [
+              {
+                "name": "order_id",
+                "type": "bigint",
+                "stat": {
+                  "per": 4
+                },
+                "notNull": true
+              },
+              {
+                "name": "product_id",
+                "type": "bigint",
+                "stat": {
+                  "per": 16
+                },
+                "notNull": true
+              },
+              {
+                "name": "quantity",
+                "type": "integer",
+                "stat": {
+                  "frac": 0.05
+                },
+                "notNull": true
+              }
+            ]
+          }
+        ],
+        "indexes": [
+          {
+            "name": "users_pkey",
+            "table": "users",
+            "cols": [
+              "id"
+            ],
+            "unique": true,
+            "kind": "pkey"
+          },
+          {
+            "name": "products_pkey",
+            "table": "products",
+            "cols": [
+              "id"
+            ],
+            "unique": true,
+            "kind": "pkey"
+          },
+          {
+            "name": "products_sku_key",
+            "table": "products",
+            "cols": [
+              "sku"
+            ],
+            "unique": true,
+            "kind": "unique",
+            "constraint": true
+          },
+          {
+            "name": "orders_pkey",
+            "table": "orders",
+            "cols": [
+              "id"
+            ],
+            "unique": true,
+            "kind": "pkey"
+          },
+          {
+            "name": "order_items_pkey",
+            "table": "order_items",
+            "cols": [
+              "order_id",
+              "product_id"
+            ],
+            "unique": true,
+            "kind": "pkey"
+          }
+        ]
+      },
+      "scans": {
+        "users_pkey": 31000,
+        "products_pkey": 12000,
+        "products_sku_key": 88000,
+        "orders_pkey": 52000,
+        "order_items_pkey": 140000
+      },
+      "queries": [
+        {
+          "id": "login",
+          "kind": "read",
+          "name": "Login by email",
+          "sql": "SELECT\n    id,\n    email\nFROM users\nWHERE email = 'ada@example.com';",
+          "event": "login-seq-scan",
+          "weight": 0.45,
+          "perDay": 90000,
+          "burn": 10
+        },
+        {
+          "id": "history",
+          "kind": "read",
+          "name": "Order history",
+          "sql": "SELECT\n    id,\n    status,\n    created_at\nFROM orders\nWHERE user_id = 4242;",
+          "event": "fk-unindexed",
+          "weight": 0.35,
+          "perDay": 60000,
+          "burn": 8
+        },
+        {
+          "id": "product",
+          "kind": "read",
+          "name": "Product page",
+          "sql": "SELECT\n    id,\n    name,\n    price_cents\nFROM products\nWHERE sku = 'MUG-001';",
+          "event": "login-seq-scan",
+          "weight": 0.2,
+          "perDay": 40000
+        },
+        {
+          "id": "report",
+          "kind": "batch",
+          "name": "Nightly shipped-orders report",
+          "sql": "SELECT count(*)\nFROM orders\nWHERE status = 'shipped';",
+          "weight": 0.01,
+          "perDay": 1,
+          "launch": true,
+          "decoy": true
+        },
+        {
+          "id": "w-order",
+          "kind": "write",
+          "name": "Place an order",
+          "sql": "INSERT INTO orders (user_id, status) VALUES (4242, 'pending');",
+          "table": "orders",
+          "weight": 0.5
+        },
+        {
+          "id": "w-item",
+          "kind": "write",
+          "name": "Add an order line",
+          "sql": "INSERT INTO order_items (order_id, product_id, quantity) VALUES (1042, 7, 2);",
+          "table": "order_items",
+          "weight": 0.35
+        },
+        {
+          "id": "w-signup",
+          "kind": "write",
+          "name": "Sign up",
+          "sql": "INSERT INTO users (email) VALUES ('new@example.com');",
+          "table": "users",
+          "weight": 0.15
+        }
+      ],
+      "schedule": [
+        {
+          "tick": 2,
+          "kind": "grow",
+          "event": "traffic-growth",
+          "table": "orders",
+          "factor": 15,
+          "detail": "sale day: orders x15"
+        },
+        {
+          "tick": 2,
+          "kind": "grow",
+          "event": "traffic-growth",
+          "table": "order_items",
+          "factor": 15,
+          "detail": "sale day: order_items x15"
+        },
+        {
+          "tick": 3,
+          "kind": "decoy",
+          "event": "report-seq-scan",
+          "query": "report"
+        }
+      ],
+      "solution": [
+        {
+          "tick": 0,
+          "action": "sql",
+          "args": [
+            "EXPLAIN ANALYZE\nSELECT\n    id,\n    email\nFROM users\nWHERE email = 'ada@example.com';"
+          ]
+        },
+        {
+          "tick": 0,
+          "action": "sql",
+          "args": [
+            "CREATE UNIQUE INDEX idx_users_email ON users (email);"
+          ]
+        },
+        {
+          "tick": 0,
+          "action": "sql",
+          "args": [
+            "CREATE INDEX idx_orders_user_id ON orders (user_id);"
+          ]
+        },
+        {
+          "tick": 1,
+          "action": "nextDay"
+        },
+        {
+          "tick": 2,
+          "action": "nextDay"
+        },
+        {
+          "tick": 3,
+          "action": "nextDay"
+        },
+        {
+          "tick": 3,
+          "action": "sql",
+          "args": [
+            "EXPLAIN\nSELECT count(*)\nFROM orders\nWHERE status = 'shipped';"
+          ]
+        },
+        {
+          "tick": 4,
+          "action": "nextDay"
+        },
+        {
+          "tick": 5,
+          "action": "nextDay"
+        }
+      ]
+    },
+    {
+      "id": "plans",
+      "title": "2. Read the plan",
+      "blurb": "A wholesale shop with big accounts. Some indexes are missing, one is the wrong shape, and two old ones nothing uses. A new order page launches tomorrow. Use EXPLAIN and pg_stat_user_indexes to decide, then keep every endpoint within budget.",
+      "seed": 22,
+      "mode": "tuning",
+      "winTicks": 6,
+      "minHealth": 40,
+      "targetMs": 15,
+      "writeBudgetMs": 0.47,
+      "storageBudgetMb": 780,
+      "dailyGrowth": 0.04,
+      "rttMs": 0.8,
+      "catalog": {
+        "tables": [
+          {
+            "name": "users",
+            "rows": 2000,
+            "cols": [
+              {
+                "name": "id",
+                "type": "bigint",
+                "stat": {
+                  "unique": true
+                },
+                "notNull": true,
+                "default": "nextval('users_id_seq')"
+              },
+              {
+                "name": "email",
+                "type": "text",
+                "stat": {
+                  "unique": true
+                },
+                "notNull": true
+              },
+              {
+                "name": "created_at",
+                "type": "timestamptz",
+                "stat": {
+                  "frac": 0.0005
+                },
+                "notNull": true,
+                "default": "now()"
+              }
+            ]
+          },
+          {
+            "name": "products",
+            "rows": 50000,
+            "cols": [
+              {
+                "name": "id",
+                "type": "bigint",
+                "stat": {
+                  "unique": true
+                },
+                "notNull": true,
+                "default": "nextval('products_id_seq')"
+              },
+              {
+                "name": "sku",
+                "type": "text",
+                "stat": {
+                  "unique": true
+                },
+                "notNull": true
+              },
+              {
+                "name": "name",
+                "type": "text",
+                "stat": {
+                  "frac": 0.0005
+                },
+                "notNull": true
+              },
+              {
+                "name": "price_cents",
+                "type": "integer",
+                "stat": {
+                  "frac": 0.01
+                },
+                "notNull": true
+              }
+            ]
+          },
+          {
+            "name": "orders",
+            "rows": 150000,
+            "fks": [
+              {
+                "cols": [
+                  "user_id"
+                ],
+                "ref": "users(id)"
+              }
+            ],
+            "cols": [
+              {
+                "name": "id",
+                "type": "bigint",
+                "stat": {
+                  "unique": true
+                },
+                "notNull": true,
+                "default": "nextval('orders_id_seq')"
+              },
+              {
+                "name": "user_id",
+                "type": "bigint",
+                "stat": {
+                  "per": 75
+                },
+                "notNull": true
+              },
+              {
+                "name": "status",
+                "type": "text",
+                "stat": {
+                  "frac": 0.25,
+                  "values": {
+                    "pending": 0.002,
+                    "paid": 0.03,
+                    "shipped": 0.6,
+                    "cancelled": 0.05
+                  }
+                },
+                "notNull": true,
+                "default": "'pending'"
+              },
+              {
+                "name": "created_at",
+                "type": "timestamptz",
+                "stat": {
+                  "frac": 0.0001
+                },
+                "notNull": true,
+                "default": "now()"
+              }
+            ]
+          },
+          {
+            "name": "order_items",
+            "rows": 6000000,
+            "fks": [
+              {
+                "cols": [
+                  "order_id"
+                ],
+                "ref": "orders(id)"
+              },
+              {
+                "cols": [
+                  "product_id"
+                ],
+                "ref": "products(id)"
+              }
+            ],
+            "cols": [
+              {
+                "name": "order_id",
+                "type": "bigint",
+                "stat": {
+                  "per": 40
+                },
+                "notNull": true
+              },
+              {
+                "name": "product_id",
+                "type": "bigint",
+                "stat": {
+                  "per": 120
+                },
+                "notNull": true
+              },
+              {
+                "name": "quantity",
+                "type": "integer",
+                "stat": {
+                  "frac": 0.05
+                },
+                "notNull": true
+              }
+            ]
+          }
+        ],
+        "indexes": [
+          {
+            "name": "users_pkey",
+            "table": "users",
+            "cols": [
+              "id"
+            ],
+            "unique": true,
+            "kind": "pkey"
+          },
+          {
+            "name": "users_email_key",
+            "table": "users",
+            "cols": [
+              "email"
+            ],
+            "unique": true,
+            "kind": "unique",
+            "constraint": true
+          },
+          {
+            "name": "idx_users_created_at",
+            "table": "users",
+            "cols": [
+              "created_at"
+            ]
+          },
+          {
+            "name": "products_pkey",
+            "table": "products",
+            "cols": [
+              "id"
+            ],
+            "unique": true,
+            "kind": "pkey"
+          },
+          {
+            "name": "products_sku_key",
+            "table": "products",
+            "cols": [
+              "sku"
+            ],
+            "unique": true,
+            "kind": "unique",
+            "constraint": true
+          },
+          {
+            "name": "orders_pkey",
+            "table": "orders",
+            "cols": [
+              "id"
+            ],
+            "unique": true,
+            "kind": "pkey"
+          },
+          {
+            "name": "idx_orders_user_id",
+            "table": "orders",
+            "cols": [
+              "user_id"
+            ]
+          },
+          {
+            "name": "idx_orders_status",
+            "table": "orders",
+            "cols": [
+              "status"
+            ]
+          },
+          {
+            "name": "idx_orders_created_at",
+            "table": "orders",
+            "cols": [
+              "created_at"
+            ]
+          },
+          {
+            "name": "order_items_pkey",
+            "table": "order_items",
+            "cols": [
+              "order_id",
+              "product_id"
+            ],
+            "unique": true,
+            "kind": "pkey"
+          }
+        ]
+      },
+      "scans": {
+        "users_pkey": 12000,
+        "users_email_key": 640000,
+        "products_pkey": 80000,
+        "products_sku_key": 5000,
+        "orders_pkey": 90000,
+        "idx_orders_user_id": 410000,
+        "idx_orders_status": 0,
+        "idx_orders_created_at": 0,
+        "idx_users_created_at": 0,
+        "order_items_pkey": 300000
+      },
+      "queries": [
+        {
+          "id": "login",
+          "kind": "read",
+          "name": "Login by email",
+          "sql": "SELECT\n    id,\n    email\nFROM users\nWHERE email = 'ada@example.com';",
+          "event": "login-seq-scan",
+          "weight": 0.25,
+          "perDay": 90000
+        },
+        {
+          "id": "recent",
+          "kind": "read",
+          "name": "Recent orders",
+          "sql": "SELECT\n    id,\n    status,\n    created_at\nFROM orders\nWHERE user_id = 4242\nORDER BY created_at DESC\nLIMIT 10;",
+          "event": "sort-after-index",
+          "weight": 0.3,
+          "perDay": 70000,
+          "budgetMs": 4,
+          "burn": 7
+        },
+        {
+          "id": "buyers",
+          "kind": "read",
+          "name": "Who bought this",
+          "sql": "SELECT\n    order_id,\n    quantity\nFROM order_items\nWHERE product_id = 7;",
+          "event": "product-seq-scan",
+          "weight": 0.15,
+          "perDay": 20000,
+          "burn": 7
+        },
+        {
+          "id": "order-page",
+          "kind": "read",
+          "name": "Order page",
+          "sql": "SELECT\n    product_id,\n    quantity\nFROM order_items\nWHERE order_id = 1042;",
+          "each": {
+            "sql": "SELECT\n    name,\n    price_cents\nFROM products\nWHERE id = 7;",
+            "count": 40
+          },
+          "swap": {
+            "tables": [
+              "order_items",
+              "products"
+            ],
+            "joins": [
+              [
+                "order_items.product_id",
+                "products.id"
+              ]
+            ],
+            "filter": "order_items.order_id"
+          },
+          "event": "n-plus-one",
+          "weight": 0.3,
+          "perDay": 50000,
+          "launch": true,
+          "burn": 8
+        },
+        {
+          "id": "report",
+          "kind": "batch",
+          "name": "Nightly shipped-orders report",
+          "sql": "SELECT count(*)\nFROM orders\nWHERE status = 'shipped';",
+          "weight": 0.01,
+          "perDay": 1,
+          "launch": true,
+          "decoy": true
+        },
+        {
+          "id": "w-order",
+          "kind": "write",
+          "name": "Place an order",
+          "sql": "INSERT INTO orders (user_id, status) VALUES (4242, 'pending');",
+          "table": "orders",
+          "weight": 0.5
+        },
+        {
+          "id": "w-item",
+          "kind": "write",
+          "name": "Add an order line",
+          "sql": "INSERT INTO order_items (order_id, product_id, quantity) VALUES (1042, 7, 2);",
+          "table": "order_items",
+          "weight": 0.35
+        },
+        {
+          "id": "w-signup",
+          "kind": "write",
+          "name": "Sign up",
+          "sql": "INSERT INTO users (email) VALUES ('new@example.com');",
+          "table": "users",
+          "weight": 0.15
+        }
+      ],
+      "schedule": [
+        {
+          "tick": 1,
+          "kind": "launch",
+          "event": "order-page-launch",
+          "query": "order-page",
+          "detail": "40 line items per order"
+        },
+        {
+          "tick": 2,
+          "kind": "decoy",
+          "event": "report-seq-scan",
+          "query": "report"
+        },
+        {
+          "tick": 4,
+          "kind": "grow",
+          "event": "traffic-growth",
+          "table": "orders",
+          "factor": 2,
+          "detail": "orders x2"
+        }
+      ],
+      "solution": [
+        {
+          "tick": 0,
+          "action": "sql",
+          "args": [
+            "SELECT\n    relname,\n    indexrelname,\n    idx_scan\nFROM pg_stat_user_indexes;"
+          ]
+        },
+        {
+          "tick": 0,
+          "action": "sql",
+          "args": [
+            "DROP INDEX idx_orders_status;"
+          ]
+        },
+        {
+          "tick": 0,
+          "action": "sql",
+          "args": [
+            "DROP INDEX idx_orders_created_at;"
+          ]
+        },
+        {
+          "tick": 0,
+          "action": "sql",
+          "args": [
+            "DROP INDEX idx_users_created_at;"
+          ]
+        },
+        {
+          "tick": 0,
+          "action": "sql",
+          "args": [
+            "EXPLAIN ANALYZE\nSELECT\n    id,\n    status,\n    created_at\nFROM orders\nWHERE user_id = 4242\nORDER BY created_at DESC\nLIMIT 10;"
+          ]
+        },
+        {
+          "tick": 0,
+          "action": "sql",
+          "args": [
+            "CREATE INDEX idx_orders_user_created ON orders (user_id, created_at);"
+          ]
+        },
+        {
+          "tick": 0,
+          "action": "sql",
+          "args": [
+            "CREATE INDEX idx_order_items_product_id ON order_items (product_id);"
+          ]
+        },
+        {
+          "tick": 1,
+          "action": "nextDay"
+        },
+        {
+          "tick": 1,
+          "action": "sql",
+          "args": [
+            "EXPLAIN ANALYZE\nSELECT\n    oi.product_id,\n    oi.quantity,\n    p.name,\n    p.price_cents\nFROM order_items AS oi\nINNER JOIN products AS p ON oi.product_id = p.id\nWHERE oi.order_id = 1042;"
+          ]
+        },
+        {
+          "tick": 1,
+          "action": "swap",
+          "args": [
+            "order-page"
+          ]
+        },
+        {
+          "tick": 2,
+          "action": "nextDay"
+        },
+        {
+          "tick": 2,
+          "action": "sql",
+          "args": [
+            "EXPLAIN\nSELECT count(*)\nFROM orders\nWHERE status = 'shipped';"
+          ]
+        },
+        {
+          "tick": 3,
+          "action": "nextDay"
+        },
+        {
+          "tick": 4,
+          "action": "nextDay"
+        },
+        {
+          "tick": 5,
+          "action": "nextDay"
+        },
+        {
+          "tick": 6,
+          "action": "nextDay"
+        }
+      ]
+    },
+    {
+      "id": "migrations",
+      "title": "3. Safe migrations",
+      "blurb": "Ship four releases through numbered up/down migrations: test on staging, migrate production, roll the app in the right order, and roll back when a release goes bad. Production never stops serving: some changes need the migration first, some need the code first.",
+      "seed": 33,
+      "mode": "migrations",
+      "winTicks": 5,
+      "minHealth": 40,
+      "baseline": "0005",
+      "catalog": {
+        "tables": [
+          {
+            "name": "users",
+            "rows": 120000,
+            "cols": [
+              {
+                "name": "id",
+                "type": "bigint",
+                "stat": {
+                  "unique": true
+                },
+                "notNull": true,
+                "default": "nextval('users_id_seq')"
+              },
+              {
+                "name": "email",
+                "type": "text",
+                "stat": {
+                  "unique": true
+                },
+                "notNull": true
+              },
+              {
+                "name": "created_at",
+                "type": "timestamptz",
+                "stat": {
+                  "frac": 0.0005
+                },
+                "notNull": true,
+                "default": "now()"
+              },
+              {
+                "name": "legacy_username",
+                "type": "text",
+                "stat": {
+                  "frac": 0.001
+                }
+              }
+            ]
+          },
+          {
+            "name": "products",
+            "rows": 5000,
+            "cols": [
+              {
+                "name": "id",
+                "type": "bigint",
+                "stat": {
+                  "unique": true
+                },
+                "notNull": true,
+                "default": "nextval('products_id_seq')"
+              },
+              {
+                "name": "sku",
+                "type": "text",
+                "stat": {
+                  "unique": true
+                },
+                "notNull": true
+              },
+              {
+                "name": "name",
+                "type": "text",
+                "stat": {
+                  "frac": 0.0005
+                },
+                "notNull": true
+              },
+              {
+                "name": "price_cents",
+                "type": "integer",
+                "stat": {
+                  "frac": 0.01
+                },
+                "notNull": true
+              }
+            ]
+          },
+          {
+            "name": "orders",
+            "rows": 300000,
+            "fks": [
+              {
+                "cols": [
+                  "user_id"
+                ],
+                "ref": "users(id)"
+              }
+            ],
+            "cols": [
+              {
+                "name": "id",
+                "type": "bigint",
+                "stat": {
+                  "unique": true
+                },
+                "notNull": true,
+                "default": "nextval('orders_id_seq')"
+              },
+              {
+                "name": "user_id",
+                "type": "bigint",
+                "stat": {
+                  "per": 3
+                },
+                "notNull": true
+              },
+              {
+                "name": "status",
+                "type": "text",
+                "stat": {
+                  "frac": 0.25,
+                  "values": {
+                    "pending": 0.002,
+                    "paid": 0.03,
+                    "shipped": 0.6,
+                    "cancelled": 0.05
+                  }
+                },
+                "notNull": true,
+                "default": "'pending'"
+              },
+              {
+                "name": "created_at",
+                "type": "timestamptz",
+                "stat": {
+                  "frac": 0.0001
+                },
+                "notNull": true,
+                "default": "now()"
+              }
+            ]
+          },
+          {
+            "name": "order_items",
+            "rows": 900000,
+            "fks": [
+              {
+                "cols": [
+                  "order_id"
+                ],
+                "ref": "orders(id)"
+              },
+              {
+                "cols": [
+                  "product_id"
+                ],
+                "ref": "products(id)"
+              }
+            ],
+            "cols": [
+              {
+                "name": "order_id",
+                "type": "bigint",
+                "stat": {
+                  "per": 3
+                },
+                "notNull": true
+              },
+              {
+                "name": "product_id",
+                "type": "bigint",
+                "stat": {
+                  "per": 180
+                },
+                "notNull": true
+              },
+              {
+                "name": "quantity",
+                "type": "integer",
+                "stat": {
+                  "frac": 0.05
+                },
+                "notNull": true
+              }
+            ]
+          }
+        ],
+        "indexes": [
+          {
+            "name": "users_pkey",
+            "table": "users",
+            "cols": [
+              "id"
+            ],
+            "unique": true,
+            "kind": "pkey"
+          },
+          {
+            "name": "users_email_key",
+            "table": "users",
+            "cols": [
+              "email"
+            ],
+            "unique": true,
+            "kind": "unique",
+            "constraint": true
+          },
+          {
+            "name": "products_pkey",
+            "table": "products",
+            "cols": [
+              "id"
+            ],
+            "unique": true,
+            "kind": "pkey"
+          },
+          {
+            "name": "products_sku_key",
+            "table": "products",
+            "cols": [
+              "sku"
+            ],
+            "unique": true,
+            "kind": "unique",
+            "constraint": true
+          },
+          {
+            "name": "orders_pkey",
+            "table": "orders",
+            "cols": [
+              "id"
+            ],
+            "unique": true,
+            "kind": "pkey"
+          },
+          {
+            "name": "idx_orders_user_id",
+            "table": "orders",
+            "cols": [
+              "user_id"
+            ]
+          },
+          {
+            "name": "order_items_pkey",
+            "table": "order_items",
+            "cols": [
+              "order_id",
+              "product_id"
+            ],
+            "unique": true,
+            "kind": "pkey"
+          }
+        ]
+      },
+      "files": [
+        {
+          "version": "0001",
+          "name": "create_users",
+          "up": "CREATE TABLE users (\n    id BIGSERIAL PRIMARY KEY,\n    email TEXT NOT NULL UNIQUE,\n    created_at TIMESTAMPTZ NOT NULL DEFAULT now()\n);\n",
+          "down": "DROP TABLE users;\n"
+        },
+        {
+          "version": "0002",
+          "name": "create_products",
+          "up": "CREATE TABLE products (\n    id BIGSERIAL PRIMARY KEY,\n    sku TEXT NOT NULL UNIQUE,\n    name TEXT NOT NULL,\n    price_cents INTEGER NOT NULL CHECK (price_cents >= 0)\n);\n",
+          "down": "DROP TABLE products;\n"
+        },
+        {
+          "version": "0003",
+          "name": "create_orders",
+          "up": "CREATE TABLE orders (\n    id BIGSERIAL PRIMARY KEY,\n    user_id BIGINT NOT NULL REFERENCES users (id),\n    status TEXT NOT NULL DEFAULT 'pending',\n    created_at TIMESTAMPTZ NOT NULL DEFAULT now()\n);\n\nCREATE INDEX idx_orders_user_id ON orders (user_id);\n",
+          "down": "DROP TABLE orders;\n"
+        },
+        {
+          "version": "0004",
+          "name": "create_order_items",
+          "up": "CREATE TABLE order_items (\n    order_id BIGINT NOT NULL REFERENCES orders (id),\n    product_id BIGINT NOT NULL REFERENCES products (id),\n    quantity INTEGER NOT NULL CHECK (quantity > 0),\n    PRIMARY KEY (order_id, product_id)\n);\n",
+          "down": "DROP TABLE order_items;\n"
+        },
+        {
+          "version": "0005",
+          "name": "add_users_legacy_username",
+          "up": "ALTER TABLE users ADD COLUMN legacy_username TEXT;\n",
+          "down": "ALTER TABLE users DROP COLUMN legacy_username;\n"
+        }
+      ],
+      "app": "v1",
+      "apps": {
+        "v1": {
+          "available": true,
+          "needs": [
+            "users.legacy_username"
+          ],
+          "note": "the current release; the old login page still reads users.legacy_username"
+        },
+        "v2": {
+          "available": true,
+          "needs": [
+            "users.legacy_username",
+            "orders.currency"
+          ],
+          "note": "shows prices in the order's currency"
+        },
+        "v3": {
+          "available": false,
+          "needs": [
+            "users.legacy_username",
+            "orders.currency",
+            "orders.shipped_at"
+          ],
+          "note": "shows when an order shipped"
+        },
+        "v4": {
+          "available": false,
+          "needs": [
+            "orders.currency"
+          ],
+          "note": "stops reading users.legacy_username"
+        },
+        "v5": {
+          "available": false,
+          "needs": [
+            "orders.currency",
+            "orders.coupon_code"
+          ],
+          "note": "adds coupon codes to orders"
+        }
+      },
+      "releases": [
+        {
+          "id": "r1",
+          "event": "release-add-column",
+          "title": "Release 1: add orders.currency (0006, app v2)",
+          "version": "0006",
+          "app": "v2",
+          "apps": [
+            "v2"
+          ],
+          "addFiles": [
+            {
+              "version": "0006",
+              "name": "add_orders_currency",
+              "up": "ALTER TABLE orders ADD COLUMN currency TEXT NOT NULL DEFAULT 'USD';\n",
+              "down": "ALTER TABLE orders DROP COLUMN currency;\n"
+            }
+          ]
+        },
+        {
+          "id": "r2",
+          "event": "release-new-column",
+          "title": "Release 2: add orders.shipped_at (0007, app v3)",
+          "version": "0007",
+          "app": "v3",
+          "apps": [
+            "v3"
+          ],
+          "addFiles": [
+            {
+              "version": "0007",
+              "name": "add_orders_shipped_at",
+              "up": "ALTER TABLE orders ADD COLUMN shipped_at TIMESTAMPTZ;\n",
+              "down": "-- TODO: write the down\n"
+            }
+          ]
+        },
+        {
+          "id": "r3",
+          "event": "release-drop-column",
+          "title": "Release 3: drop users.legacy_username (0008, app v4)",
+          "version": "0008",
+          "app": "v4",
+          "apps": [
+            "v4"
+          ],
+          "addFiles": [
+            {
+              "version": "0008",
+              "name": "drop_users_legacy_username",
+              "up": "ALTER TABLE users DROP COLUMN legacy_username;\n",
+              "down": "ALTER TABLE users ADD COLUMN legacy_username TEXT;\n"
+            }
+          ]
+        },
+        {
+          "id": "r4",
+          "event": "edited-applied",
+          "title": "Release 4: coupon codes (app v5)",
+          "detail": "0003 was edited in place",
+          "app": "v5",
+          "apps": [
+            "v5"
+          ],
+          "column": "orders.coupon_code",
+          "clean": true
+        }
+      ],
+      "intro": [
+        "r1"
+      ],
+      "schedule": [
+        {
+          "tick": 1,
+          "kind": "release",
+          "event": "release-new-column",
+          "release": "r2"
+        },
+        {
+          "tick": 2,
+          "kind": "bad-deploy",
+          "event": "bad-deploy",
+          "detail": "roll back the app and the migration"
+        },
+        {
+          "tick": 3,
+          "kind": "release",
+          "event": "release-drop-column",
+          "release": "r3"
+        },
+        {
+          "tick": 4,
+          "kind": "edit-applied",
+          "event": "edited-applied",
+          "release": "r4",
+          "version": "0003",
+          "find": "    status TEXT NOT NULL DEFAULT 'pending',\n",
+          "replace": "    status TEXT NOT NULL DEFAULT 'pending',\n    coupon_code TEXT,\n"
+        }
+      ],
+      "solution": [
+        {
+          "tick": 0,
+          "action": "sql",
+          "args": [
+            "\\c staging"
+          ]
+        },
+        {
+          "tick": 0,
+          "action": "sql",
+          "args": [
+            "migrate up"
+          ]
+        },
+        {
+          "tick": 0,
+          "action": "sql",
+          "args": [
+            "migrate down 1"
+          ]
+        },
+        {
+          "tick": 0,
+          "action": "sql",
+          "args": [
+            "migrate up"
+          ]
+        },
+        {
+          "tick": 0,
+          "action": "sql",
+          "args": [
+            "\\c prod"
+          ]
+        },
+        {
+          "tick": 0,
+          "action": "sql",
+          "args": [
+            "migrate up"
+          ]
+        },
+        {
+          "tick": 0,
+          "action": "sql",
+          "args": [
+            "deploy v2"
+          ]
+        },
+        {
+          "tick": 1,
+          "action": "nextDay"
+        },
+        {
+          "tick": 1,
+          "action": "sql",
+          "args": [
+            "\\c staging"
+          ]
+        },
+        {
+          "tick": 1,
+          "action": "sql",
+          "args": [
+            "migrate up"
+          ]
+        },
+        {
+          "tick": 1,
+          "action": "sql",
+          "args": [
+            "migrate down 1"
+          ]
+        },
+        {
+          "tick": 1,
+          "action": "saveFile",
+          "args": [
+            "0007",
+            "down",
+            "ALTER TABLE orders DROP COLUMN shipped_at;\n"
+          ]
+        },
+        {
+          "tick": 1,
+          "action": "sql",
+          "args": [
+            "ALTER TABLE orders DROP COLUMN shipped_at;"
+          ]
+        },
+        {
+          "tick": 1,
+          "action": "sql",
+          "args": [
+            "migrate up"
+          ]
+        },
+        {
+          "tick": 1,
+          "action": "sql",
+          "args": [
+            "migrate down 1"
+          ]
+        },
+        {
+          "tick": 1,
+          "action": "sql",
+          "args": [
+            "\\c prod"
+          ]
+        },
+        {
+          "tick": 1,
+          "action": "sql",
+          "args": [
+            "migrate up"
+          ]
+        },
+        {
+          "tick": 1,
+          "action": "sql",
+          "args": [
+            "deploy v3"
+          ]
+        },
+        {
+          "tick": 2,
+          "action": "nextDay"
+        },
+        {
+          "tick": 2,
+          "action": "sql",
+          "args": [
+            "deploy v2"
+          ]
+        },
+        {
+          "tick": 2,
+          "action": "sql",
+          "args": [
+            "migrate down 1"
+          ]
+        },
+        {
+          "tick": 3,
+          "action": "nextDay"
+        },
+        {
+          "tick": 3,
+          "action": "sql",
+          "args": [
+            "deploy v4"
+          ]
+        },
+        {
+          "tick": 3,
+          "action": "sql",
+          "args": [
+            "migrate up"
+          ]
+        },
+        {
+          "tick": 4,
+          "action": "nextDay"
+        },
+        {
+          "tick": 4,
+          "action": "sql",
+          "args": [
+            "git restore 0003_create_orders.up.sql"
+          ]
+        },
+        {
+          "tick": 4,
+          "action": "sql",
+          "args": [
+            "migrate create add_orders_coupon_code"
+          ]
+        },
+        {
+          "tick": 4,
+          "action": "saveFile",
+          "args": [
+            "0009",
+            "up",
+            "ALTER TABLE orders ADD COLUMN coupon_code TEXT;\n"
+          ]
+        },
+        {
+          "tick": 4,
+          "action": "saveFile",
+          "args": [
+            "0009",
+            "down",
+            "ALTER TABLE orders DROP COLUMN coupon_code;\n"
+          ]
+        },
+        {
+          "tick": 4,
+          "action": "sql",
+          "args": [
+            "\\c staging"
+          ]
+        },
+        {
+          "tick": 4,
+          "action": "sql",
+          "args": [
+            "migrate up"
+          ]
+        },
+        {
+          "tick": 4,
+          "action": "sql",
+          "args": [
+            "\\c prod"
+          ]
+        },
+        {
+          "tick": 4,
+          "action": "sql",
+          "args": [
+            "migrate up"
+          ]
+        },
+        {
+          "tick": 4,
+          "action": "sql",
+          "args": [
+            "deploy v5"
+          ]
+        },
+        {
+          "tick": 5,
+          "action": "nextDay"
+        }
+      ]
+    }
+  ]
+}

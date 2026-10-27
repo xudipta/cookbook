@@ -1,0 +1,447 @@
+/* Skill Issue. Boards use <div>s, never <ul>, so Material's list styling doesn't apply. */
+
+.cg .sk-panel {
+  min-width: 0;
+  margin-bottom: 0.75rem;
+}
+
+.cg .sk-h {
+  margin: 0 0 0.4rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--muted);
+}
+
+.cg .sk-muted {
+  margin: 0 0 0.4rem;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.cg .sk p {
+  margin: 0 0 0.4rem;
+  font-size: 0.82rem;
+}
+
+/* Two columns only when the board itself is wide enough. */
+.cg .sk-cols {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0 0.9rem;
+}
+
+@container (min-width: 740px) {
+  .cg .sk-cols {
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
+.cg .sk-col {
+  min-width: 0;
+}
+
+/* ---- context window ---- */
+
+.cg .sk-bar {
+  position: relative;
+  display: flex;
+  height: 1.1rem;
+  overflow: hidden;
+  border: 1px solid var(--cg-border);
+  border-radius: 0.55rem;
+  background: var(--surface);
+}
+
+.cg .sk-seg {
+  display: block;
+  height: 100%;
+  min-width: 0;
+}
+
+.cg .sk-seg-base {
+  background: var(--muted);
+}
+
+.cg .sk-seg-meta {
+  background: var(--accent);
+}
+
+.cg .sk-seg-body {
+  background: var(--ok);
+}
+
+.cg .sk-seg-bundled {
+  background: var(--warn);
+}
+
+.cg .sk-limit {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  border-left: 2px dashed var(--ink);
+}
+
+.cg .sk-legend {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr));
+  gap: 0.2rem 0.9rem;
+  margin: 0.4rem 0 0.2rem;
+  font-size: 0.76rem;
+}
+
+.cg .sk-leg {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.cg .sk-swatch {
+  display: inline-block;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 0.15rem;
+}
+
+.cg .sk .sk-total {
+  margin: 0;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.cg .sk .sk-total[data-over="true"] {
+  color: var(--bad);
+}
+
+/* ---- the pieces (layers mode) ---- */
+
+.cg .sk-chunks,
+.cg .sk-files,
+.cg .sk-queue,
+.cg .sk-shelf,
+.cg .sk-scores {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.cg .sk-chunk,
+.cg .sk-card,
+.cg .sk-req {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.15rem 0.6rem;
+  padding: 0.4rem 0.55rem;
+  border: 1px solid var(--cg-border);
+  border-left: 4px solid var(--cg-accent);
+  border-radius: 0.25rem;
+  background: var(--surface);
+}
+
+.cg .sk-name {
+  font-size: 0.82rem;
+  word-break: break-word;
+}
+
+.cg .sk-tok {
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+.cg .sk-use {
+  flex-basis: 100%;
+  font-size: 0.76rem;
+  color: var(--muted);
+}
+
+.cg .sk-layers {
+  display: flex;
+  flex-wrap: wrap;
+  flex-basis: 100%;
+  gap: 0.35rem;
+  margin-top: 0.2rem;
+}
+
+.cg .sk-btn {
+  padding: 0.2rem 0.45rem;
+  border: 1px solid var(--cg-accent);
+  border-radius: 0.2rem;
+  background: transparent;
+  color: var(--cg-accent);
+  font: inherit;
+  font-size: 0.72rem;
+  cursor: pointer;
+}
+
+.cg .sk-btn:hover:not(:disabled) {
+  background: var(--cg-surface);
+}
+
+.cg .sk-btn[aria-pressed="true"],
+.cg .sk-btn-primary {
+  background: var(--cg-accent);
+  color: var(--accent-ink);
+}
+
+.cg .sk-btn[aria-pressed="true"]::before {
+  content: "\2713\00a0";
+}
+
+.cg .sk-btn:disabled,
+.cg .sk-input:disabled,
+.cg .sk-editor:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.cg .sk-btn:focus-visible,
+.cg .sk-input:focus-visible,
+.cg .sk-editor:focus-visible,
+.cg .sk-code:focus-visible,
+.cg .sk-term:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.cg .sk-code,
+.cg .sk-editor {
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0 0 0.4rem;
+  padding: 0.5rem;
+  border: 1px solid var(--cg-border);
+  border-radius: 0.3rem;
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  line-height: 1.4;
+}
+
+.cg .sk-code {
+  max-height: 14rem;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.cg .sk-editor {
+  min-height: 14rem;
+  resize: vertical;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  overflow: auto;
+}
+
+.cg .sk-editor-bar,
+.cg .sk-layout {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.6rem;
+  margin: 0 0 0.5rem;
+}
+
+.cg .sk-field {
+  display: flex;
+  flex: 1 1 9rem;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.cg .sk-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.cg .sk-input {
+  min-width: 0;
+  padding: 0.25rem 0.4rem;
+  border: 1px solid var(--cg-border);
+  border-radius: 0.25rem;
+  background: var(--surface);
+  color: inherit;
+  font: inherit;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+}
+
+.cg .sk .sk-pathline {
+  margin: 0 0 0.4rem;
+  overflow-wrap: anywhere;
+}
+
+.cg .sk-file {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.1rem 0.6rem;
+  font-size: 0.76rem;
+}
+
+.cg .sk-file .sk-muted {
+  margin: 0;
+}
+
+/* ---- the gate output ---- */
+
+.cg .sk-term {
+  max-height: 11rem;
+  margin: 0;
+  padding: 0.5rem;
+  overflow: auto;
+  border: 1px solid var(--cg-border);
+  border-radius: 0.3rem;
+  background: var(--term-bg);
+  color: var(--term-ink);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  line-height: 1.35;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.cg .sk-line-ok {
+  color: var(--term-ink);
+}
+
+.cg .sk-line-fail {
+  font-weight: 700;
+}
+
+.cg .sk-line-err {
+  color: var(--term-ink);
+}
+
+.cg .sk-line-warn {
+  color: var(--term-dim);
+}
+
+/* ---- queue, agent and shelf ---- */
+
+.cg .sk-n {
+  display: inline-grid;
+  place-items: center;
+  width: 1.3rem;
+  height: 1.3rem;
+  border: 1px solid var(--cg-border);
+  border-radius: 50%;
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.cg .sk-req-text {
+  flex: 1 1 12rem;
+  min-width: 0;
+  font-size: 0.82rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.cg .sk-chip {
+  padding: 0 0.4rem;
+  border: 1px solid currentcolor;
+  border-radius: 0.2rem;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.cg .sk-want {
+  font-size: 0.74rem;
+  color: var(--muted);
+}
+
+.cg .sk-detail {
+  flex-basis: 100%;
+  font-size: 0.76rem;
+  overflow-wrap: anywhere;
+}
+
+.cg .sk-req[data-state="next"] {
+  border-left-color: var(--accent);
+  background: var(--cg-surface);
+}
+
+.cg .sk-req[data-state="ok"] {
+  border-left-color: var(--ok);
+}
+
+.cg .sk-req[data-state="ok"] .sk-chip {
+  color: var(--ok);
+}
+
+.cg .sk-req[data-state="fail"] {
+  border-left-color: var(--bad);
+}
+
+.cg .sk-req[data-state="fail"] .sk-chip {
+  color: var(--bad);
+}
+
+.cg .sk-card-off {
+  border-left-color: var(--bad);
+}
+
+.cg .sk-chip-bad {
+  color: var(--bad);
+}
+
+.cg .sk-card[data-mine="true"] {
+  border-left-color: var(--accent);
+}
+
+.cg .sk-desc {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 0.76rem;
+  overflow-wrap: anywhere;
+}
+
+.cg .sk-quote {
+  font-weight: 600;
+}
+
+.cg .sk-score {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.1rem 0.6rem;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--cg-border);
+  border-radius: 0.25rem;
+  background: var(--surface);
+  font-size: 0.78rem;
+}
+
+.cg .sk-score[data-pick="true"] {
+  border-color: var(--accent);
+  border-width: 2px;
+}
+
+.cg .sk-pts {
+  font-variant-numeric: tabular-nums;
+}
+
+.cg .sk-matched {
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.cg .sk .sk-outcome {
+  font-weight: 700;
+}
+
+.cg .sk .sk-outcome-ok {
+  color: var(--ok);
+}
+
+.cg .sk .sk-outcome-bad {
+  color: var(--bad);
+}

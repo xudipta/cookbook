@@ -32,7 +32,7 @@ flowchart LR
 
 - `expr` — any PromQL expression; the alert fires for every distinct label combination
   the expression returns, not just once.
-- `for: 5m` — the condition must stay true for this long before the alert actually
+- `for: 5m` — the condition must stay true on every evaluation for this long (one good evaluation resets it) before the alert actually
   fires (state goes `pending` → `firing`). Without `for`, a single noisy scrape fires an
   alert — this is the single most common cause of alert fatigue, and the fix is almost
   always adding or lengthening `for`, not deleting the alert.
@@ -57,6 +57,24 @@ promtool test rules alert_tests.yml   # unit-test rules against synthetic input 
   can wait for business hours in a Slack channel. Encode that in `labels.severity` and
   let Alertmanager's routing tree do the rest.
 
+## Predictive alerts
+
+A static threshold says where a gauge *is*; for something that fills up, what matters is where it
+is *heading*. `predict_linear` fits a straight line to the last window of samples and extends it:
+
+```yaml
+- alert: DiskWillFillSoon
+  expr: predict_linear(node_filesystem_avail_bytes{mountpoint="/data"}[1h], 4 * 3600) < 0
+  for: 5m
+  labels:
+    severity: critical
+```
+
+This fires when the disk is on course to run out within four hours, while there is still time to act.
+`node_filesystem_avail_bytes < 5e9` only fires when 5 GB is left, which on a fast leak can be
+minutes from the outage. Use a short window for fast leaks and a long one for slow growth, and keep the horizon
+longer than the time it takes to fix the problem.
+
 ## Alertmanager routing, briefly
 
 ```yaml
@@ -79,3 +97,7 @@ receivers:
 `group_by` batches related alerts (e.g. the same `alertname` firing across many
 instances) into one notification instead of one per series — without it, a single bad
 deploy can page someone 50 times in a minute.
+
+Group by labels that identify the *incident*, not each series: with `group_by: [alertname, job]` a
+rack of 15 dead instances is one notification, while adding `instance` brings back fifteen pages,
+and `group_by: ['...']` turns grouping off altogether.

@@ -32,6 +32,10 @@ same schema by replaying the same files. See `02-migrations.md`.
 New here? Start with `notes/01-schema-design-and-normalization.md` alongside
 `examples/schema/schema.sql`.
 
+**Play it:** [Index Fund](../../docs/games/database/index.md) is a short game where you read
+`EXPLAIN` plans, add the indexes that help, and ship migrations in an order that keeps
+production up, using the same statements these notes teach.
+
 ## Quickstart
 
 Needs any running Postgres (`docker run -e POSTGRES_PASSWORD=x -p 5432:5432

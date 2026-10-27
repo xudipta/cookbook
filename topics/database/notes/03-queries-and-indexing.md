@@ -26,7 +26,9 @@ indexes have a maintenance cost, so they're not free to add everywhere).
 
 ## What to index
 
-- Foreign key columns used in `JOIN`s or `WHERE` clauses (`orders.user_id` above).
+- Foreign key columns used in `JOIN`s or `WHERE` clauses (`orders.user_id` above). Postgres
+  indexes a `PRIMARY KEY` and a `UNIQUE` constraint for you, but **not** a foreign key — the
+  `REFERENCES` clause alone leaves `WHERE user_id = 42` a seq scan until you add the index.
 - Columns frequently in `WHERE`/`ORDER BY` on a large table.
 - A `UNIQUE` constraint (`users.email`, `products.sku` in the example schema) always
   creates an index as a side effect — that's *why* uniqueness checks stay fast as a
@@ -37,7 +39,17 @@ indexes have a maintenance cost, so they're not free to add everywhere).
 
 Indexing everything isn't free: every index slows down `INSERT`/`UPDATE`/`DELETE`
 (the index has to be maintained too) and takes storage. Index based on actual query
-patterns, not preemptively.
+patterns, not preemptively. `pg_stat_user_indexes` shows how often each index has been
+used, so an index whose `idx_scan` stays at 0 is a candidate for `DROP INDEX`:
+
+```sql
+SELECT relname, indexrelname, idx_scan FROM pg_stat_user_indexes WHERE idx_scan = 0;
+```
+
+An index on `(a, b)` also serves queries on `a` alone, so a separate index on `a` is then
+redundant. And an index can hand rows back already sorted: with `(user_id, created_at)`,
+`WHERE user_id = 42 ORDER BY created_at DESC LIMIT 10` reads ten index entries and needs no
+sort step, where an index on `user_id` alone finds every row of that user and sorts them.
 
 ## EXPLAIN
 
@@ -51,6 +63,22 @@ row counts, and time spent per step — the standard first move when a query is 
 before guessing at an index or rewriting the query. A `Seq Scan` on a large table where
 you expected an `Index Scan` usually means either no matching index exists, or the
 planner's statistics are stale (`ANALYZE tablename;` refreshes them).
+
+## When an index does not help
+
+The planner compares the cost of an index scan, which jumps to each matching row, with a
+seq scan, which reads the table once in order. When a filter keeps a large share of the rows,
+reading everything is cheaper, so the planner ignores the index:
+
+```sql
+-- most orders are 'shipped': Seq Scan, even with an index on status
+SELECT count(*) FROM orders WHERE status = 'shipped';
+```
+
+A column with few distinct values (a status, a boolean) is a poor index on its own, though
+a rare value can still be worth finding (`status = 'pending'` when 0.2% of rows are
+pending). Run `EXPLAIN` before adding the index, and again after: if the plan did not change,
+`DROP INDEX` it.
 
 ## Joins
 

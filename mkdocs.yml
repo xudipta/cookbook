@@ -101,6 +101,12 @@ nav:
       - Chaos Monkey Cluster (Kubernetes): docs/games/kubernetes/index.md
       - Layer Cake (Docker): docs/games/docker/index.md
       - Drift Detective (Terraform): docs/games/terraform/index.md
+      - Pipeline Panic (CI/CD): docs/games/cicd/index.md
+      - Skill Issue (Agent Skills): docs/games/skills/index.md
+      - Patch Bay (MCP): docs/games/mcp/index.md
+      - Quiet Hours (Observability): docs/games/observability/index.md
+      - Merge Conflict Rush (GitHub / Git): docs/games/github/index.md
+      - Index Fund (Database / SQL): docs/games/database/index.md
       - Night Shift (Linux / Shell): docs/games/linux/index.md
       - Replica Rescue (demo): docs/games/demo/index.md
   - Learn:
