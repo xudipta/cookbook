@@ -4,7 +4,9 @@
 Reads docs/games/games.json. For each entry, every Markdown page under its `notes` folder in the
 assembled docs tree (site-src/) gets an admonition right after its first heading: a link to the game
 when it is live, or a pointer to its issue when it is queued. A page that already links to the live
-game (the topic README keeps its own pointer so GitHub readers see it too) is left alone.
+game (the topic README keeps its own pointer so GitHub readers see it too) is left alone. The live banner
+also lists the sections of the page that the game's events link back to (read from scenarios.json), so
+the notes and the game point at each other and cannot drift apart.
 
 Usage: python3 scripts/play_banners.py site-src
 """
@@ -19,13 +21,39 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 ISSUES = "https://github.com/xudipta/cookbook/issues/"
 
 
+def slugify(text: str) -> str:
+    """Same rule as MkDocs' toc extension (and docs/games/shared/learn.js)."""
+    text = re.sub(r"[^\w\s-]", "", text.replace("`", "").lower()).strip()
+    return re.sub(r"[\s-]+", "-", text)
+
+
+def linked_sections(game: dict, page: Path, root: Path) -> list[tuple[str, str]]:
+    """Sections of this page that the game's events link to, in the order the page lists them."""
+    scenario = REPO_ROOT / "docs" / "games" / game["id"] / "scenarios.json"
+    if not scenario.is_file():
+        return []
+    note = page.relative_to(root).as_posix()
+    wanted = {e["learn"]["section"] for e in json.loads(scenario.read_text(encoding="utf-8"))["events"] if e["learn"]["note"] == note}
+    found = []
+    for line in page.read_text(encoding="utf-8").splitlines():
+        m = re.match(r"^#{2,6}\s+(.*?)\s*#*\s*$", line)
+        if m and m.group(1).replace("`", "").lower() in {w.replace("`", "").lower() for w in wanted}:
+            found.append((m.group(1), slugify(m.group(1))))
+    return found
+
+
 def banner(game: dict, page: Path, root: Path) -> list[str]:
     if game["status"] == "live":
         target = os.path.relpath(root / "docs" / "games" / game["id"] / "index.md", page.parent)
-        return [
+        lines = [
             '!!! tip "Play it"',
             f"    [{game['title']}]({Path(target).as_posix()}): {game['blurb']}",
         ]
+        sections = linked_sections(game, page, root)
+        if sections:
+            links = ", ".join(f"[{title}](#{slug})" for title, slug in sections)
+            lines += ["", f"    The game links back to this page from: {links}."]
+        return lines
     return [
         '!!! note "Game coming"',
         f"    A game for this topic is planned: [issue #{game['issue']}]({ISSUES}{game['issue']}).",

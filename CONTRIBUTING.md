@@ -41,7 +41,8 @@ not this repo's own template — these two are.)
    `docs/learn.md`). Run `make docs` — the strict build fails if a page is missing from
    `nav`. The top-level sections are **Play** (the games), **Learn** (the notes) and
    **About**; the site build adds a "Play it" banner to every note of a topic that has an
-   entry in `docs/games/games.json` (a topic README links to its game itself).
+   entry in `docs/games/games.json` (a topic README links to its game itself), listing the sections of
+   that note the game's events link back to.
 
 Keep examples **self-contained and credential-free** so CI can run them anywhere (e.g.
 Terraform examples use the `local`/`random`/`null` providers, not real clouds).
