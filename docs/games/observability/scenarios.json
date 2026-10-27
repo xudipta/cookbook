@@ -1,0 +1,717 @@
+{
+  "id": "observability",
+  "title": "Quiet Hours",
+  "healthLabel": "Sleep or SLO (the lower one)",
+  "tickLabel": "Hour",
+  "manual": true,
+  "stacked": true,
+  "seed": 7,
+  "events": [
+    {
+      "id": "error-spike",
+      "title": "Error ratio jumps to 8% for 20 minutes",
+      "fix": "Users feel the error ratio, so alert on it: errors divided by all requests, with `for: 5m`. A ratio holds at any traffic level; an absolute error count does not.",
+      "urgent": true,
+      "signals": [
+        "errors"
+      ],
+      "fixMin": 10,
+      "dur": 20,
+      "learn": {
+        "note": "topics/observability/notes/02-alerting-and-rules.md",
+        "section": "What makes a good alert"
+      }
+    },
+    {
+      "id": "traffic-spike",
+      "title": "A harmless traffic surge for twelve minutes",
+      "fix": "More traffic means more errors in absolute terms and a hotter CPU, but users are fine. A ratio ignores the surge; a count or a CPU threshold pages for nothing.",
+      "signals": [
+        "traffic"
+      ],
+      "dur": 12,
+      "learn": {
+        "note": "topics/observability/notes/02-alerting-and-rules.md",
+        "section": "What makes a good alert"
+      }
+    },
+    {
+      "id": "cpu-blip",
+      "title": "A one-minute CPU blip",
+      "fix": "One bad evaluation is noise. `for:` makes the condition hold across evaluations before the alert fires, and a cause such as CPU belongs at `warning` unless users are hurt.",
+      "signals": [
+        "cpu"
+      ],
+      "dur": 1,
+      "learn": {
+        "note": "topics/observability/notes/02-alerting-and-rules.md",
+        "section": "Anatomy of an alerting rule"
+      }
+    },
+    {
+      "id": "latency-creep",
+      "title": "p95 latency creeps up for two hours",
+      "fix": "A small share of slow requests moves the tail a lot and the mean only a little. Read a histogram with `histogram_quantile(0.95, ...)` over the `_bucket` series; an average hides it.",
+      "urgent": true,
+      "signals": [
+        "latency"
+      ],
+      "fixMin": 15,
+      "dur": 150,
+      "learn": {
+        "note": "topics/observability/notes/01-prometheus-basics.md",
+        "section": "The four metric types"
+      }
+    },
+    {
+      "id": "disk-fill",
+      "title": "The data disk starts filling at 12% an hour",
+      "fix": "A static threshold (alert at 5% free) fires with minutes to spare. `predict_linear` projects the trend and fires hours before the disk is full, while there is still time to act.",
+      "urgent": true,
+      "signals": [
+        "disk"
+      ],
+      "fixMin": 40,
+      "dur": 300,
+      "learn": {
+        "note": "topics/observability/notes/02-alerting-and-rules.md",
+        "section": "Predictive alerts"
+      }
+    },
+    {
+      "id": "scrape-flap",
+      "title": "All 15 targets miss one scrape, then recover",
+      "fix": "A one-minute scrape flap is not an outage. `for: 2m` or longer lets it pass, and `group_by` keeps one alert per rule from becoming fifteen pages.",
+      "signals": [
+        "up"
+      ],
+      "dur": 1,
+      "learn": {
+        "note": "topics/observability/notes/02-alerting-and-rules.md",
+        "section": "Anatomy of an alerting rule"
+      }
+    },
+    {
+      "id": "rack-down",
+      "title": "A whole rack goes dark: 15 targets down for 25 minutes",
+      "fix": "One real incident raises fifteen alerts. Alertmanager's `group_by: [alertname, job]` turns them into a single notification instead of fifteen pages.",
+      "urgent": true,
+      "signals": [
+        "up"
+      ],
+      "fixMin": 15,
+      "dur": 25,
+      "learn": {
+        "note": "topics/observability/notes/02-alerting-and-rules.md",
+        "section": "Alertmanager routing, briefly"
+      }
+    },
+    {
+      "id": "slow-dashboard",
+      "title": "The request-rate panel takes ten seconds to load",
+      "fix": "An expensive query recomputed on every refresh is slow. A recording rule precomputes it under a `level:metric:operations` name, and the panel queries the cheap series.",
+      "dur": 1,
+      "learn": {
+        "note": "topics/observability/notes/01-prometheus-basics.md",
+        "section": "Recording rules"
+      }
+    }
+  ],
+  "levels": [
+    {
+      "id": "first-shift",
+      "title": "1. First shift",
+      "blurb": "Classify four signals, then fix two starter rules that are too twitchy. Page me for the real error spike, and let me sleep through traffic surges and a CPU blip. Rules are free to change all night, but the pages you earn are not.",
+      "seed": 7,
+      "winTicks": 9,
+      "budgetMin": 50,
+      "sloTarget": 62,
+      "minSleep": 70,
+      "groupBy": "alertname,job",
+      "warmup": [
+        {
+          "signal": "http_requests_total",
+          "hint": "Every request served. It only ever goes up, and drops to 0 when the process restarts.",
+          "type": "counter",
+          "fn": "rate",
+          "why": "http_requests_total only goes up, so it is a counter: graph rate() of it, never the raw line."
+        },
+        {
+          "signal": "job_queue_depth",
+          "hint": "Jobs waiting right now. It goes up and down.",
+          "type": "gauge",
+          "fn": "nothing",
+          "why": "job_queue_depth goes up and down, so it is a gauge: it already means something, so graph it as it is."
+        },
+        {
+          "signal": "http_request_duration_seconds_bucket",
+          "hint": "Counts of requests that finished within each latency bucket, plus _sum and _count.",
+          "type": "histogram",
+          "fn": "histogram_quantile",
+          "why": "Buckets plus _sum and _count make a histogram: histogram_quantile(0.95, ...) turns them into a percentile."
+        },
+        {
+          "signal": "http_request_duration_seconds{quantile=\"0.95\"}",
+          "hint": "A latency percentile the client library already computed, one value per instance.",
+          "type": "summary",
+          "fn": "nothing",
+          "why": "Pre-computed quantiles are a summary. Read them as they are: they cannot be averaged across instances."
+        }
+      ],
+      "rules": [
+        {
+          "id": "r1",
+          "name": "HighErrorCount",
+          "metric": "err",
+          "fn": "sum_rate",
+          "op": ">",
+          "threshold": 2,
+          "for": "0m",
+          "severity": "critical",
+          "window": "5m"
+        },
+        {
+          "id": "r2",
+          "name": "HighCPU",
+          "metric": "cpu",
+          "fn": "raw",
+          "op": ">",
+          "threshold": 0.9,
+          "for": "0m",
+          "severity": "critical"
+        }
+      ],
+      "history": [
+        {
+          "event": "traffic-spike",
+          "day": -5,
+          "at": "14:10",
+          "dur": 14,
+          "mult": 4
+        },
+        {
+          "event": "traffic-spike",
+          "day": -2,
+          "at": "19:40",
+          "dur": 12,
+          "mult": 5
+        },
+        {
+          "event": "cpu-blip",
+          "day": -6,
+          "at": "03:20"
+        },
+        {
+          "event": "cpu-blip",
+          "day": -4,
+          "at": "11:05"
+        },
+        {
+          "event": "cpu-blip",
+          "day": -3,
+          "at": "02:45"
+        },
+        {
+          "event": "cpu-blip",
+          "day": -1,
+          "at": "16:30"
+        },
+        {
+          "event": "error-spike",
+          "day": -3,
+          "at": "15:30",
+          "dur": 20,
+          "ratio": 0.08
+        }
+      ],
+      "schedule": [
+        {
+          "tick": 2,
+          "minute": 15,
+          "event": "traffic-spike",
+          "dur": 12,
+          "mult": 8
+        },
+        {
+          "tick": 4,
+          "minute": 20,
+          "event": "cpu-blip"
+        },
+        {
+          "tick": 6,
+          "minute": 10,
+          "event": "error-spike",
+          "dur": 20,
+          "ratio": 0.08
+        },
+        {
+          "tick": 8,
+          "minute": 5,
+          "event": "traffic-spike",
+          "dur": 12,
+          "mult": 8
+        },
+        {
+          "tick": 8,
+          "minute": 40,
+          "event": "cpu-blip"
+        }
+      ],
+      "solution": [
+        {
+          "tick": 0,
+          "action": "classify",
+          "args": [
+            0,
+            "counter",
+            "rate"
+          ]
+        },
+        {
+          "tick": 1,
+          "action": "classify",
+          "args": [
+            1,
+            "gauge",
+            "nothing"
+          ]
+        },
+        {
+          "tick": 2,
+          "action": "classify",
+          "args": [
+            2,
+            "histogram",
+            "histogram_quantile"
+          ]
+        },
+        {
+          "tick": 3,
+          "action": "classify",
+          "args": [
+            3,
+            "summary",
+            "nothing"
+          ]
+        },
+        {
+          "tick": 4,
+          "action": "saveRule",
+          "args": [
+            {
+              "id": "r1",
+              "name": "HighErrorRatio",
+              "metric": "err",
+              "fn": "ratio",
+              "op": ">",
+              "threshold": 0.05,
+              "for": "5m",
+              "severity": "critical",
+              "window": "5m"
+            }
+          ]
+        },
+        {
+          "tick": 5,
+          "action": "saveRule",
+          "args": [
+            {
+              "id": "r2",
+              "name": "HighCPU",
+              "metric": "cpu",
+              "fn": "raw",
+              "op": ">",
+              "threshold": 0.9,
+              "for": "10m",
+              "severity": "warning"
+            }
+          ]
+        },
+        {
+          "tick": 6,
+          "action": "toMorning"
+        }
+      ]
+    },
+    {
+      "id": "slow-burn",
+      "title": "2. Slow burn",
+      "blurb": "Two quiet killers: p95 latency creeping up over two hours, and a disk that fills in the small hours. Averages and static thresholds notice too late. Alert on the tail and on where the disk is heading.",
+      "seed": 11,
+      "winTicks": 9,
+      "budgetMin": 60,
+      "sloTarget": 60,
+      "minSleep": 70,
+      "groupBy": "alertname,job",
+      "rules": [
+        {
+          "id": "r1",
+          "name": "HighErrorRatio",
+          "metric": "err",
+          "fn": "ratio",
+          "op": ">",
+          "threshold": 0.05,
+          "for": "5m",
+          "severity": "critical",
+          "window": "5m"
+        },
+        {
+          "id": "r2",
+          "name": "AvgLatencyHigh",
+          "metric": "lat",
+          "fn": "mean",
+          "op": ">",
+          "threshold": 0.5,
+          "for": "5m",
+          "severity": "critical",
+          "window": "5m"
+        },
+        {
+          "id": "r3",
+          "name": "DiskAlmostFull",
+          "metric": "disk",
+          "fn": "raw",
+          "op": "<",
+          "threshold": 10,
+          "for": "0m",
+          "severity": "critical"
+        },
+        {
+          "id": "r4",
+          "name": "HighCPU",
+          "metric": "cpu",
+          "fn": "raw",
+          "op": ">",
+          "threshold": 0.9,
+          "for": "0m",
+          "severity": "critical"
+        }
+      ],
+      "history": [
+        {
+          "event": "latency-creep",
+          "day": -4,
+          "at": "15:00",
+          "dur": 150,
+          "peak": 0.1
+        },
+        {
+          "event": "disk-fill",
+          "day": -2,
+          "at": "10:30",
+          "dur": 280,
+          "rate": 12
+        },
+        {
+          "event": "error-spike",
+          "day": -5,
+          "at": "13:20",
+          "dur": 20,
+          "ratio": 0.08
+        },
+        {
+          "event": "traffic-spike",
+          "day": -3,
+          "at": "18:00",
+          "dur": 12,
+          "mult": 4
+        },
+        {
+          "event": "traffic-spike",
+          "day": -1,
+          "at": "12:00",
+          "dur": 12,
+          "mult": 4
+        },
+        {
+          "event": "cpu-blip",
+          "day": -6,
+          "at": "09:15"
+        },
+        {
+          "event": "cpu-blip",
+          "day": -2,
+          "at": "03:40"
+        }
+      ],
+      "schedule": [
+        {
+          "tick": 2,
+          "minute": 40,
+          "event": "cpu-blip"
+        },
+        {
+          "tick": 3,
+          "minute": 30,
+          "event": "disk-fill",
+          "dur": 420,
+          "rate": 12
+        },
+        {
+          "tick": 5,
+          "minute": 10,
+          "event": "latency-creep",
+          "dur": 150,
+          "peak": 0.1
+        },
+        {
+          "tick": 8,
+          "minute": 0,
+          "event": "traffic-spike",
+          "dur": 12,
+          "mult": 5
+        }
+      ],
+      "solution": [
+        {
+          "tick": 0,
+          "action": "saveRule",
+          "args": [
+            {
+              "id": "r2",
+              "name": "HighP95Latency",
+              "metric": "lat",
+              "fn": "quantile",
+              "q": 0.95,
+              "op": ">",
+              "threshold": 0.5,
+              "for": "5m",
+              "severity": "critical",
+              "window": "5m"
+            }
+          ]
+        },
+        {
+          "tick": 1,
+          "action": "saveRule",
+          "args": [
+            {
+              "id": "r3",
+              "name": "DiskFillingUp",
+              "metric": "disk",
+              "fn": "predict_linear",
+              "op": "<",
+              "threshold": 0,
+              "for": "5m",
+              "severity": "critical",
+              "window": "1h",
+              "horizon": 4
+            }
+          ]
+        },
+        {
+          "tick": 2,
+          "action": "saveRule",
+          "args": [
+            {
+              "id": "r4",
+              "name": "HighCPU",
+              "metric": "cpu",
+              "fn": "raw",
+              "op": ">",
+              "threshold": 0.9,
+              "for": "10m",
+              "severity": "warning"
+            }
+          ]
+        },
+        {
+          "tick": 3,
+          "action": "toMorning"
+        }
+      ]
+    },
+    {
+      "id": "storm-night",
+      "title": "3. Storm night",
+      "blurb": "The earlier rules are in place. Now a rack goes dark and fifteen alerts fire at once, a scrape flap looks like an outage, and the request-rate panel is too slow to use while you debug. Group the storm, tame the flap, and record the expensive query.",
+      "seed": 19,
+      "winTicks": 9,
+      "budgetMin": 100,
+      "sloTarget": 60,
+      "minSleep": 70,
+      "groupBy": "...",
+      "rules": [
+        {
+          "id": "r1",
+          "name": "HighErrorRatio",
+          "metric": "err",
+          "fn": "ratio",
+          "op": ">",
+          "threshold": 0.05,
+          "for": "5m",
+          "severity": "critical",
+          "window": "5m"
+        },
+        {
+          "id": "r2",
+          "name": "HighP95Latency",
+          "metric": "lat",
+          "fn": "quantile",
+          "q": 0.95,
+          "op": ">",
+          "threshold": 0.5,
+          "for": "5m",
+          "severity": "critical",
+          "window": "5m"
+        },
+        {
+          "id": "r3",
+          "name": "DiskFillingUp",
+          "metric": "disk",
+          "fn": "predict_linear",
+          "op": "<",
+          "threshold": 0,
+          "for": "5m",
+          "severity": "critical",
+          "window": "1h",
+          "horizon": 4
+        },
+        {
+          "id": "r4",
+          "name": "HighCPU",
+          "metric": "cpu",
+          "fn": "raw",
+          "op": ">",
+          "threshold": 0.9,
+          "for": "10m",
+          "severity": "warning"
+        },
+        {
+          "id": "r5",
+          "name": "InstanceDown",
+          "metric": "up",
+          "fn": "raw",
+          "op": "<",
+          "threshold": 1,
+          "for": "0m",
+          "severity": "critical"
+        }
+      ],
+      "history": [
+        {
+          "event": "scrape-flap",
+          "day": -5,
+          "at": "04:10"
+        },
+        {
+          "event": "scrape-flap",
+          "day": -2,
+          "at": "12:45"
+        },
+        {
+          "event": "rack-down",
+          "day": -3,
+          "at": "14:20",
+          "dur": 25
+        },
+        {
+          "event": "error-spike",
+          "day": -4,
+          "at": "10:10",
+          "dur": 20,
+          "ratio": 0.08
+        },
+        {
+          "event": "traffic-spike",
+          "day": -6,
+          "at": "15:00",
+          "dur": 12,
+          "mult": 4
+        },
+        {
+          "event": "cpu-blip",
+          "day": -1,
+          "at": "13:30"
+        }
+      ],
+      "schedule": [
+        {
+          "tick": 1,
+          "minute": 30,
+          "event": "slow-dashboard"
+        },
+        {
+          "tick": 2,
+          "minute": 20,
+          "event": "traffic-spike",
+          "dur": 12,
+          "mult": 5
+        },
+        {
+          "tick": 3,
+          "minute": 10,
+          "event": "scrape-flap"
+        },
+        {
+          "tick": 5,
+          "minute": 20,
+          "event": "rack-down",
+          "dur": 25
+        },
+        {
+          "tick": 6,
+          "minute": 40,
+          "event": "cpu-blip"
+        },
+        {
+          "tick": 8,
+          "minute": 10,
+          "event": "error-spike",
+          "dur": 20,
+          "ratio": 0.08
+        }
+      ],
+      "solution": [
+        {
+          "tick": 0,
+          "action": "setRoute",
+          "args": [
+            "alertname,job"
+          ]
+        },
+        {
+          "tick": 1,
+          "action": "saveRule",
+          "args": [
+            {
+              "id": "r5",
+              "name": "InstanceDown",
+              "metric": "up",
+              "fn": "raw",
+              "op": "<",
+              "threshold": 1,
+              "for": "2m",
+              "severity": "critical"
+            }
+          ]
+        },
+        {
+          "tick": 2,
+          "action": "nextHour"
+        },
+        {
+          "tick": 3,
+          "action": "nextHour"
+        },
+        {
+          "tick": 4,
+          "action": "saveRule",
+          "args": [
+            {
+              "kind": "record",
+              "name": "job:http_requests:rate5m",
+              "metric": "req",
+              "fn": "sum_rate",
+              "window": "5m"
+            }
+          ]
+        },
+        {
+          "tick": 5,
+          "action": "toMorning"
+        }
+      ]
+    }
+  ]
+}

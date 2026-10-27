@@ -106,12 +106,23 @@
     },
     {
       "id": "observability",
-      "title": "Observability",
+      "title": "Quiet Hours",
       "topic": "Metrics and alerts",
       "code": "OB",
       "hue": "obs",
-      "status": "queued",
-      "issue": 44,
+      "status": "live",
+      "levels": 3,
+      "blurb": "Write the alert rules, then survive a night on call: page for real incidents, sleep through the noise.",
+      "chips": [
+        "rate()",
+        "histogram_quantile",
+        "for: 5m",
+        "group_by"
+      ],
+      "facts": [
+        "3 levels",
+        "PromQL + week replay"
+      ],
       "notes": "topics/observability/"
     },
     {

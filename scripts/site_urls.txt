@@ -12,6 +12,7 @@ docs/games/demo/
 docs/games/docker/
 docs/games/kubernetes/
 docs/games/mcp/
+docs/games/observability/
 docs/games/skills/
 docs/games/terraform/
 docs/infrastructure/
