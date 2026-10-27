@@ -55,7 +55,13 @@ du -h --max-depth=1 . | sort -h   # directory sizes, largest last
 free -h                      # memory
 nproc                        # CPU count
 uptime                       # load average
+find / -xdev -type f -size +1G   # what filled the disk
+truncate -s 0 /var/log/app.log   # empty a log in place
 ```
+
+Delete a log with `rm` and a process that still has it open keeps writing to the unlinked
+file: `df` shows the same usage until that process closes it. Truncate the file (or restart the
+process) instead, and remove only files nothing is using.
 
 ## Quick troubleshooting order
 

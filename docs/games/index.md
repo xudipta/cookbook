@@ -19,6 +19,7 @@ sections, and a scripted winning run must actually win.
 | [Quiet Hours](observability/index.md) | Observability | Playable: 3 levels, PromQL rule blocks, a week-long replay, a night on call |
 | [Merge Conflict Rush](github/index.md) | GitHub / Git | Playable: 3 levels, a commit graph, a `git` and `gh` prompt |
 | [Index Fund](database/index.md) | Database / SQL | Playable: 3 levels, a query planner with `EXPLAIN`, a migration pipeline |
+| [Night Shift](linux/index.md) | Linux / Shell | Playable: 3 levels, a simulated server, a shell you type real commands into |
 | [Replica Rescue (demo)](demo/index.md) | Kubernetes basics | Playable; exists to prove the shell |
 
 Topic games are planned for every topic; follow the

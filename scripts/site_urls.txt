@@ -13,6 +13,7 @@ docs/games/demo/
 docs/games/docker/
 docs/games/github/
 docs/games/kubernetes/
+docs/games/linux/
 docs/games/mcp/
 docs/games/observability/
 docs/games/skills/

@@ -18,6 +18,10 @@ input/output to files or other processes (`|`, `>`, `<`), and hand you back an e
 once it's done — everything in `02-text-processing.md`'s pipelines is just chaining that
 one mechanism.
 
+**Play it:** [Night Shift](../../docs/games/linux/index.md) puts you on call for a simulated
+server: a script that won't run, a pegged CPU, a full disk, a crash-looping service. Find each
+cause with the commands these notes teach, then fix it.
+
 ## Contents
 
 - `notes/01-shell-fundamentals.md` — permissions, processes, pipes/redirection, writing
