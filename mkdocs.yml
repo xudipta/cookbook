@@ -105,6 +105,7 @@ nav:
       - Skill Issue (Agent Skills): docs/games/skills/index.md
       - Patch Bay (MCP): docs/games/mcp/index.md
       - Quiet Hours (Observability): docs/games/observability/index.md
+      - Merge Conflict Rush (GitHub / Git): docs/games/github/index.md
       - Replica Rescue (demo): docs/games/demo/index.md
   - Learn:
       - Overview: docs/learn.md

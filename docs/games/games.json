@@ -96,12 +96,23 @@
     },
     {
       "id": "github",
-      "title": "GitHub / Git",
+      "title": "Merge Conflict Rush",
       "topic": "Version control",
       "code": "GT",
       "hue": "git",
-      "status": "queued",
-      "issue": 43,
+      "status": "live",
+      "levels": 3,
+      "blurb": "Rescue a branch on a shared repo with real git and gh commands while the commit graph redraws.",
+      "chips": [
+        "rebase",
+        "revert",
+        "--force-with-lease",
+        "gh pr merge"
+      ],
+      "facts": [
+        "3 levels",
+        "commit graph"
+      ],
       "notes": "topics/github/"
     },
     {
