@@ -87,14 +87,18 @@ export function createUI(container, { def, scenario, levels, siteRoot, handlers,
   }
 
   const actionsBar = el('div', { class: 'cg-actions', role: 'group', 'aria-label': 'Actions' });
+  const actionButtons = new Map(); // name -> { setLabel, label }: a level may relabel an action (`actionLabels`)
   for (const [name, action] of Object.entries(def.actions)) {
     // `hidden: true` actions have no button (a game drives them from its own UI, e.g. a prompt).
     if (typeof action === 'object' && action.hidden) continue;
     const label = (typeof action === 'object' && action.label) || name;
     const key = typeof action === 'object' ? action.key : undefined;
     const btn = el('button', { class: 'cg-btn cg-btn-action', type: 'button', 'data-action': name, title: key ? `Shortcut: ${key}` : undefined });
-    btn.append(label);
-    if (key) btn.append(el('kbd', { text: key }));
+    const setLabel = (text) => {
+      btn.replaceChildren(text, ...(key ? [el('kbd', { text: key })] : []));
+    };
+    setLabel(label);
+    actionButtons.set(name, { setLabel, label });
     btn.addEventListener('click', () => handlers.act(name));
     actionsBar.append(btn);
   }
@@ -152,6 +156,7 @@ export function createUI(container, { def, scenario, levels, siteRoot, handlers,
 
     setLevel(level) {
       for (const [id, btn] of levelButtons) btn.setAttribute('aria-pressed', String(Boolean(level) && id === level.id));
+      for (const [name, a] of actionButtons) a.setLabel((level && level.actionLabels && level.actionLabels[name]) || a.label);
       blurb.textContent = (level && level.blurb) || '';
       blurbBox.hidden = !blurb.textContent;
       showGoal(matchMedia('(min-width: 700px)').matches);
