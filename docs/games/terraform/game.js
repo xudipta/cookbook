@@ -4,10 +4,12 @@
 import { registerGame } from '../shared/engine.js';
 import { el } from '../shared/ui.js';
 import {
+  addMoved as simAddMoved,
   afterMove,
   createWorld,
   describeValue,
   editTargets,
+  extractModule as simExtractModule,
   isLost as simIsLost,
   isWon as simIsWon,
   runCommand,
@@ -24,13 +26,17 @@ function configText(w) {
   const lines = [];
   if (w.config.backend) lines.push('terraform {', '  backend "s3" {', '    bucket = "acme-tfstate"', '  }', '}', '');
   for (const [name, value] of Object.entries(w.config.vars)) lines.push(`variable "${name}" {`, `  default = ${JSON.stringify(value)}`, '}', '');
-  for (const [addr, res] of Object.entries(w.config.resources)) {
-    const [type, name] = addr.split('.');
-    lines.push(`resource "${type}" "${name}" {`);
-    const width = Math.max(...Object.keys(res.attrs).map((k) => k.length));
-    for (const [k, v] of Object.entries(res.attrs)) lines.push(`  ${k.padEnd(width)} = ${describeValue(v)}`);
-    lines.push('}', '');
+  if (w.refactored && w.refactor.configText) lines.push(...w.refactor.configText, '');
+  else {
+    for (const [addr, res] of Object.entries(w.config.resources)) {
+      const [type, name] = [res.type, addr.split('.').pop()];
+      lines.push(`resource "${type}" "${name}" {`);
+      const width = Math.max(...Object.keys(res.attrs).map((k) => k.length));
+      for (const [k, v] of Object.entries(res.attrs)) lines.push(`  ${k.padEnd(width)} = ${describeValue(v)}`);
+      lines.push('}', '');
+    }
   }
+  for (const m of w.config.moved) lines.push('moved {', `  from = ${m.from}`, `  to   = ${m.to}`, '}', '');
   return lines.join('\n').trimEnd();
 }
 
@@ -99,6 +105,27 @@ function fillInput(state) {
   input.value = target ? target.value : '';
 }
 
+function syncRefactor(state, ctx) {
+  const r = state.dom.refactor;
+  r.box.hidden = !state.refactor;
+  if (!state.refactor) return;
+  const from = Object.keys(state.envs[state.workspace].state);
+  const to = Object.keys(state.config.resources);
+  const sig = JSON.stringify([from, to]);
+  if (state.refactorSig !== sig) {
+    state.refactorSig = sig;
+    const keep = [r.fromSel.value, r.toSel.value];
+    r.fromSel.replaceChildren(...from.map((a) => el('option', { value: a, text: a })));
+    r.toSel.replaceChildren(...to.map((a) => el('option', { value: a, text: a })));
+    if (from.includes(keep[0])) r.fromSel.value = keep[0];
+    if (to.includes(keep[1])) r.toSel.value = keep[1];
+  }
+  r.extract.disabled = ctx.over || state.refactored;
+  r.add.disabled = ctx.over || !state.refactored;
+  r.fromSel.disabled = ctx.over || !state.refactored;
+  r.toSel.disabled = ctx.over || !state.refactored;
+}
+
 function saveEdit(state, ctx) {
   const { select, input } = state.dom.editor;
   const id = select.value;
@@ -134,6 +161,7 @@ function render(state, ctx) {
   d.stateHead.textContent = `State (${state.stateStore === 'remote' ? 'remote' : 'terraform.tfstate'})`;
   d.realHead.textContent = `Real infrastructure (workspace ${state.workspace})`;
   syncEditor(state);
+  syncRefactor(state, ctx);
   const atBottom = d.term.scrollHeight - d.term.scrollTop - d.term.clientHeight < 40;
   d.term.replaceChildren(...(state.term.length ? termLines(state) : [el('span', { class: 'tf-line tf-line-out', text: 'Type a command below, for example: terraform init\n' })]));
   if (atBottom || state.stickBottom) d.term.scrollTop = d.term.scrollHeight;
@@ -159,6 +187,7 @@ registerGame({
     state.history = [];
     state.historyAt = 0;
     state.editorSig = null;
+    state.refactorSig = null;
     state.stickBottom = true;
 
     const status = el('div', { class: 'tf-status', role: 'status', 'aria-label': 'Workspace, state, lock and CI' });
@@ -180,6 +209,26 @@ registerGame({
       }
     });
     const editor = el('div', { class: 'tf-editor' }, el('span', { class: 'tf-fact-label', text: 'Edit main.tf' }), select, editInput, save);
+
+    // Refactoring tools, shown only on a level that has a `refactor` step.
+    const extract = el('button', { class: 'tf-btn', type: 'button', text: 'Extract module' });
+    extract.addEventListener('click', () => ctx.act('extractModule'));
+    const fromSel = el('select', { class: 'tf-select', 'aria-label': 'moved block: from (an address in state)' });
+    const toSel = el('select', { class: 'tf-select', 'aria-label': 'moved block: to (an address in the config)' });
+    const addMoved = el('button', { class: 'tf-btn', type: 'button', text: 'Add moved block' });
+    addMoved.addEventListener('click', () => ctx.act('addMoved', fromSel.value, toSel.value));
+    const refactorBox = el(
+      'div',
+      { class: 'tf-editor tf-refactor' },
+      el('span', { class: 'tf-fact-label', text: 'Refactor' }),
+      extract,
+      el('span', { class: 'tf-fact-label', text: 'moved from' }),
+      fromSel,
+      el('span', { class: 'tf-fact-label', text: 'to' }),
+      toSel,
+      addMoved,
+    );
+    refactorBox.hidden = !state.refactor;
 
     const term = el('pre', { class: 'tf-term', tabindex: 0, role: 'log', 'aria-label': 'Terminal output' });
     const input = el('input', { class: 'tf-input tf-cmd', type: 'text', 'aria-label': 'Terminal command', placeholder: 'terraform plan', autocomplete: 'off', autocapitalize: 'off', spellcheck: 'false' });
@@ -222,13 +271,13 @@ registerGame({
       el(
         'div',
         { class: 'tf-cols' },
-        el('section', { class: 'tf-panel' }, el('h4', { class: 'tf-h', text: 'Config (main.tf)' }), config, editor),
+        el('section', { class: 'tf-panel' }, el('h4', { class: 'tf-h', text: 'Config (main.tf)' }), config, editor, refactorBox),
         el('section', { class: 'tf-panel' }, stateHead, stateList),
         el('section', { class: 'tf-panel' }, realHead, realList),
       ),
       el('section', { class: 'tf-panel' }, el('h4', { class: 'tf-h', text: 'Terminal' }), term, pendingNote, form, el('div', { class: 'tf-quicks' }, ...quick)),
     );
-    state.dom = { root, status, config, state: stateList, real: realList, stateHead, realHead, term, input, run, quick, pendingNote, editor: { select, input: editInput, save } };
+    state.dom = { refactor: { box: refactorBox, extract, fromSel, toSel, add: addMoved }, root, status, config, state: stateList, real: realList, stateHead, realHead, term, input, run, quick, pendingNote, editor: { select, input: editInput, save } };
     ctx.ui.board.append(root);
     ctx.log('Run commands in the terminal. Reading a plan is free; every change costs a move. Next day (d) ends the day: anything still out of sync overnight costs trust.');
   },
@@ -251,6 +300,22 @@ registerGame({
         afterMove(state, ctx);
         render(state, ctx); // the engine does not re-render after a read-only or failed command (false)
         return result;
+      },
+    },
+    extractModule: {
+      hidden: true,
+      run(state, ctx) {
+        if (!simExtractModule(state, ctx)) return false;
+        afterMove(state, ctx);
+        return true;
+      },
+    },
+    addMoved: {
+      hidden: true,
+      run(state, ctx, from, to) {
+        if (!simAddMoved(state, from, to)) return false;
+        afterMove(state, ctx);
+        return true;
       },
     },
     setVar: {

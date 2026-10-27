@@ -65,3 +65,26 @@ Conventions worth following as a config grows:
   `examples/local-file/main.tf`) so `terraform init` is reproducible.
 - A module's `variables.tf` is its public interface — keep it minimal and documented
   (`description` on every variable and output).
+
+## Refactoring into a module
+
+Moving a resource into a module changes its address (`aws_instance.web_a` becomes
+`module.svc_a.aws_instance.web`). Terraform tracks resources by address, so a plain `plan` proposes
+to destroy the old object and create the new one: for a database or bucket, that is data loss. Tell
+Terraform the object moved instead:
+
+```hcl
+moved {
+  from = aws_instance.web_a
+  to   = module.svc_a.aws_instance.web
+}
+```
+
+```bash
+terraform plan                # "has moved to": no destroy, no create
+terraform state mv aws_instance.web_a module.svc_a.aws_instance.web   # one-off alternative, edits state now
+```
+
+Prefer `moved` blocks: they are reviewed in the pull request and work for everyone who applies the
+config. `state mv` changes only your state. Either way, read the plan: a wrong pair still shows
+changes.

@@ -50,7 +50,7 @@
       "code": "TF",
       "hue": "tf",
       "status": "live",
-      "levels": 3,
+      "levels": 4,
       "blurb": "Keep config, state and reality in agreement through drift, imports and locks.",
       "chips": [
         "plan",
@@ -59,8 +59,9 @@
         "force-unlock"
       ],
       "facts": [
-        "3 levels",
-        "plan simulator"
+        "4 levels",
+        "plan simulator",
+        "modules and moved"
       ],
       "notes": "topics/terraform/"
     },
