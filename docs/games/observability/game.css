@@ -1,0 +1,592 @@
+/* Quiet Hours. Boards use <div>s, never <ul>, so Material's list styling doesn't apply. State is always
+   carried by text or shape as well as colour. */
+
+.cg .cg-board:has(.oh) {
+  padding: 0.4rem;
+}
+
+.cg .oh {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.cg .oh p,
+.cg .oh h4 {
+  margin: 0;
+}
+
+.cg .oh-sub {
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+/* ---- status strip ---- */
+
+.cg .oh-strip {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.6rem 0.9rem;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--cg-border);
+  border-radius: var(--radius-m);
+  background: var(--surface);
+}
+
+.cg .oh-clockbox,
+.cg .oh-phone {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.cg .oh-clock {
+  font: 700 1.6rem/1.1 var(--font-mono);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.cg .oh-phone {
+  padding: 0.25rem 0.6rem;
+  border: 2px solid var(--cg-border);
+  border-radius: 0.7rem;
+  background: var(--cg-surface);
+}
+
+.cg .oh-phone[data-buzz="true"] {
+  border-color: var(--cg-bad);
+  animation: oh-buzz 0.5s 2;
+}
+
+.cg .oh-phone-count {
+  font: 700 1.3rem/1.1 var(--font-mono);
+}
+
+@keyframes oh-buzz {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-3px);
+  }
+  75% {
+    transform: translateX(3px);
+  }
+}
+
+.cg .oh-meters {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+.cg .oh-meter-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.cg .oh-meter-text {
+  font: 600 0.85rem/1.2 var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.cg .oh-meter {
+  height: 0.8rem;
+  border: 1px solid var(--cg-border);
+  border-radius: 0.4rem;
+  background: var(--cg-surface);
+  overflow: hidden;
+}
+
+.cg .oh-meter-fill {
+  height: 100%;
+  width: 100%;
+  background: var(--cg-ok);
+  transition: width 0.3s ease;
+}
+
+.cg .oh-meter-fill[data-level="warn"] {
+  background: var(--cg-warn);
+}
+
+.cg .oh-meter-fill[data-level="bad"] {
+  background: var(--cg-bad);
+}
+
+.cg .oh-msg {
+  padding: 0.45rem 0.7rem;
+  border-left: 4px solid var(--cg-warn);
+  background: var(--surface);
+  font-size: 0.85rem;
+}
+
+/* ---- sections ---- */
+
+.cg .oh-sec {
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--cg-border);
+  border-radius: var(--radius-m);
+  background: var(--surface);
+  min-width: 0;
+}
+
+.cg .oh-sec > :not(summary) + :not(summary) {
+  margin-top: 0.55rem;
+}
+
+.cg .oh-sum {
+  font: 700 0.82rem/1.3 var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.cg .oh-h {
+  font: 700 0.85rem/1.3 var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--muted);
+}
+
+.cg .oh-report {
+  border: 2px solid var(--cg-accent);
+}
+
+.cg .oh-hint,
+.cg .oh-bt,
+.cg .oh-keytext,
+.cg .oh-note-line {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.cg .oh-bt.oh-bad,
+.cg .oh-bad {
+  color: var(--cg-bad);
+}
+
+.cg .oh-good {
+  color: var(--cg-ok);
+}
+
+.cg .oh-empty {
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+/* ---- code ---- */
+
+.cg .oh-expr,
+.cg .oh-yaml {
+  display: block;
+  margin: 0;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--cg-border);
+  border-radius: 0.25rem;
+  background: var(--term-bg);
+  color: var(--term-ink);
+  font: 0.72rem/1.4 var(--font-mono);
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.cg .oh-yaml {
+  max-height: 16rem;
+  overflow: auto;
+  white-space: pre;
+  word-break: normal;
+  overflow-wrap: normal;
+}
+
+.cg .oh-expr-big {
+  font-size: 0.78rem;
+}
+
+.cg .oh-details > summary {
+  cursor: pointer;
+  font-size: 0.8rem;
+  color: var(--cg-accent);
+}
+
+/* ---- buttons and fields ---- */
+
+.cg .oh-btn {
+  padding: 0.3rem 0.7rem;
+  border: 1px solid var(--cg-accent);
+  border-radius: 0.25rem;
+  background: transparent;
+  color: var(--cg-accent);
+  font: 600 0.8rem/1.3 var(--font-body);
+  cursor: pointer;
+}
+
+.cg .oh-btn:hover:not(:disabled) {
+  background: var(--cg-surface);
+}
+
+.cg .oh-btn-primary {
+  background: var(--cg-accent);
+  color: var(--accent-ink);
+}
+
+.cg .oh-btn-primary:hover:not(:disabled) {
+  background: var(--cg-accent);
+  filter: brightness(1.1);
+}
+
+.cg .oh-btn:disabled,
+.cg .oh-input:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.cg .oh-btn:focus-visible,
+.cg .oh-input:focus-visible,
+.cg .oh-sum:focus-visible,
+.cg .oh-details > summary:focus-visible,
+.cg .oh-yaml:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.cg .oh-input {
+  width: 100%;
+  min-width: 0;
+  padding: 0.3rem 0.4rem;
+  border: 1px solid var(--cg-border);
+  border-radius: 0.25rem;
+  background: var(--surface);
+  color: var(--ink);
+  font: 0.8rem/1.3 var(--font-body);
+}
+
+.cg .oh-rule-actions,
+.cg .oh-quiz-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.cg .oh-quiz-row .oh-input {
+  flex: 1 1 11rem;
+  width: auto;
+}
+
+/* ---- rules ---- */
+
+.cg .oh-rules {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.cg .oh-rule,
+.cg .oh-quiz {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--cg-border);
+  border-left: 4px solid var(--cg-accent);
+  border-radius: 0.3rem;
+  background: var(--cg-surface);
+  min-width: 0;
+}
+
+.cg .oh-quiz[data-done="true"] {
+  border-left-color: var(--cg-ok);
+}
+
+.cg .oh-ok {
+  font-size: 0.8rem;
+  color: var(--cg-ok);
+  font-weight: 600;
+}
+
+.cg .oh-rule-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.2rem 0.6rem;
+}
+
+.cg .oh-name {
+  font: 700 0.85rem/1.3 var(--font-mono);
+  overflow-wrap: anywhere;
+}
+
+.cg .oh-badge {
+  padding: 0 0.4rem;
+  border: 1px solid currentcolor;
+  border-radius: 0.2rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.cg .oh-sev-critical {
+  color: var(--cg-bad);
+}
+
+.cg .oh-sev-warning {
+  color: var(--cg-warn);
+}
+
+.cg .oh-sev-rec {
+  color: var(--cg-accent);
+}
+
+.cg .oh-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.6rem;
+  border: 2px solid var(--cg-accent);
+  border-radius: 0.3rem;
+  background: var(--cg-surface);
+}
+
+.cg .oh-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 0.5rem;
+}
+
+.cg .oh-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.cg .oh-label {
+  font: 700 0.7rem/1.3 var(--font-mono);
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.cg .oh-unit {
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+.cg .oh-check {
+  font-size: 0.8rem;
+}
+
+.cg .oh-check[data-ok="false"] {
+  color: var(--cg-bad);
+  font-weight: 600;
+}
+
+.cg .oh-check[data-ok="true"] {
+  color: var(--cg-ok);
+}
+
+/* ---- dashboard ---- */
+
+.cg .oh-panels {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.6rem;
+}
+
+@container (min-width: 520px) {
+  .cg .oh-panels {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .cg .oh-strip {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 1.6fr);
+  }
+
+  .cg .oh-meters {
+    grid-column: auto;
+    grid-template-columns: minmax(0, 1fr);
+    align-content: center;
+  }
+}
+
+.cg .oh-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.45rem 0.55rem;
+  border: 1px solid var(--cg-border);
+  border-radius: 0.3rem;
+  background: var(--cg-surface);
+  min-width: 0;
+}
+
+.cg .oh-panel-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.1rem 0.5rem;
+  font-size: 0.82rem;
+}
+
+.cg .oh-type {
+  font-size: 0.68rem;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.cg .oh-now {
+  margin-left: auto;
+  font: 700 0.85rem/1.2 var(--font-mono);
+}
+
+.cg .oh-chart,
+.cg .oh-timeline {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.cg .oh-grid {
+  stroke: var(--line);
+  stroke-width: 0.6;
+}
+
+.cg .oh-axis {
+  fill: var(--muted);
+  font: 8px var(--font-mono);
+}
+
+.cg .oh-line {
+  stroke: var(--accent);
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+}
+
+.cg .oh-dot {
+  fill: var(--accent);
+}
+
+.cg .oh-thr {
+  stroke: var(--bad);
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+}
+
+.cg .oh-thr-label {
+  fill: var(--bad);
+}
+
+.cg .oh-slow {
+  padding: 1.2rem 0.5rem;
+  border: 1px dashed var(--cg-warn);
+  border-radius: 0.25rem;
+  font-size: 0.8rem;
+  color: var(--cg-warn);
+  font-weight: 600;
+}
+
+.cg .oh-gauge {
+  height: 0.6rem;
+  border: 1px solid var(--cg-border);
+  border-radius: 0.3rem;
+  overflow: hidden;
+}
+
+.cg .oh-gauge-fill {
+  height: 100%;
+  background: var(--accent);
+}
+
+/* ---- timeline ---- */
+
+.cg .oh-asleep {
+  fill: var(--surface-2);
+  stroke: var(--line);
+  stroke-width: 0.6;
+}
+
+.cg .oh-bar {
+  fill: none;
+  stroke: var(--muted);
+  stroke-width: 1.2;
+  stroke-dasharray: 3 2;
+}
+
+.cg .oh-bar-urgent {
+  fill: var(--bad);
+  stroke: var(--bad);
+  stroke-dasharray: none;
+}
+
+.cg .oh-letter {
+  fill: var(--ink);
+  font: 700 8px var(--font-mono);
+  paint-order: stroke;
+  stroke: var(--surface);
+  stroke-width: 2px;
+}
+
+.cg .oh-page {
+  fill: var(--ink);
+  stroke: var(--ink);
+  stroke-width: 1.2;
+}
+
+.cg .oh-page-false {
+  fill: none;
+}
+
+.cg .oh-ticket {
+  fill: var(--accent);
+}
+
+.cg .oh-now-line {
+  stroke: var(--accent);
+  stroke-width: 1.2;
+}
+
+.cg .oh-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  font-size: 0.78rem;
+}
+
+/* ---- tables built from divs ---- */
+
+.cg .oh-table {
+  display: flex;
+  flex-direction: column;
+}
+
+.cg .oh-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.1rem;
+  padding: 0.35rem 0;
+  border-top: 1px solid var(--cg-border);
+  font-size: 0.8rem;
+}
+
+.cg .oh-when {
+  font: 0.72rem/1.3 var(--font-mono);
+  color: var(--muted);
+}
+
+.cg .oh-result {
+  font-weight: 600;
+}
+
+@container (min-width: 560px) {
+  .cg .oh-row {
+    grid-template-columns: 9rem minmax(0, 1.4fr) minmax(0, 1fr);
+    gap: 0.6rem;
+  }
+
+  .cg .oh-report .oh-row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}

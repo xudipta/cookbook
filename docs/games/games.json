@@ -75,12 +75,23 @@
     },
     {
       "id": "cicd",
-      "title": "CI/CD",
+      "title": "Pipeline Panic",
       "topic": "Pipelines",
       "code": "CI",
       "hue": "cicd",
-      "status": "queued",
-      "issue": 42,
+      "status": "live",
+      "levels": 4,
+      "blurb": "Build a workflow from cards, then pick rolling, blue-green or canary for each release.",
+      "chips": [
+        "paths-ignore",
+        "matrix",
+        "pin a SHA",
+        "canary"
+      ],
+      "facts": [
+        "4 levels",
+        "live YAML preview"
+      ],
       "notes": "topics/cicd/"
     },
     {
@@ -106,12 +117,23 @@
     },
     {
       "id": "observability",
-      "title": "Observability",
+      "title": "Quiet Hours",
       "topic": "Metrics and alerts",
       "code": "OB",
       "hue": "obs",
-      "status": "queued",
-      "issue": 44,
+      "status": "live",
+      "levels": 3,
+      "blurb": "Write the alert rules, then survive a night on call: page for real incidents, sleep through the noise.",
+      "chips": [
+        "rate()",
+        "histogram_quantile",
+        "for: 5m",
+        "group_by"
+      ],
+      "facts": [
+        "3 levels",
+        "PromQL + week replay"
+      ],
       "notes": "topics/observability/"
     },
     {
@@ -126,22 +148,44 @@
     },
     {
       "id": "skills",
-      "title": "Agent Skills",
+      "title": "Skill Issue",
       "topic": "AI tooling",
       "code": "SK",
       "hue": "skills",
-      "status": "queued",
-      "issue": 46,
+      "status": "live",
+      "levels": 3,
+      "blurb": "Author a SKILL.md and see whether an agent would trigger it, inside a limited context window.",
+      "chips": [
+        "description",
+        "frontmatter",
+        "allowed-tools",
+        "check_skill.py"
+      ],
+      "facts": [
+        "3 levels",
+        "trigger simulator"
+      ],
       "notes": "topics/skills/"
     },
     {
       "id": "mcp",
-      "title": "MCP",
+      "title": "Patch Bay",
       "topic": "AI tooling",
       "code": "MC",
       "hue": "mcp",
-      "status": "queued",
-      "issue": 47,
+      "status": "live",
+      "levels": 3,
+      "blurb": "Wire an agent to MCP servers: pick transports and scopes, keep secrets out of version control, vet what you plug in.",
+      "chips": [
+        "claude mcp add",
+        ".mcp.json",
+        "${VAR}",
+        "inspector"
+      ],
+      "facts": [
+        "3 levels",
+        "JSON-RPC wire log"
+      ],
       "notes": "topics/mcp/"
     }
   ]

@@ -1,0 +1,353 @@
+/* Pipeline Panic. Boards use <div>s, never <ul>, so Material's list styling doesn't apply. */
+
+.cg .cp-panel {
+  margin-bottom: 0.75rem;
+  min-width: 0;
+}
+
+.cg .cp-cols {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.75rem;
+}
+
+/* Two panes side by side only when the board itself is wide enough. */
+@container (min-width: 820px) {
+  .cg .cp-cols {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.cg .cp-h {
+  margin: 0 0 0.4rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--muted);
+}
+
+.cg .cp-next {
+  margin: 0 0 0.4rem;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--cg-accent);
+  border-left-width: 4px;
+  border-radius: 0.25rem;
+  background: var(--surface);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.cg .cp-facts,
+.cg .cp-hint,
+.cg .cp-empty {
+  margin: 0.3rem 0 0.4rem;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+/* ---- goals ---- */
+
+.cg .cp-goals {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.cg .cp-goal {
+  display: flex;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+}
+
+.cg .cp-goal-mark {
+  min-width: 2.6rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.cg .cp-goal-ok .cp-goal-mark {
+  color: var(--cg-ok);
+}
+
+.cg .cp-goal-todo .cp-goal-mark {
+  color: var(--cg-bad);
+}
+
+/* ---- buttons ---- */
+
+.cg .cp-btn {
+  padding: 0.15rem 0.55rem;
+  border: 1px solid var(--cg-accent);
+  border-radius: 0.2rem;
+  background: transparent;
+  color: var(--cg-accent);
+  font: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.cg .cp-btn:hover:not(:disabled) {
+  background: var(--cg-surface);
+}
+
+.cg .cp-btn-primary {
+  background: var(--cg-accent);
+  color: var(--accent-ink);
+}
+
+.cg .cp-btn-primary:hover:not(:disabled) {
+  background: var(--cg-accent);
+  opacity: 0.9;
+}
+
+.cg .cp-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.cg .cp-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* ---- cards ---- */
+
+.cg .cp-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-height: 2.5rem;
+  margin-bottom: 0.6rem;
+  padding: 0.4rem;
+  border: 1px dashed var(--cg-border);
+  border-radius: 0.3rem;
+  background: var(--cg-surface);
+}
+
+.cg .cp-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.1rem 0.5rem;
+  align-items: center;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--cg-border);
+  border-left: 4px solid var(--cg-border);
+  border-radius: 0.25rem;
+  background: var(--surface);
+}
+
+.cg .cp-card-on {
+  border-left-color: var(--cg-accent);
+}
+
+.cg .cp-card-label {
+  font-size: 0.78rem;
+  word-break: break-word;
+}
+
+.cg .cp-card-tip {
+  grid-column: 1;
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+.cg .cp-card .cp-btn {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+}
+
+/* ---- code and terminal panes ---- */
+
+.cg .cp-code,
+.cg .cp-term {
+  max-height: 34rem;
+  margin: 0;
+  padding: 0.5rem;
+  overflow: auto;
+  border: 1px solid var(--cg-border);
+  border-radius: 0.3rem;
+  background: var(--term-bg);
+  color: var(--term-ink);
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+
+.cg .cp-term {
+  height: 14rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.cg .cp-line-cmd {
+  font-weight: 700;
+}
+
+.cg .cp-line-dim {
+  color: var(--term-dim);
+}
+
+.cg .cp-line-err {
+  display: inline-block;
+  width: 100%;
+  border-left: 3px solid var(--bad);
+  padding-left: 0.4rem;
+  margin-left: -0.4rem;
+  font-weight: 600;
+}
+
+/* ---- Deploy Day ---- */
+
+.cg .cd-notes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.cg .cd-note {
+  padding: 0.1rem 0.5rem;
+  border: 1px solid var(--cg-border);
+  border-radius: 0.25rem;
+  background: var(--surface);
+  font-size: 0.78rem;
+}
+
+.cg .cd-lane {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 0.4rem;
+}
+
+.cg .cd-env {
+  display: flex;
+  flex-direction: column;
+  min-width: 6rem;
+  padding: 0.3rem 0.6rem;
+  border: 1px solid var(--cg-border);
+  border-radius: 0.3rem;
+  background: var(--surface);
+  font-size: 0.8rem;
+}
+
+.cg .cd-env-here {
+  border: 2px solid var(--cg-accent);
+  background: var(--cg-surface);
+}
+
+.cg .cd-env-note {
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+.cg .cd-arrow {
+  align-self: center;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.cg .cd-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.cg .cd-fleet {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.3rem;
+}
+
+@container (min-width: 520px) {
+  .cg .cd-fleet {
+    grid-template-columns: repeat(10, minmax(0, 1fr));
+  }
+}
+
+.cg .cd-tile {
+  padding: 0.3rem 0;
+  border: 1px solid var(--cg-border);
+  border-radius: 0.25rem;
+  background: var(--surface);
+  font-size: 0.72rem;
+  text-align: center;
+}
+
+.cg .cd-tile-new {
+  border: 2px solid var(--cg-accent);
+  background: var(--cg-surface);
+  font-weight: 700;
+}
+
+.cg .cd-graph {
+  position: relative;
+  height: 6rem;
+  padding: 0.3rem 0.4rem 0;
+  border: 1px solid var(--cg-border);
+  border-radius: 0.3rem;
+  background: var(--cg-surface);
+}
+
+.cg .cd-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.25rem;
+  height: 100%;
+}
+
+.cg .cd-pair {
+  display: flex;
+  flex: 1 1 0;
+  align-items: flex-end;
+  gap: 1px;
+  height: 100%;
+  max-width: 1.8rem;
+}
+
+.cg .cd-bar {
+  flex: 1 1 0;
+  min-height: 3px;
+  border-radius: 2px 2px 0 0;
+  background: var(--cg-accent);
+}
+
+.cg .cd-bar-new {
+  background: repeating-linear-gradient(45deg, var(--cg-accent) 0 3px, transparent 3px 5px);
+  outline: 1px solid var(--cg-accent);
+  outline-offset: -1px;
+}
+
+.cg .cd-bar-none {
+  background: transparent;
+}
+
+.cg .cd-bar-bad {
+  background: var(--cg-bad);
+  border-top: 3px solid var(--ink);
+}
+
+.cg .cd-bar-new.cd-bar-bad {
+  background: repeating-linear-gradient(45deg, var(--cg-bad) 0 3px, transparent 3px 5px);
+  outline-color: var(--cg-bad);
+}
+
+/* The 5% alert threshold is 10% of the way up a 0-50% chart. */
+.cg .cd-alert-line {
+  position: absolute;
+  right: 0.4rem;
+  bottom: calc(10% * 0.95 + 0.1rem);
+  left: 0.4rem;
+  border-top: 1px dashed var(--muted);
+  font-size: 0.65rem;
+  text-align: right;
+  color: var(--muted);
+  pointer-events: none;
+}
+
+@media (max-width: 700px) {
+  .cg .cd-env {
+    min-width: 5rem;
+  }
+}
