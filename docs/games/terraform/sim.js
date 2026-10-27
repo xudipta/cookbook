@@ -12,6 +12,11 @@
 // The world is data from scenarios.json: a provider schema, a config, and per-workspace state + reality.
 
 const clone = (o) => JSON.parse(JSON.stringify(o));
+// The last two parts of an address are the resource type and name; anything before them is a module path.
+const leaf = (addr) => {
+  const parts = addr.split('.');
+  return { type: parts[parts.length - 2] || parts[0], name: parts[parts.length - 1] };
+};
 const quote = (v) => JSON.stringify(v);
 
 // ---------------------------------------------------------------- config values
@@ -64,12 +69,39 @@ export function setAttr(w, addr, attr, value) {
   return true;
 }
 
+// "Extract a module": the level's `refactor.mapping` says where every resource block goes. The config
+// still describes the same real objects with the same attributes; only the addresses change, and state is
+// untouched, so Terraform now sees a destroy at each old address and a create at each new one.
+export function extractModule(w, ctx) {
+  if (!w.refactor || w.refactored) return false;
+  const before = outOfSync(w);
+  for (const { from, to } of w.refactor.mapping) {
+    w.config.resources[to] = w.config.resources[from];
+    delete w.config.resources[from];
+  }
+  w.refactored = true;
+  w.pending = null;
+  openEvent(w, ctx, 'module-extracted', `${w.refactor.mapping.length} resources now live in module "${w.refactor.module}"`, before);
+  return true;
+}
+
+// A `moved { from, to }` block: `to` must be a resource the config declares.
+export function addMoved(w, from, to) {
+  if (!from || !to || from === to || !w.config.resources[to]) return false;
+  if ((w.config.moved || []).some((m) => m.from === from && m.to === to)) return false;
+  w.config.moved.push({ from, to });
+  w.pending = null;
+  return true;
+}
+
 // ---------------------------------------------------------------- world
 
 export function createWorld(sc) {
   const w = {
     schema: sc.schema,
-    config: clone(sc.config),
+    config: { ...clone(sc.config), moved: clone(sc.config.moved || []) },
+    refactor: sc.refactor ? clone(sc.refactor) : null, // an optional "extract a module" step (see extractModule)
+    refactored: false,
     envs: {},
     workspace: sc.workspace,
     stateStore: sc.stateStore || 'local',
@@ -131,6 +163,16 @@ export function computePlan(w, workspace = w.workspace) {
     refreshed[addr] = { id: s.id, type: real.type, attrs: { ...real.attrs } };
   }
 
+  // `moved` blocks: a state entry at `from` that has no entry at `to` is re-keyed before the diff.
+  const moves = [];
+  for (const m of w.config.moved || []) {
+    if (refreshed[m.from] && !refreshed[m.to]) {
+      refreshed[m.to] = refreshed[m.from];
+      delete refreshed[m.from];
+      moves.push({ from: m.from, to: m.to, type: refreshed[m.to].type });
+    }
+  }
+
   const changes = [];
   for (const [addr, res] of Object.entries(w.config.resources)) {
     const want = wanted(w, workspace, res);
@@ -142,19 +184,22 @@ export function computePlan(w, workspace = w.workspace) {
     const diffs = diffAttrs(cur.attrs, want);
     if (!diffs.length) continue;
     const forces = diffs.filter((d) => w.schema[res.type].forceNew.includes(d.attr)).map((d) => d.attr);
-    changes.push({ addr, type: res.type, action: forces.length ? 'replace' : 'update', diffs, forces, from: cur.attrs, want });
+    changes.push({ addr, type: res.type, action: forces.length ? 'replace' : 'update', diffs, forces, from: cur.attrs, want, id: cur.id });
   }
   for (const [addr, cur] of Object.entries(refreshed)) {
     if (!w.config.resources[addr]) changes.push({ addr, type: cur.type, action: 'destroy', from: cur.attrs });
   }
-  return { workspace, refreshed, drift, changes };
+  return { workspace, refreshed, drift, changes, moves };
 }
 
 // "env/addr" pairs where reality, state and config disagree.
 export function outOfSync(w) {
   const out = new Set();
   for (const name of Object.keys(w.envs)) {
-    for (const c of computePlan(w, name).changes) out.add(`${name}/${c.addr}`);
+    const plan = computePlan(w, name);
+    for (const c of plan.changes) out.add(`${name}/${c.addr}`);
+    for (const m of plan.moves) out.add(`${name}/${m.to}`); // a move not yet applied to state
+
   }
   return out;
 }
@@ -168,7 +213,8 @@ const VERB = {
 };
 
 function changeLines(w, c) {
-  const [type, name] = [c.type, c.addr.split('.')[1]];
+  const type = c.type;
+  const { name } = leaf(c.addr);
   const sym = SYMBOL[c.action];
   const lines = [`  # ${c.addr} ${VERB[c.action]}`, `${sym.length === 1 ? `  ${sym}` : sym} resource "${type}" "${name}" {`];
   const keys = [...new Set([...Object.keys(c.from || {}), ...Object.keys(c.want || {})])];
@@ -189,7 +235,7 @@ function changeLines(w, c) {
       }
       lines.push(`      ~ ${k.padEnd(width)} = ${quote(d.from)} -> ${quote(d.to)}${c.forces.includes(k) ? ' # forces replacement' : ''}`);
     }
-    if (c.action === 'replace') lines.push(`      ~ ${'id'.padEnd(width)} = ${quote(w.envs[w.workspace].state[c.addr]?.id ?? '')} -> (known after apply)`);
+    if (c.action === 'replace') lines.push(`      ~ ${'id'.padEnd(width)} = ${quote(c.id ?? '')} -> (known after apply)`);
     if (hidden) lines.push(`        # (${hidden} unchanged attribute${hidden > 1 ? 's' : ''} hidden)`);
   }
   lines.push('    }', '');
@@ -209,7 +255,7 @@ export function planText(w, plan) {
   if (plan.drift.length) {
     lines.push('Note: Objects have changed outside of Terraform', '', 'Terraform detected the following changes made outside of Terraform since the last "terraform apply":', '');
     for (const d of plan.drift) {
-      const name = d.addr.split('.')[1];
+      const { name } = leaf(d.addr);
       if (d.deleted) {
         lines.push(`  # ${d.addr} has been deleted`, `  - resource "${d.type}" "${name}" {`, '    }', '');
         continue;
@@ -219,7 +265,7 @@ export function planText(w, plan) {
       lines.push('    }', '');
     }
   }
-  if (!plan.changes.length) {
+  if (!plan.changes.length && !plan.moves.length) {
     lines.push('No changes. Your infrastructure matches the configuration.');
     return lines;
   }
@@ -229,6 +275,9 @@ export function planText(w, plan) {
     'Terraform will perform the following actions:',
     '',
   );
+  for (const m of plan.moves) {
+    lines.push(`  # ${m.from} has moved to ${m.to}`, `    resource "${m.type}" "${leaf(m.to).name}" {`, '        # (all attributes unchanged)', '    }', '');
+  }
   for (const c of plan.changes) lines.push(...changeLines(w, c));
   lines.push(`Plan: ${summary(plan.changes)}.`);
   return lines;
@@ -397,7 +446,7 @@ function doApply(w, ctx, args) {
   if (!gate(w, ctx)) return false;
   const plan = computePlan(w);
   const auto = args.includes('-auto-approve');
-  if (!plan.changes.length) {
+  if (!plan.changes.length && !plan.moves.length) {
     say(w, planText(w, plan).join('\n'));
     applyPlan(w, ctx, plan); // still saves the refreshed state
     return 'free';
@@ -436,7 +485,7 @@ function doImport(w, ctx, args) {
   }
   const res = w.config.resources[addr];
   if (!res) {
-    failure(w, 'Resource address does not exist in configuration', `Before importing this resource, add a resource "${addr.split('.')[0]}" "${addr.split('.')[1] || 'NAME'}" block to the configuration.`);
+    failure(w, 'Resource address does not exist in configuration', `Before importing this resource, add a resource "${leaf(addr).type}" "${leaf(addr).name || 'NAME'}" block to the configuration.`);
     return false;
   }
   if (env.state[addr]) {
@@ -456,7 +505,7 @@ function doImport(w, ctx, args) {
 function doState(w, ctx, args) {
   const [sub, addr] = args;
   const env = w.envs[w.workspace];
-  if (!gate(w, ctx, { lock: sub === 'rm' })) return false;
+  if (!gate(w, ctx, { lock: sub === 'rm' || sub === 'mv' })) return false;
   if (sub === 'list') {
     say(w, Object.keys(env.state).join('\n') || 'No state.');
     return false;
@@ -467,8 +516,31 @@ function doState(w, ctx, args) {
       failure(w, 'No instance found for the given address!', `This command requires that the address references one specific instance. "${addr || ''}" is not in state.`);
       return false;
     }
-    say(w, [`# ${addr}:`, `resource "${s.type}" "${addr.split('.')[1]}" {`, `    id = ${quote(s.id)}`, ...Object.entries(s.attrs).map(([k, v]) => `    ${k} = ${quote(v)}`), '}'].join('\n'));
+    say(w, [`# ${addr}:`, `resource "${s.type}" "${leaf(addr).name}" {`, `    id = ${quote(s.id)}`, ...Object.entries(s.attrs).map(([k, v]) => `    ${k} = ${quote(v)}`), '}'].join('\n'));
     return false;
+  }
+  if (sub === 'mv') {
+    const [, from, to] = args;
+    if (!from || !to) {
+      failure(w, 'Invalid arguments', 'Usage: terraform state mv SOURCE DESTINATION');
+      return false;
+    }
+    if (!env.state[from]) {
+      failure(w, 'Invalid source address', `No matching objects found for "${from}".`);
+      return false;
+    }
+    if (env.state[to]) {
+      failure(w, 'Invalid destination address', `The destination resource instance already exists: ${to}.`);
+      return false;
+    }
+    if (!/^(module\.[\w-]+\.)*[a-z0-9_]+\.[\w-]+$/.test(to)) {
+      failure(w, 'Invalid destination address', `"${to}" is not a valid resource address.`);
+      return false;
+    }
+    env.state[to] = env.state[from];
+    delete env.state[from];
+    say(w, `Move "${from}" to "${to}"\nSuccessfully moved 1 object(s). The real object is untouched.`);
+    return true;
   }
   if (sub === 'rm') {
     if (!env.state[addr]) {
@@ -479,7 +551,7 @@ function doState(w, ctx, args) {
     say(w, `Removed ${addr}\nSuccessfully removed 1 resource instance(s). The real object is untouched.`);
     return true;
   }
-  failure(w, 'Unknown state subcommand', 'Usage: terraform state (list | show ADDRESS | rm ADDRESS)');
+  failure(w, 'Unknown state subcommand', 'Usage: terraform state (list | show ADDRESS | mv SOURCE DESTINATION | rm ADDRESS)');
   return false;
 }
 
@@ -547,7 +619,7 @@ const HELP = [
   '  plan',
   '  apply [-auto-approve]       (answer the prompt with: yes)',
   '  import ADDRESS ID',
-  '  state list | state show ADDRESS | state rm ADDRESS',
+  '  state list | state show ADDRESS | state mv SOURCE DESTINATION | state rm ADDRESS',
   '  workspace show | list | select NAME | new NAME',
   '  force-unlock LOCK_ID',
 ].join('\n');
@@ -629,6 +701,11 @@ export function tick(w, ctx) {
   w.days += 1;
   w.pending = null;
 
+  if (w.refactor && !w.refactored && sc.nagCost) {
+    hurt(w, sc.nagCost);
+    ctx.log(`The refactoring ticket is still open (-${sc.nagCost} ${sc.healthLabel.toLowerCase()}).`, { kind: 'warn' });
+  }
+
   // Overnight, anything still out of sync costs trust. An active lock freezes the clock: nobody can fix it.
   const stuck = outOfSync(w);
   if (stuck.size && !(w.lock && w.lock.expires !== null)) {
@@ -697,5 +774,5 @@ export function tick(w, ctx) {
   reconcile(w, ctx);
 }
 
-export const isWon = (w) => w.days >= w.winTicks && !w.open.length && !w.lock && w.health >= w.minHealth && outOfSync(w).size === 0;
+export const isWon = (w) => (!w.refactor || w.refactored) && w.days >= w.winTicks && !w.open.length && !w.lock && w.health >= w.minHealth && outOfSync(w).size === 0;
 export const isLost = (w) => w.health < w.minHealth;

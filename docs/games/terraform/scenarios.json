@@ -119,6 +119,15 @@
         "note": "topics/terraform/notes/03-state-and-workspaces.md",
         "section": "Why remote state"
       }
+    },
+    {
+      "id": "module-extracted",
+      "title": "The refactoring changed every resource address",
+      "fix": "Terraform tracks resources by address, so a resource that moves into a module looks like one destroyed and one created. Tell it the object moved, with a `moved` block or `terraform state mv`, instead of letting it destroy and recreate.",
+      "learn": {
+        "note": "topics/terraform/notes/02-variables-and-modules.md",
+        "section": "Refactoring into a module"
+      }
     }
   ],
   "levels": [
@@ -527,6 +536,165 @@
         },
         {
           "tick": 5,
+          "action": "nextDay"
+        }
+      ]
+    },
+    {
+      "id": "module",
+      "title": "4. Copy-paste to module",
+      "blurb": "Two stacks (an instance and a log bucket each) are copy-pasted in main.tf. Extract them into a module without touching the real infrastructure: read the plan after you extract, and make Terraform move the state instead of destroying the buckets.",
+      "winTicks": 3,
+      "minHealth": 50,
+      "nagCost": 3,
+      "workspace": "default",
+      "initialized": true,
+      "stateStore": "local",
+      "config": {
+        "backend": false,
+        "vars": {},
+        "resources": {
+          "aws_instance.web_a": {
+            "type": "aws_instance",
+            "attrs": {
+              "ami": "ami-0abc123",
+              "instance_type": "t3.micro",
+              "name": "svc-a-web"
+            }
+          },
+          "aws_s3_bucket.logs_a": {
+            "type": "aws_s3_bucket",
+            "attrs": {
+              "bucket": "acme-a-logs",
+              "versioning": "Enabled"
+            }
+          },
+          "aws_instance.web_b": {
+            "type": "aws_instance",
+            "attrs": {
+              "ami": "ami-0abc123",
+              "instance_type": "t3.micro",
+              "name": "svc-b-web"
+            }
+          },
+          "aws_s3_bucket.logs_b": {
+            "type": "aws_s3_bucket",
+            "attrs": {
+              "bucket": "acme-b-logs",
+              "versioning": "Enabled"
+            }
+          }
+        }
+      },
+      "envs": {
+        "default": {
+          "deployed": [
+            "aws_instance.web_a",
+            "aws_s3_bucket.logs_a",
+            "aws_instance.web_b",
+            "aws_s3_bucket.logs_b"
+          ]
+        }
+      },
+      "refactor": {
+        "module": "service",
+        "mapping": [
+          {
+            "from": "aws_instance.web_a",
+            "to": "module.svc_a.aws_instance.web"
+          },
+          {
+            "from": "aws_s3_bucket.logs_a",
+            "to": "module.svc_a.aws_s3_bucket.logs"
+          },
+          {
+            "from": "aws_instance.web_b",
+            "to": "module.svc_b.aws_instance.web"
+          },
+          {
+            "from": "aws_s3_bucket.logs_b",
+            "to": "module.svc_b.aws_s3_bucket.logs"
+          }
+        ],
+        "configText": [
+          "module \"svc_a\" {",
+          "  source = \"./modules/service\"",
+          "  name   = \"svc-a\"",
+          "}",
+          "",
+          "module \"svc_b\" {",
+          "  source = \"./modules/service\"",
+          "  name   = \"svc-b\"",
+          "}",
+          "",
+          "# modules/service/main.tf",
+          "resource \"aws_instance\" \"web\" {",
+          "  ami           = \"ami-0abc123\"",
+          "  instance_type = \"t3.micro\"",
+          "  name          = \"${var.name}-web\"",
+          "}",
+          "",
+          "resource \"aws_s3_bucket\" \"logs\" {",
+          "  bucket     = \"acme-${trimprefix(var.name, \"svc-\")}-logs\"",
+          "  versioning = \"Enabled\"",
+          "}"
+        ]
+      },
+      "schedule": [],
+      "solution": [
+        {
+          "tick": 0,
+          "action": "extractModule"
+        },
+        {
+          "tick": 0,
+          "action": "addMoved",
+          "args": [
+            "aws_instance.web_a",
+            "module.svc_a.aws_instance.web"
+          ]
+        },
+        {
+          "tick": 0,
+          "action": "addMoved",
+          "args": [
+            "aws_s3_bucket.logs_a",
+            "module.svc_a.aws_s3_bucket.logs"
+          ]
+        },
+        {
+          "tick": 0,
+          "action": "addMoved",
+          "args": [
+            "aws_instance.web_b",
+            "module.svc_b.aws_instance.web"
+          ]
+        },
+        {
+          "tick": 0,
+          "action": "addMoved",
+          "args": [
+            "aws_s3_bucket.logs_b",
+            "module.svc_b.aws_s3_bucket.logs"
+          ]
+        },
+        {
+          "tick": 0,
+          "action": "terraform",
+          "args": [
+            "terraform apply -auto-approve"
+          ]
+        },
+        {
+          "tick": 0,
+          "action": "nextDay"
+        },
+        {
+          "tick": 1,
+          "action": "nextDay"
+        },
+        {
+          "tick": 2,
           "action": "nextDay"
         }
       ]
