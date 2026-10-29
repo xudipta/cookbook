@@ -348,6 +348,30 @@ async function checkVariants(browser, id, scenario, VARIANT_SEEDS) {
 
 let collapseMoves = (x) => x; // set in main() from the engine, so the path check uses the engine's own rule
 
+// Quiet Hours on a phone: no dropdown quiz, chart data as text, a short page (#95).
+async function checkObservabilityPhone(browser, scenario) {
+  const problems = [];
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+  await ctx.addInitScript(() => localStorage.setItem('cookbook-games-seen', '1'));
+  const page = await ctx.newPage();
+  for (const level of scenario.levels) {
+    await page.goto(`${SITE_URL}docs/games/observability/?autoplay=0&coach=0&level=${level.id}`, { waitUntil: 'load' });
+    await page.waitForSelector('.cg-board');
+    if (await page.locator('.oh-quiz select').count()) problems.push(`[${level.id}] the warm-up still uses dropdowns`);
+    if ((level.path || []).length < 6) problems.push(`[${level.id}] has only ${(level.path || []).length} player decisions, expected at least 6`);
+    await page.click('.oh-tabbar [data-part="charts"]');
+    if (!(await page.locator('.oh-summary').innerText()).includes('highest')) problems.push(`[${level.id}] the chart has no text summary`);
+    if (!(await page.locator('.oh-scrub').count())) problems.push(`[${level.id}] the chart cannot be read point by point`);
+    await page.locator('.oh-scrub').fill('3');
+    if (!/\d\d:\d\d/.test(await page.locator('.oh-readout').innerText())) problems.push(`[${level.id}] sliding the chart shows no time and value`);
+    await page.click('.oh-tabbar [data-part="rules"]');
+    const height = await page.evaluate(() => document.documentElement.scrollHeight);
+    if (height > 3000) problems.push(`[${level.id}] the page is ${height}px tall on a 390px screen, expected under 3000`);
+  }
+  await ctx.close();
+  return problems;
+}
+
 async function playGame(browser, id) {
   const scenario = JSON.parse(fs.readFileSync(path.join(GAMES_DIR, id, 'scenarios.json'), 'utf8'));
   const onBoard = JSON.parse(fs.readFileSync(path.join(GAMES_DIR, 'games.json'), 'utf8')).games.some((g) => g.id === id);
@@ -363,6 +387,7 @@ async function playGame(browser, id) {
 
   problems.push(...(await checkGuidance(browser, id, scenario)).map((p) => `[guidance] ${p}`));
   problems.push(...(await checkDebrief(browser, id, scenario)).map((p) => `[debrief] ${p}`));
+  if (id === 'observability') problems.push(...(await checkObservabilityPhone(browser, scenario)).map((p) => `[phone] ${p}`));
   const { VARIANT_SEEDS } = await import(pathToFileURL(path.join(GAMES_DIR, 'shared', 'engine.js')).href);
   problems.push(...(await checkVariants(browser, id, scenario, VARIANT_SEEDS)).map((p) => `[versions] ${p}`));
 

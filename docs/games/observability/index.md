@@ -11,6 +11,10 @@ Write the alerting rules before your shift, then live through the night: page yo
 - Build each rule from blocks (metric, function, window, comparison, threshold, `for:`, severity). The editor
   shows the real PromQL and replays the **last 7 days**: how often the rule would have paged, and whether
   those pages were real. Changing a rule or the route costs a move; time is free.
+- Some levels open with a **warm-up**: a graph per signal. Read its shape, pick its type and what to do with it
+  before you graph or alert on it, and see what a wrong choice would have done. Tabs switch between **Rules**,
+  **Charts** (one at a time: slide to read a point, and the numbers are written under the chart), **Tonight**, the
+  **Route** and the **Replay**.
 - **Next hour** (`h`) plays an hour of the night. A `critical` alert **pages** you; a `warning` alert only opens
   a ticket. A false page at night costs **Sleep**; a real incident left unfixed burns the **SLO**.
 - Win by reaching 07:00 with every real incident paged, SLO and Sleep above the level's lines, and nothing left
