@@ -422,3 +422,45 @@ body:has(#game[data-game]) .md-typeset h1 {
     display: none;
   }
 }
+
+/* ---- touch targets (#81): on a touch screen every control is at least 44x44 CSS px ---- */
+
+@media (pointer: coarse) {
+  .cg button,
+  .cg a.cg-btn,
+  .cg a.cg-notes,
+  .cg summary,
+  .cg select,
+  .cg [role="button"],
+  .cg input:not([type="radio"]):not([type="checkbox"]) {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  /* A radio or checkbox is tapped through its label, so the label is the target. */
+  .cg label:has(> input[type="radio"]),
+  .cg label:has(> input[type="checkbox"]) {
+    min-height: 44px;
+    align-items: center;
+  }
+
+  .cg input[type="radio"],
+  .cg input[type="checkbox"] {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+
+  /* Keep neighbouring targets apart. */
+  .cg .cg-actions,
+  .cg .cg-levels,
+  .cg .cg-controls,
+  .cg .cg-result-actions {
+    gap: 0.5rem;
+  }
+
+  .cg .cg-notes {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+  }
+}

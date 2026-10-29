@@ -48,8 +48,11 @@ function measure() {
   };
   const cg = document.querySelector('.cg');
   const label = (e) => (e.getAttribute('aria-label') || e.textContent || e.className || e.tagName).toString().trim().replace(/\s+/g, ' ').slice(0, 30);
-  const interactive = [...cg.querySelectorAll('button, a[href], input, select, textarea, summary, [role=button]')].filter(visible);
-  const under = (n) => interactive.filter((e) => { const r = e.getBoundingClientRect(); return r.width < n || r.height < n; });
+  // A radio or checkbox is tapped through its label, and a link inside a sentence is exempt (WCAG 2.5.8).
+  const target = (e) => (e.matches('input[type=radio], input[type=checkbox]') && e.closest('label')) || e;
+  const inlineLink = (e) => e.matches('a[href]') && getComputedStyle(e).display === 'inline' && e.parentElement.textContent.trim() !== e.textContent.trim();
+  const interactive = [...cg.querySelectorAll('button, a[href], input, select, textarea, summary, [role=button]')].filter((e) => visible(e) && !inlineLink(e));
+  const under = (n) => interactive.filter((e) => { const r = target(e).getBoundingClientRect(); return r.width < n || r.height < n; });
   const small44 = under(44);
   const small24 = under(24);
   const inputs = [...cg.querySelectorAll('input[type=text], input:not([type]), input[type=search], textarea')].filter(visible);
