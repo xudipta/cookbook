@@ -7,6 +7,7 @@
 //   tiny11    visible text nodes under 11px
 //   overflow  1 if the page scrolls sideways
 //   action    1 if, with the board scrolled to its end, no primary action button is visible
+//   narrow    1 if the board is narrower than the screen minus 40px (cards inside cards waste width)
 // and compares them with scripts/mobile_baseline.json. The baseline is a ratchet: a metric may go DOWN
 // (lower the baseline with --update) but never UP, and a level or game missing from the baseline must be
 // clean. Landscape (844x390) is measured and reported, not enforced.
@@ -20,7 +21,7 @@ const SITE_URL = (process.env.SITE_URL || 'http://localhost:8000/').replace(/\/?
 const GAMES_DIR = path.join(__dirname, '..', 'docs', 'games');
 const BASELINE = path.join(__dirname, 'mobile_baseline.json');
 const UPDATE = process.argv.includes('--update');
-const METRICS = ['small44', 'small24', 'input16', 'tiny11', 'overflow', 'action'];
+const METRICS = ['small44', 'small24', 'input16', 'tiny11', 'overflow', 'action', 'narrow'];
 
 const VIEWS = [
   { name: '390x844', width: 390, height: 844, enforce: true },
@@ -65,6 +66,7 @@ function measure() {
   }
   // Scroll the board to its end: is a primary action still on screen?
   const board = document.querySelector('.cg-board');
+  const narrow = board.getBoundingClientRect().width < innerWidth - 40 ? 1 : 0;
   window.scrollTo(0, board.getBoundingClientRect().bottom + scrollY - innerHeight);
   const actions = [...document.querySelectorAll('.cg-actions .cg-btn-action, [data-primary-action]')].filter(visible);
   const reachable = actions.some((a) => { const r = a.getBoundingClientRect(); return r.bottom > 0 && r.top < innerHeight; });
@@ -77,6 +79,7 @@ function measure() {
       tiny11: tiny.length,
       overflow: document.documentElement.scrollWidth > innerWidth ? 1 : 0,
       action: actions.length && !reachable ? 1 : 0,
+      narrow,
     },
     examples: { small44: sample(small44), small24: sample(small24), input16: sample(input16), tiny11: sample(tiny) },
   };
@@ -126,10 +129,10 @@ function measure() {
   for (const [key, r] of Object.entries(results)) {
     if (!r.enforce) continue;
     if (r.error) { worse.push(`${key}: ${r.error}`); continue; }
-    const base = baseline[key] || Object.fromEntries(METRICS.map((m) => [m, 0])); // new content must be clean
+    const base = baseline[key] || {}; // a level or metric missing from the baseline must be clean
     for (const m of METRICS) {
-      if (r[m] > base[m]) worse.push(`${key}: ${m} is ${r[m]} (baseline ${base[m]})${examples[key] && examples[key][m] ? `, e.g. ${examples[key][m].join(' | ')}` : ''}`);
-      else if (r[m] < base[m]) improved += 1;
+      if (r[m] > (base[m] ?? 0)) worse.push(`${key}: ${m} is ${r[m]} (baseline ${base[m] ?? 0})${examples[key] && examples[key][m] ? `, e.g. ${examples[key][m].join(' | ')}` : ''}`);
+      else if (r[m] < (base[m] ?? 0)) improved += 1;
     }
   }
   for (const key of Object.keys(baseline)) if (!results[key]) worse.push(`${key}: in the baseline but not measured (a game or level was removed; run with --update)`);
