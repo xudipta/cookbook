@@ -6,6 +6,7 @@
     "actions": "Wait a minute lets time pass. A command that changes something costs a move and a minute; reading is free.",
     "firstMove": "Read the pager message, then run cat or ls on whatever it names."
   },
+  "lossRule": "Service health fell below the floor: incidents stayed open too long or the machine went down.",
   "healthLabel": "Service health",
   "tickLabel": "Minute",
   "manual": true,
@@ -432,6 +433,30 @@
         "chmod +x the deploy script, find the busiest process with ps aux --sort=-%cpu and kill it, then truncate the huge log file."
       ],
       "par": 3,
+      "path": [
+        "cat ~/README",
+        "ls -l /opt/deploy",
+        "chmod +x /opt/deploy/deploy.sh",
+        "Wait a minute",
+        "uptime",
+        "ps aux --sort=-%cpu | head -5",
+        "kill 2291",
+        "Wait a minute",
+        "df -h",
+        "du -sh /var/log/*",
+        "ls -lh /var/log/app",
+        "truncate -s 0 /var/log/app/app.log",
+        "Wait a minute"
+      ],
+      "lessons": [
+        "Read before you change: the README, ls -l and ps tell you which of the three problems you are looking at.",
+        "A script needs its execute bit, a busy process is found with ps --sort and stopped with kill, and a huge log is truncated rather than deleted while a process holds it open."
+      ],
+      "tryItForReal": {
+        "needs": "a Linux shell you can break (a VM or container)",
+        "example": "topics/linux/examples/scripts",
+        "commands": "ls -l /opt/deploy\nchmod +x /opt/deploy/deploy.sh\nps aux --sort=-%cpu | head -5\nkill <pid>\ndf -h && du -sh /var/log/*\ntruncate -s 0 /var/log/app/app.log"
+      },
       "seed": 1,
       "winTicks": 6,
       "minHealth": 40,
@@ -768,6 +793,34 @@
         "Fix the config path in the unit and restart it, deny the abusive IP in an nginx conf and reload, then make the API listen on 0.0.0.0:8080."
       ],
       "par": 3,
+      "path": [
+        "systemctl status web",
+        "journalctl -u web -n 5",
+        "ls /etc/web /opt/web",
+        "sed -i 's#/opt/web/conf.yml#/etc/web/conf.yml#' /etc/systemd/system/web.service && systemctl daemon-reload && systemctl restart web",
+        "systemctl status web",
+        "Wait a minute",
+        "wc -l /var/log/nginx/access.log",
+        "awk '{print $1}' /var/log/nginx/access.log | sort | uniq -c | sort -rn | head -3",
+        "grep 500 /var/log/nginx/access.log | awk '{print $1}' | sort | uniq -c | sort -rn | head -3",
+        "echo 'deny 10.0.3.17;' >> /etc/nginx/conf.d/blocklist.conf && systemctl reload nginx",
+        "Wait a minute",
+        "ss -tlnp",
+        "curl -I 10.0.2.15:8080",
+        "cat /etc/api/api.conf",
+        "sed -i 's/127.0.0.1/0.0.0.0/;s/18080/8080/' /etc/api/api.conf && systemctl restart api",
+        "curl -I 10.0.2.15:8080",
+        "Wait a minute ×3"
+      ],
+      "lessons": [
+        "The journal names the cause of a crash loop; ss -tlnp shows who is listening on which address.",
+        "Change the one thing that fixes it, reload the service, and verify with curl before you move on."
+      ],
+      "tryItForReal": {
+        "needs": "a Linux shell you can break (a VM or container)",
+        "example": "topics/linux/examples/scripts",
+        "commands": "systemctl status web\njournalctl -u web -n 20\nss -tlnp\nawk '{print $1}' /var/log/nginx/access.log | sort | uniq -c | sort -rn | head\nsystemctl daemon-reload && systemctl restart web\ncurl -I localhost:8080"
+      },
       "seed": 2,
       "winTicks": 8,
       "minHealth": 40,
@@ -1398,6 +1451,36 @@
         "Add set -euo pipefail and rerun the backup, kill -9 the stuck job, chown the worker's directory, and remove the old temp export, not live data."
       ],
       "par": 6,
+      "path": [
+        "cat /etc/cron.d/backup",
+        "cat /opt/scripts/backup.sh",
+        "ls -l /backups",
+        "tail -n 3 /var/log/backup.log",
+        "sed -i '2i set -euo pipefail' /opt/scripts/backup.sh && sed -i 's#/srv/dta#/srv/data#' /etc/cron.d/backup",
+        "/opt/scripts/backup.sh /srv/data /backups; echo $?",
+        "ls -l /backups",
+        "ps aux --sort=-%cpu | head -4",
+        "kill 3310",
+        "ps aux --sort=-%cpu | head -4",
+        "kill -9 3310",
+        "systemctl status worker",
+        "journalctl -u worker -n 4",
+        "ls -ld /var/lib/worker",
+        "chown worker:worker /var/lib/worker",
+        "df -h",
+        "find / -type f -size +1G -mtime +2",
+        "rm /var/tmp/export-20261020.tmp",
+        "Wait a minute ×4"
+      ],
+      "lessons": [
+        "A job that fails silently is the worst kind: make scripts fail loudly with set -euo pipefail, and check that backups exist.",
+        "Try a polite kill first, then kill -9; check ownership with ls -ld when a service cannot write; and delete the stale temp file, not the live data."
+      ],
+      "tryItForReal": {
+        "needs": "a Linux shell you can break (a VM or container)",
+        "example": "topics/linux/examples/scripts",
+        "commands": "cat /etc/cron.d/backup\nsed -i '2i set -euo pipefail' /opt/scripts/backup.sh\nls -l /backups\nkill <pid>; sleep 2; kill -9 <pid>\nchown worker:worker /var/lib/worker\nfind / -type f -size +1G -mtime +2"
+      },
       "seed": 3,
       "winTicks": 10,
       "minHealth": 40,

@@ -197,6 +197,14 @@ registerGame({
     ctx.log('Arrange the Dockerfile, then press Build. The first build is free; later ones cost budget in proportion to the layers that rebuild.');
   },
 
+  // How a move reads in the debrief and in the efficient path.
+  describeMove(name, args) {
+    if (name === 'arrange') return `Arrange the Dockerfile: ${args[0].join(' → ')}`;
+    if (name === 'choose') return `Choose ${args[0]} = ${args[1]}`;
+    if (name === 'recreate') return 'Recreate the stack (down, then up)';
+    return undefined;
+  },
+
   tick: (state, ctx) => (state.mode === 'compose' ? compose.tick(state, ctx) : simTick(state, ctx)),
 
   actions: {

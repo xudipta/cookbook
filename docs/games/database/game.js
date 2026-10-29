@@ -346,6 +346,13 @@ registerGame({
     start(state, ctx);
   },
 
+  // How a move reads in the debrief and in the efficient path.
+  describeMove(name, args) {
+    if (name === 'swap') return 'Deploy my last SELECT as this query';
+    if (name === 'saveFile') return `Edit migration ${args[0]} (${args[1]}): ${String(args[2]).trim().replace(/\s+/g, ' ')}`;
+    return undefined;
+  },
+
   tick: (state, ctx) => simTick(state, ctx),
 
   actions: {

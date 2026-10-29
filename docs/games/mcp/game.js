@@ -265,6 +265,14 @@ registerGame({
     ctx.log('Wire servers with claude mcp commands, then serve each request. Reading is free; changes and serves are moves.');
   },
 
+  // How a move reads in the debrief and in the efficient path.
+  describeMove(name, args) {
+    if (name === 'setKnob') return `Builder: ${args[0]} = ${args[1]}`;
+    if (name === 'saveServer') return 'Save the server you built';
+    if (name === 'reject') return `Reject the server ${args[0]}`;
+    return undefined;
+  },
+
   tick: (state, ctx) => simTick(state, ctx),
 
   actions: {

@@ -6,6 +6,7 @@
     "actions": "Send serves the next request to your skill setup and shows whether it was triggered and whether it fit.",
     "firstMove": "Look at what is in SKILL.md and move the bulky parts out of the body."
   },
+  "lossRule": "Requests served well fell below the floor: requests missed the skill or overflowed the context window.",
   "healthLabel": "Requests served well",
   "tickLabel": "Request",
   "manual": true,
@@ -160,6 +161,21 @@
         "Move the script, the labels and the example into bundled files, then send the requests."
       ],
       "par": 3,
+      "path": [
+        "Move script to bundled",
+        "Move labels to bundled",
+        "Move example to bundled",
+        "Send next request ×7"
+      ],
+      "lessons": [
+        "Frontmatter is always loaded, the body loads when the skill is chosen, and bundled files load only when a request needs them.",
+        "Keep SKILL.md short and move scripts, long references and examples into bundled files."
+      ],
+      "tryItForReal": {
+        "needs": "Claude Code",
+        "example": "topics/skills/examples/release-notes",
+        "commands": "release-notes/\n  SKILL.md              # name, description, short steps\n  scripts/collect_prs.sh\n  references/labels.md\n  examples/notes.md"
+      },
       "mode": "layers",
       "skillName": "release-notes",
       "winTicks": 7,
@@ -353,6 +369,19 @@
         "Write a description that names release notes and changelogs and what they are built from, with clear use-when triggers, then save and send the queue."
       ],
       "par": 1,
+      "path": [
+        "Save SKILL.md",
+        "Send next request ×7"
+      ],
+      "lessons": [
+        "The agent chooses a skill from its name and description alone, so say what it does and when to use it.",
+        "Use the words people really ask with, and leave out what a neighbouring skill already covers."
+      ],
+      "tryItForReal": {
+        "needs": "Claude Code",
+        "example": "topics/skills/examples/release-notes",
+        "commands": "---\nname: release-notes\ndescription: >-\n  Generate release notes from merged pull requests since the last git tag. Use when the\n  user asks for a changelog, release notes, or \"what changed since <version>\".\n---"
+      },
       "mode": "file",
       "skillName": "release-notes",
       "winTicks": 7,
@@ -467,6 +496,21 @@
         "Save SKILL.md with a matching name and a good description, allow only running the script and reading files, folder release-notes, location .claude/skills."
       ],
       "par": 3,
+      "path": [
+        "Save SKILL.md",
+        "Name the folder release-notes",
+        "Put it in .claude/skills",
+        "Send next request ×6"
+      ],
+      "lessons": [
+        "A skill is found only in a folder Claude Code scans (.claude/skills/ or ~/.claude/skills/), and the folder name must match the skill name.",
+        "Give it only the tools it needs: allowed-tools: [Bash, Read], never Write for a skill that only reads."
+      ],
+      "tryItForReal": {
+        "needs": "Claude Code and Python (for the lint script)",
+        "example": "topics/skills/examples/release-notes",
+        "commands": "mkdir -p .claude/skills/release-notes\ncp -r topics/skills/examples/release-notes/* .claude/skills/release-notes/\npython scripts/check_skill.py .claude/skills/release-notes"
+      },
       "mode": "file",
       "skillName": "release-notes",
       "winTicks": 6,

@@ -223,6 +223,12 @@ registerGame({
     print(state, 'Welcome to the cluster. Type "help" to see the commands. Reading (get/describe/logs) is free and works while paused.');
   },
 
+  // How a move reads in the debrief and in the efficient path.
+  describeMove(name, args) {
+    if (name === 'applyEdit') return `Edit the deployment: ${Object.entries(args[0]).map(([k, v]) => `${k} = ${v}`).join(', ')}`;
+    return undefined;
+  },
+
   tick: (state, ctx) => simTick(state, ctx),
 
   actions: {

@@ -15,7 +15,96 @@ export function el(tag, props = {}, ...kids) {
 }
 
 const HINT_LABELS = ['Where to look', 'What is wrong', 'What to do'];
+const REPO_TREE = 'https://github.com/xudipta/cookbook/tree/main/';
+const MAX_TIMELINE = 40;
 const starText = (n) => '★'.repeat(n) + '☆'.repeat(3 - n);
+
+// Copy a block of commands. Clipboard access can be blocked (an insecure page, a locked-down browser): then the text is
+// selected instead, so the player can copy it with the keyboard or a long press.
+async function copyBlock(text, node) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return 'Copied';
+  } catch {
+    // fall through to selecting
+  }
+  const range = document.createRange();
+  range.selectNodeContents(node);
+  const selection = window.getSelection();
+  selection.removeAllRanges();
+  selection.addRange(range);
+  try {
+    if (document.execCommand('copy')) return 'Copied';
+  } catch {
+    // fall through
+  }
+  return 'Selected: copy it with your keyboard, or press and hold';
+}
+
+// What the player did next to the efficient path, the lessons, and the real commands.
+function debriefView({ timeline, timed, tickLabel, path, lessons, tryIt, lossRule }) {
+  const wide = matchMedia('(min-width: 700px)').matches;
+  const section = (title, open, ...kids) => {
+    const d = el('details', { class: 'cg-debrief-part' }, el('summary', { text: title }), ...kids);
+    d.open = open;
+    return d;
+  };
+  const parts = [];
+
+  if (lossRule) parts.push(el('p', { class: 'cg-rule-broken' }, el('strong', { text: 'Rule broken: ' }), lossRule));
+  if (lessons.length) {
+    parts.push(el('div', { class: 'cg-lessons' }, el('h4', { class: 'cg-h', text: lessons.length === 1 ? 'The lesson' : 'The lessons' }), el('ul', { class: 'cg-list' }, lessons.map((l) => el('li', { text: l })))));
+  }
+
+  // The player's run: incidents and moves in order, repeated moves folded into one line.
+  const rows = [];
+  for (const item of timeline) {
+    const last = rows[rows.length - 1];
+    if (last && item.kind === last.kind && last.text === item.text) last.count += 1;
+    else rows.push({ ...item, count: 1 });
+  }
+  const shown = rows.slice(0, MAX_TIMELINE);
+  const when = (item) => (timed ? `${tickLabel} ${item.at}` : '');
+  const timelineItems = shown.map((item) =>
+    el(
+      'li',
+      { class: `cg-tl cg-tl-${item.kind}` },
+      el('span', { class: 'cg-tl-when', text: when(item) }),
+      item.kind === 'event'
+        ? el('span', { class: 'cg-tl-text' }, el('strong', { text: 'Incident: ' }), item.text, item.count > 1 ? ` ×${item.count}` : '', item.fixedAt === null ? ' (still open)' : item.fixedAt === undefined ? '' : ` (fixed at ${tickLabel.toLowerCase()} ${item.fixedAt})`)
+        : el('span', { class: 'cg-tl-text' }, el('code', { text: item.text }), item.count > 1 ? ` ×${item.count}` : item.counted ? '' : ' (free)'),
+    ),
+  );
+  if (rows.length > shown.length) timelineItems.push(el('li', { class: 'cg-tl', text: `…and ${rows.length - shown.length} more` }));
+  parts.push(section('What you did, and what happened', wide, el('ol', { class: 'cg-timeline cg-list' }, timelineItems)));
+
+  if (path.length) {
+    parts.push(
+      section(`The efficient path (${path.length} move${path.length === 1 ? '' : 's'})`, false, el('ol', { class: 'cg-path cg-list' }, path.map((step) => el('li', {}, el('code', { text: step }))))),
+    );
+  }
+
+  if (tryIt) {
+    const code = el('code', { text: tryIt.commands });
+    const block = el('pre', { class: 'cg-commands', tabindex: 0, 'aria-label': 'Commands to try for real' }, code);
+    const note = el('span', { class: 'cg-copy-note', role: 'status', 'aria-live': 'polite' });
+    const copy = el('button', { class: 'cg-btn', type: 'button', 'data-cg': 'copy', text: 'Copy commands' });
+    copy.addEventListener('click', async () => {
+      note.textContent = await copyBlock(tryIt.commands, block);
+    });
+    parts.push(
+      section(
+        'Try it for real',
+        false,
+        el('p', { class: 'cg-needs', text: `Needs: ${tryIt.needs}` }),
+        block,
+        el('div', { class: 'cg-copy-row' }, copy, note),
+        el('p', {}, el('a', { href: `${REPO_TREE}${tryIt.example}`, 'data-cg': 'example', text: 'The runnable example in the repo' })),
+      ),
+    );
+  }
+  return el('div', { class: 'cg-debrief' }, ...parts);
+}
 
 // "★★☆  Par 4 moves, you used 5. Three stars need 4 moves, two need 6." The text carries the meaning; the stars decorate it.
 function starLine(stars, par, used) {
@@ -325,7 +414,7 @@ export function createUI(container, { def, scenario, levels, siteRoot, handlers,
       delete latest.dataset.kind;
     },
 
-    showResult({ status, score, best, ticks, actionsUsed, hintsUsed = 0, stars = 0, par, version, avgResolve, events, nextLevel }) {
+    showResult({ status, score, best, ticks, actionsUsed, hintsUsed = 0, stars = 0, par, version, debrief, avgResolve, events, nextLevel }) {
       const won = status === 'won';
       const list = el('ul', { class: 'cg-result-events cg-list' });
       for (const e of events) {
@@ -343,6 +432,9 @@ export function createUI(container, { def, scenario, levels, siteRoot, handlers,
       if (other) other.addEventListener('click', () => handlers.nextVersion());
       const standard = version && !version.standard ? el('button', { class: 'cg-btn', type: 'button', 'data-cg': 'standard', text: 'Standard version' }) : null;
       if (standard) standard.addEventListener('click', () => handlers.standardVersion());
+      // After a loss: start again with the first hint already open.
+      const retry = !won ? el('button', { class: 'cg-btn', type: 'button', 'data-cg': 'retry-hint', text: 'Retry with a hint' }) : null;
+      if (retry) retry.addEventListener('click', () => handlers.retryWithHint());
       const notes = meta ? el('a', { class: 'cg-btn', 'data-cg': 'notes', href: new URL(meta.notes, siteRoot).href, text: 'Read the notes' }) : null;
       const facts = [`Score ${score}`, `Best ${best}`, `${ticks} ticks`, `${actionsUsed} actions`];
       if (version && !version.standard) facts.push(`version ${version.seed}`);
@@ -357,7 +449,8 @@ export function createUI(container, { def, scenario, levels, siteRoot, handlers,
           el('p', { class: 'cg-result-facts', text: facts.join(' · ') }),
           events.length ? el('p', { text: 'What happened, and where to read more:' }) : null,
           list,
-          el('div', { class: 'cg-result-actions' }, next, again, other, standard, notes),
+          debrief ? debriefView(debrief) : null,
+          el('div', { class: 'cg-result-actions' }, next, again, retry, other, standard, notes),
         ),
       );
       (next || again).focus({ preventScroll: true });

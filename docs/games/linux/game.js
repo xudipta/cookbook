@@ -99,7 +99,7 @@ registerGame({
     createWorld(ctx.scenario, state);
     state.drawn = 0;
 
-    const pager = el('div', { class: 'lx-list', role: 'list', 'aria-label': 'Pager messages' });
+    const pager = el('div', { class: 'lx-list', role: 'list', 'aria-label': 'Pager messages', tabindex: 0 });
     const statusList = el('div', { class: 'lx-facts', role: 'list', 'aria-label': 'Server status' });
     const term = el('pre', { class: 'lx-term', tabindex: 0, role: 'log', 'aria-label': 'Terminal output' });
     const cmd = createPrompt({

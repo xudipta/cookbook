@@ -288,6 +288,22 @@ registerGame({
     else initDeploy(state, ctx);
   },
 
+  // How a move reads in the debrief and in the efficient path.
+  describeMove(name, args) {
+    const text = {
+      place: `Place the card ${args[0]}`,
+      remove: `Remove the card ${args[0]}`,
+      deploy: `Deploy to prod: ${args[0]}`,
+      promote: 'Promote to the next environment',
+      rollback: 'Roll back',
+      reject: 'Reject the release',
+      expand: 'Expand the schema first (add before you remove)',
+      commit: 'Commit the hand-fix to git',
+      wait: 'Wait a minute',
+    }[name];
+    return text;
+  },
+
   tick: (state, ctx) => simTick(state, ctx),
 
   actions: {

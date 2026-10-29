@@ -24,8 +24,33 @@ const PAGES = [
   { name: 'home', url: '', ready: '.tile' },
   { name: 'learn overview', url: 'docs/learn/', ready: '.md-content' },
   { name: 'note with a Play banner', url: 'topics/docker/notes/01-images-and-dockerfiles/', ready: '.admonition' },
-  // Games are audited with the guided start open and one hint revealed, the two things a first visit adds.
-  ...games.map((g) => ({ name: `game ${g}`, url: `docs/games/${g}/?autoplay=0&coach=1`, ready: '.cg-board', prepare: (tab) => tab.click('[data-cg="hint"]') })),
+  // Games are audited with the guided start open, a hint revealed and the first level won, so the debrief on the
+  // result panel (timeline, efficient path, copyable commands) is on the page too.
+  ...games.map((g) => ({
+    name: `game ${g}`,
+    url: `docs/games/${g}/?autoplay=0&coach=1`,
+    ready: '.cg-board',
+    prepare: async (tab) => {
+      await tab.click('[data-cg="hint"]');
+      const scenario = JSON.parse(fs.readFileSync(path.join(GAMES_DIR, g, 'scenarios.json'), 'utf8'));
+      const first = scenario.levels ? scenario.levels[0] : scenario;
+      await tab.evaluate(
+        ({ gid, solution, manual }) => {
+          const game = window.cookbookGames[gid];
+          for (const step of [...solution].sort((a, b) => a.tick - b.tick)) {
+            if (!manual && step.tick > game.ticks) game.step(step.tick - game.ticks);
+            game.act(step.action, ...(step.args || []));
+          }
+          if (!manual) game.step(1000 - game.ticks);
+        },
+        { gid: g, solution: first.solution, manual: Boolean(scenario.manual) },
+      );
+      await tab.click('[data-cg="coach-skip"]');
+      await tab.locator('.cg-debrief-part summary').nth(0).waitFor();
+      // Open every part so axe sees the timeline, the path and the commands, not just the closed summaries.
+      await tab.evaluate(() => document.querySelectorAll('.cg-debrief-part').forEach((d) => (d.open = true)));
+    },
+  })),
 ];
 
 const VIEWS = [

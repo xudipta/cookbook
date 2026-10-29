@@ -6,6 +6,7 @@
     "actions": "Next day lets traffic run and bills you for what is still slow. The terminal changes the schema.",
     "firstMove": "Press EXPLAIN ANALYZE on the slowest query and look for a Seq Scan in the plan."
   },
+  "lossRule": "The error budget ran out: reads, writes or storage stayed over budget for too long, or production broke.",
   "healthLabel": "Error budget",
   "tickLabel": "Day",
   "manual": true,
@@ -186,6 +187,23 @@
         "Index users(email) as unique and orders(user_id), and leave the nightly report alone: it runs once."
       ],
       "par": 2,
+      "path": [
+        "EXPLAIN ANALYZE\nSELECT\n    id,\n    email\nFROM users\nWHERE email = 'ada@example.com';",
+        "CREATE UNIQUE INDEX idx_users_email ON users (email);",
+        "CREATE INDEX idx_orders_user_id ON orders (user_id);",
+        "Next day ×3",
+        "EXPLAIN\nSELECT count(*)\nFROM orders\nWHERE status = 'shipped';",
+        "Next day ×2"
+      ],
+      "lessons": [
+        "EXPLAIN ANALYZE shows how a query really runs: a Seq Scan on a big table means no index fits the WHERE column.",
+        "Every index speeds some reads and slows every write, so add the ones the queries need and skip the one-off report."
+      ],
+      "tryItForReal": {
+        "needs": "a Postgres database",
+        "example": "topics/database/examples/schema",
+        "commands": "EXPLAIN ANALYZE SELECT id, email FROM users WHERE email = 'ada@example.com';\nCREATE UNIQUE INDEX idx_users_email ON users (email);\nCREATE INDEX idx_orders_user_id ON orders (user_id);\nEXPLAIN ANALYZE SELECT id, email FROM users WHERE email = 'ada@example.com';"
+      },
       "seed": 11,
       "mode": "tuning",
       "winTicks": 5,
@@ -575,6 +593,30 @@
         "Drop idx_orders_status, idx_orders_created_at and idx_users_created_at, create (user_id, created_at) on orders and (product_id) on order_items, and when the order page launches deploy one JOIN in place of the per-item queries."
       ],
       "par": 6,
+      "path": [
+        "SELECT\n    relname,\n    indexrelname,\n    idx_scan\nFROM pg_stat_user_indexes;",
+        "DROP INDEX idx_orders_status;",
+        "DROP INDEX idx_orders_created_at;",
+        "DROP INDEX idx_users_created_at;",
+        "EXPLAIN ANALYZE\nSELECT\n    id,\n    status,\n    created_at\nFROM orders\nWHERE user_id = 4242\nORDER BY created_at DESC\nLIMIT 10;",
+        "CREATE INDEX idx_orders_user_created ON orders (user_id, created_at);",
+        "CREATE INDEX idx_order_items_product_id ON order_items (product_id);",
+        "Next day",
+        "EXPLAIN ANALYZE\nSELECT\n    oi.product_id,\n    oi.quantity,\n    p.name,\n    p.price_cents\nFROM order_items AS oi\nINNER JOIN products AS p ON oi.product_id = p.id\nWHERE oi.order_id = 1042;",
+        "Deploy my last SELECT as this query",
+        "Next day",
+        "EXPLAIN\nSELECT count(*)\nFROM orders\nWHERE status = 'shipped';",
+        "Next day ×4"
+      ],
+      "lessons": [
+        "pg_stat_user_indexes shows which indexes are never scanned: drop them, since they only cost writes and storage.",
+        "A composite index serves a filter plus a sort when its columns are in that order, and one JOIN beats forty queries in a loop."
+      ],
+      "tryItForReal": {
+        "needs": "a Postgres database",
+        "example": "topics/database/examples/schema",
+        "commands": "SELECT relname, indexrelname, idx_scan FROM pg_stat_user_indexes ORDER BY idx_scan;\nDROP INDEX idx_orders_status;\nCREATE INDEX idx_orders_user_created ON orders (user_id, created_at);\nEXPLAIN ANALYZE SELECT id, status, created_at FROM orders\nWHERE user_id = 4242 ORDER BY created_at DESC LIMIT 10;"
+      },
       "seed": 22,
       "mode": "tuning",
       "winTicks": 6,
@@ -1081,6 +1123,52 @@
         "Run migrate up and down on staging before prod, deploy the app in the order the release needs, and when a release goes bad roll the app back and migrate down."
       ],
       "par": 24,
+      "path": [
+        "\\c staging",
+        "migrate up",
+        "migrate down 1",
+        "migrate up",
+        "\\c prod",
+        "migrate up",
+        "deploy v2",
+        "Next day",
+        "\\c staging",
+        "migrate up",
+        "migrate down 1",
+        "Edit migration 0007 (down): ALTER TABLE orders DROP COLUMN shipped_at;",
+        "ALTER TABLE orders DROP COLUMN shipped_at;",
+        "migrate up",
+        "migrate down 1",
+        "\\c prod",
+        "migrate up",
+        "deploy v3",
+        "Next day",
+        "deploy v2",
+        "migrate down 1",
+        "Next day",
+        "deploy v4",
+        "migrate up",
+        "Next day",
+        "git restore 0003_create_orders.up.sql",
+        "migrate create add_orders_coupon_code",
+        "Edit migration 0009 (up): ALTER TABLE orders ADD COLUMN coupon_code TEXT;",
+        "Edit migration 0009 (down): ALTER TABLE orders DROP COLUMN coupon_code;",
+        "\\c staging",
+        "migrate up",
+        "\\c prod",
+        "migrate up",
+        "deploy v5",
+        "Next day"
+      ],
+      "lessons": [
+        "Test every migration up and down on staging before production, and keep the down migration honest.",
+        "Order matters: add a column before the code that uses it, and remove the code that uses a column before you drop it."
+      ],
+      "tryItForReal": {
+        "needs": "a Postgres database and a migration tool such as golang-migrate",
+        "example": "topics/database/examples/migrations",
+        "commands": "migrate -path migrations -database \"$STAGING_URL\" up\nmigrate -path migrations -database \"$STAGING_URL\" down 1\nmigrate -path migrations -database \"$STAGING_URL\" up\nmigrate -path migrations -database \"$PROD_URL\" up\n# then deploy the app version that needs the new schema"
+      },
       "seed": 33,
       "mode": "migrations",
       "winTicks": 5,

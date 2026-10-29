@@ -6,6 +6,7 @@
     "actions": "Build runs your Dockerfile. Builds are limited, so read the output before you build again.",
     "firstMove": "Move the cards into a sensible order, then press Build and read what each layer did."
   },
+  "lossRule": "The build budget ran out before the image met the goal.",
   "healthLabel": "Build budget",
   "tickLabel": "Build",
   "manual": true,
@@ -221,6 +222,19 @@
         "Arrange from-nginx, copy-index, expose-80, healthcheck, then Build twice: the second build shows what the cache reused."
       ],
       "par": 2,
+      "path": [
+        "Arrange the Dockerfile: from-nginx → copy-index → expose-80 → healthcheck",
+        "Build ×2"
+      ],
+      "lessons": [
+        "Every Dockerfile instruction is a layer, and the order of the instructions is the order of the build.",
+        "Docker reuses a layer from cache only when its instruction and every layer before it are unchanged."
+      ],
+      "tryItForReal": {
+        "needs": "Docker",
+        "example": "topics/docker/examples/hello-nginx",
+        "commands": "cd topics/docker/examples/hello-nginx\ndocker build -t hello-nginx .\ndocker run --rm -p 8080:80 hello-nginx      # then: curl localhost:8080\n# edit index.html and build again: the base layers say CACHED"
+      },
       "winTicks": 2,
       "minHealth": 50,
       "drainRate": 0.25,
@@ -323,6 +337,19 @@
         "Copy only the manifest, run npm ci, then copy the rest; add the cache flag so a fresh CI runner can reuse layers."
       ],
       "par": 5,
+      "path": [
+        "Arrange the Dockerfile: from-node → workdir → copy-manifest → npm-ci → copy-all → build → cmd-node → cache-flag",
+        "Build ×5"
+      ],
+      "lessons": [
+        "Copy the dependency manifest and install before you copy the source, so a code edit does not reinstall everything.",
+        "A fresh CI runner has no layer cache: export and import it, or every build starts cold."
+      ],
+      "tryItForReal": {
+        "needs": "Docker with BuildKit (buildx)",
+        "example": "topics/docker/examples/hello-nginx",
+        "commands": "# Dockerfile\nFROM node:20-slim\nWORKDIR /app\nCOPY package.json package-lock.json ./\nRUN npm ci\nCOPY . .\nRUN npm run build\n\n# on a CI runner\ndocker buildx build --cache-from type=gha --cache-to type=gha,mode=max -t app ."
+      },
       "winTicks": 5,
       "minHealth": 75,
       "drainRate": 0.25,
@@ -502,6 +529,19 @@
         "Build in a node stage, then start a second FROM nginx and copy just the dist folder into it."
       ],
       "par": 3,
+      "path": [
+        "Arrange the Dockerfile: from-node-build → workdir → copy-manifest → npm-ci → copy-all → build → from-nginx → copy-dist → expose-80",
+        "Build ×3"
+      ],
+      "lessons": [
+        "A multi-stage build keeps compilers, dependencies and source in a build stage and ships only the result.",
+        "Pick the runtime image for what it must run: a static site needs a web server, not Node."
+      ],
+      "tryItForReal": {
+        "needs": "Docker",
+        "example": "topics/docker/examples/hello-nginx",
+        "commands": "# Dockerfile\nFROM node:20-slim AS build\nWORKDIR /app\nCOPY package.json package-lock.json ./\nRUN npm ci\nCOPY . .\nRUN npm run build\n\nFROM nginx:alpine\nCOPY --from=build /app/dist /usr/share/nginx/html\n\ndocker build -t site . && docker images site   # compare the size"
+      },
       "winTicks": 3,
       "minHealth": 70,
       "drainRate": 0.25,
@@ -706,6 +746,19 @@
         "Pick the dockerignore, the slim Python base, the apt-good and pip-good variants, then add useradd and user-app."
       ],
       "par": 2,
+      "path": [
+        "Arrange the Dockerfile: dockerignore → from-py → workdir → apt-good → copy-req → pip-good → copy-all → useradd → user-app → cmd-py",
+        "Build ×2"
+      ],
+      "lessons": [
+        "A .dockerignore keeps secrets and junk out of the build context; a secret copied into a layer stays in the image.",
+        "Use a slim base, clean package caches in the same layer, and switch to a non-root USER before the container starts."
+      ],
+      "tryItForReal": {
+        "needs": "Docker",
+        "example": "topics/docker/examples/hello-nginx",
+        "commands": "# .dockerignore\n.env\n.git\n__pycache__/\n\n# Dockerfile\nFROM python:3.12-slim\nRUN apt-get update && apt-get install -y --no-install-recommends curl \\\n    && rm -rf /var/lib/apt/lists/*\nCOPY requirements.txt .\nRUN pip install --no-cache-dir -r requirements.txt\nCOPY . .\nRUN useradd --create-home app\nUSER app\nCMD [\"python\", \"main.py\"]"
+      },
       "winTicks": 2,
       "minHealth": 50,
       "drainRate": 0.1,
@@ -920,6 +973,19 @@
         "Copy the manifest before npm ci, copy the sources before the build step, and end with the CMD."
       ],
       "par": 1,
+      "path": [
+        "Arrange the Dockerfile: from-node → workdir → copy-manifest → npm-ci → copy-all → build → cmd-node",
+        "Build"
+      ],
+      "lessons": [
+        "Read a failed build from the bottom: the last step that ran is the one that failed.",
+        "Fix one problem at a time and rebuild, and check what each instruction needs to exist before it runs (a manifest before npm ci, the sources before the build)."
+      ],
+      "tryItForReal": {
+        "needs": "Docker",
+        "example": "topics/docker/examples/hello-nginx",
+        "commands": "docker build -t app . 2>&1 | tail -20      # read from the bottom\ndocker build --progress=plain -t app .      # full output of every step\ndocker history app                          # what each layer added"
+      },
       "winTicks": 1,
       "minHealth": 50,
       "drainRate": 0.25,
@@ -1066,6 +1132,26 @@
         "Point the api at the host db, make it depend on db being healthy with a pg healthcheck, use a named volume, and publish nothing on db."
       ],
       "par": 2,
+      "path": [
+        "Choose web-ports = p8080",
+        "Choose api-env = db",
+        "Choose api-depends = healthy",
+        "Choose db-health = pg",
+        "Choose db-volumes = named",
+        "Choose db-ports = none",
+        "Choose vol-decl = decl",
+        "Build",
+        "Recreate the stack (down, then up)"
+      ],
+      "lessons": [
+        "Containers on one Compose network reach each other by service name, never localhost; publish a port only for what the host must reach.",
+        "depends_on only waits for a service to be healthy if it has a healthcheck, and data survives down and up only in a named volume."
+      ],
+      "tryItForReal": {
+        "needs": "Docker with Compose",
+        "example": "topics/docker/examples/hello-nginx",
+        "commands": "# compose.yaml\nservices:\n  web:\n    build: ./web\n    ports: [\"8080:80\"]\n  api:\n    build: ./api\n    environment:\n      DB_HOST: db\n    depends_on:\n      db:\n        condition: service_healthy\n  db:\n    image: postgres:16\n    volumes: [dbdata:/var/lib/postgresql/data]\n    healthcheck:\n      test: [\"CMD-SHELL\", \"pg_isready -U postgres\"]\n      interval: 5s\nvolumes:\n  dbdata:\n\ndocker compose up -d && docker compose down && docker compose up -d   # the data survives"
+      },
       "mode": "compose",
       "tickLabel": "Run",
       "actionLabels": {

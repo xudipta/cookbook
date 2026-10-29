@@ -6,6 +6,7 @@
     "actions": "Next day ends the day, and drift lands overnight. Everything else you do in the terminal.",
     "firstMove": "Tap terraform, then init, then plan, and read what it says before you apply."
   },
+  "lossRule": "Team trust fell below the floor: drift or a bad apply stayed in place for too long.",
   "healthLabel": "Team trust",
   "tickLabel": "Day",
   "manual": true,
@@ -146,6 +147,24 @@
         "terraform init, terraform apply -auto-approve; then press Next day and apply again whenever the plan shows a difference."
       ],
       "par": 3,
+      "path": [
+        "terraform init",
+        "terraform apply -auto-approve",
+        "Next day ×2",
+        "terraform apply -auto-approve",
+        "Next day",
+        "terraform apply -auto-approve",
+        "Next day"
+      ],
+      "lessons": [
+        "Read the plan before every apply: init once, then plan and apply.",
+        "Terraform finds drift by planning against what really exists, so a hand-edited resource shows up in the next plan."
+      ],
+      "tryItForReal": {
+        "needs": "Terraform (the local-file example needs no cloud account)",
+        "example": "topics/terraform/examples/local-file",
+        "commands": "cd topics/terraform/examples/local-file\nterraform init\nterraform plan\nterraform apply\n# change a variable or edit the file by hand, then\nterraform plan"
+      },
       "winTicks": 4,
       "minHealth": 50,
       "workspace": "default",
@@ -246,6 +265,25 @@
         "Apply what the plan shows, import aws_s3_bucket.assets acme-assets, and set the identifier back to orders-db so the plan stays empty."
       ],
       "par": 4,
+      "path": [
+        "Next day",
+        "terraform apply -auto-approve",
+        "Next day",
+        "terraform import aws_s3_bucket.assets acme-assets",
+        "terraform apply -auto-approve",
+        "Next day",
+        "Edit main.tf: aws_db_instance.main.identifier = \"orders-db\"",
+        "Next day ×2"
+      ],
+      "lessons": [
+        "terraform import adopts an existing resource into state, but only after a matching resource block exists in the configuration.",
+        "A rename or a changed identifier can force replacement: look for \"must be replaced\" in the plan before you apply."
+      ],
+      "tryItForReal": {
+        "needs": "Terraform (the local-file example needs no cloud account)",
+        "example": "topics/terraform/examples/local-file",
+        "commands": "terraform plan                                  # read it: look for \"must be replaced\"\nterraform import aws_s3_bucket.assets acme-assets\nterraform plan                                  # should now be empty\nterraform state list"
+      },
       "winTicks": 5,
       "minHealth": 50,
       "workspace": "default",
@@ -384,6 +422,29 @@
         "terraform init -migrate-state, select dev before applying, then prod; for a stale lock, force-unlock with the ID the error prints."
       ],
       "par": 4,
+      "path": [
+        "terraform init -migrate-state",
+        "Next day",
+        "terraform workspace select dev",
+        "terraform apply -auto-approve",
+        "Next day ×2",
+        "terraform workspace select prod",
+        "terraform apply -auto-approve",
+        "Next day",
+        "terraform force-unlock b81c0d52-7e44-4a0f-9d3b-5c2a8e6f1b77",
+        "terraform workspace select dev",
+        "terraform apply -auto-approve",
+        "Next day ×2"
+      ],
+      "lessons": [
+        "Check terraform workspace show before every plan, and keep state in a remote backend that locks it.",
+        "force-unlock only a stale lock, with the lock ID the error message shows, never one a teammate is using."
+      ],
+      "tryItForReal": {
+        "needs": "Terraform (the local-file example needs no cloud account)",
+        "example": "topics/terraform/examples/local-file",
+        "commands": "terraform workspace show\nterraform workspace select dev\nterraform init -migrate-state                   # after adding a backend block\nterraform plan\nterraform force-unlock <lock-id>                # only for a stale lock"
+      },
       "winTicks": 6,
       "minHealth": 50,
       "workspace": "prod",
@@ -573,6 +634,24 @@
         "Extract the module, add a moved entry for each of the four resources, then apply and check the plan touches nothing real."
       ],
       "par": 6,
+      "path": [
+        "Extract the repeated stacks into a module",
+        "moved { from = aws_instance.web_a  to = module.svc_a.aws_instance.web }",
+        "moved { from = aws_s3_bucket.logs_a  to = module.svc_a.aws_s3_bucket.logs }",
+        "moved { from = aws_instance.web_b  to = module.svc_b.aws_instance.web }",
+        "moved { from = aws_s3_bucket.logs_b  to = module.svc_b.aws_s3_bucket.logs }",
+        "terraform apply -auto-approve",
+        "Next day ×3"
+      ],
+      "lessons": [
+        "Moving resources into a module changes their addresses, so add moved blocks (or run terraform state mv) to keep the real infrastructure.",
+        "A good plan after a refactor says 0 to add, 0 to change, 0 to destroy."
+      ],
+      "tryItForReal": {
+        "needs": "Terraform (the local-file example needs no cloud account)",
+        "example": "topics/terraform/examples/local-file",
+        "commands": "# main.tf\nmoved {\n  from = aws_instance.web_a\n  to   = module.svc_a.aws_instance.web\n}\n\nterraform plan                                  # 0 to add, 0 to destroy\nterraform apply"
+      },
       "winTicks": 3,
       "minHealth": 50,
       "nagCost": 3,

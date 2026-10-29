@@ -6,6 +6,7 @@
     "actions": "Next hour moves time on one step and Run to morning plays the rest. Rules cost a move to change; time is free.",
     "firstMove": "Do the warm-up quiz first, then open a rule and read what it fires on."
   },
+  "lossRule": "The Sleep or SLO score fell: you were paged for noise, or a real incident went unnoticed.",
   "healthLabel": "Sleep or SLO (the lower one)",
   "tickLabel": "Hour",
   "manual": true,
@@ -133,6 +134,24 @@
         "Make the error rule use the error ratio over several minutes with a for duration, make CPU a warning, then Run to morning."
       ],
       "par": 6,
+      "path": [
+        "Classify signal 1: a counter, alert with rate",
+        "Classify signal 2: a gauge, alert with nothing",
+        "Classify signal 3: a histogram, alert with histogram_quantile",
+        "Classify signal 4: a summary, alert with nothing",
+        "Rule HighErrorRatio: ratio err > 0.05 for 5m (critical)",
+        "Rule HighCPU: raw cpu > 0.9 for 10m (warning)",
+        "Run to morning"
+      ],
+      "lessons": [
+        "A counter only goes up, so alert on its rate; classify a signal (counter, gauge, histogram, summary) before you write a rule.",
+        "Add a for duration so a blip does not page you, and send non-urgent alerts as warnings that wait for the morning."
+      ],
+      "tryItForReal": {
+        "needs": "Prometheus (docker run prom/prometheus is enough)",
+        "example": "topics/observability/examples/prometheus",
+        "commands": "groups:\n  - name: starter\n    rules:\n      - alert: HighErrorRatio\n        expr: sum(rate(http_requests_total{code=~\"5..\"}[5m])) / sum(rate(http_requests_total[5m])) > 0.05\n        for: 5m\n        labels: { severity: critical }\n\npromtool check rules rules.yml"
+      },
       "variants": true,
       "seed": 7,
       "winTicks": 9,
@@ -355,6 +374,21 @@
         "Save a p95 latency rule and a DiskFillingUp rule using predict_linear, keep CPU as a warning, then Run to morning."
       ],
       "par": 3,
+      "path": [
+        "Rule HighP95Latency: quantile lat > 0.5 for 5m (critical)",
+        "Rule DiskFillingUp: predict_linear disk < 0 for 5m (critical)",
+        "Rule HighCPU: raw cpu > 0.9 for 10m (warning)",
+        "Run to morning"
+      ],
+      "lessons": [
+        "Alert on the tail (histogram_quantile) and not the average, which hides the slow requests.",
+        "Alert on where a resource is heading with predict_linear, not on where it is right now."
+      ],
+      "tryItForReal": {
+        "needs": "Prometheus",
+        "example": "topics/observability/examples/prometheus",
+        "commands": "- alert: HighP95Latency\n  expr: histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket[5m]))) > 0.5\n  for: 5m\n- alert: DiskFillingUp\n  expr: predict_linear(node_filesystem_avail_bytes[1h], 4 * 3600) < 0\n  for: 5m"
+      },
       "variants": true,
       "seed": 11,
       "winTicks": 9,
@@ -550,6 +584,22 @@
         "Set group_by to alertname,job, save the InstanceDown rule with a for duration, add a recording rule for the request rate, then Run to morning."
       ],
       "par": 3,
+      "path": [
+        "Alertmanager group_by: alertname,job",
+        "Rule InstanceDown: raw up < 1 for 2m (critical)",
+        "Next hour ×2",
+        "Record job:http_requests:rate5m: sum_rate(req[5m])",
+        "Run to morning"
+      ],
+      "lessons": [
+        "Group alerts by what they share (group_by: [alertname, job]) so a dead rack is one page, not fifteen.",
+        "Use a for clause to ride out a flapping scrape, and record an expensive query as a recording rule so dashboards stay fast."
+      ],
+      "tryItForReal": {
+        "needs": "Prometheus and Alertmanager",
+        "example": "topics/observability/examples/prometheus",
+        "commands": "# alertmanager.yml\nroute:\n  group_by: [alertname, job]\n  group_wait: 30s\n\n# rules.yml\n- record: job:http_requests:rate5m\n  expr: sum by (job) (rate(http_requests_total[5m]))\n- alert: InstanceDown\n  expr: up == 0\n  for: 2m"
+      },
       "variants": true,
       "seed": 19,
       "winTicks": 9,
