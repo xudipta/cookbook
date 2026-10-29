@@ -361,3 +361,51 @@ export function exec(w, ctx, line) {
       return fail(`error: unknown command "${verb || ''}" for "kubectl" (type "help")`);
   }
 }
+
+// ---------------------------------------------------------------- tap-to-compose
+
+// What the prompt offers next, given the words already on the line. Read from the live world, so
+// the pod and deployment names are the real ones.
+export function nextWords(w, words) {
+  const full = (text, label) => ({ text, label, full: true, run: true });
+  if (!words.length) {
+    const sick = w.pods.filter((p) => !p.terminating && podStatus(w, p).status !== 'Running').slice(0, 3);
+    return [
+      full('kubectl get pods'),
+      full('kubectl get deploy'),
+      full('kubectl get nodes'),
+      ...sick.map((p) => ({ text: `kubectl describe pod ${p.name}`, label: `describe ${p.name}`, full: true, run: true })),
+      full('help'),
+      'kubectl',
+    ];
+  }
+  if (words[0] !== 'kubectl' && words[0] !== 'k') return [];
+  const [, verb, a, b] = words;
+  const pods = w.pods.filter((p) => !p.terminating).map((p) => p.name);
+  const deploys = Object.keys(w.deploys).map((d) => `deploy/${d}`);
+  if (!verb) return ['get', 'describe', 'logs', 'scale', 'rollout', 'set', 'edit', 'delete'];
+  switch (verb) {
+    case 'get':
+      return a ? ['-o wide'] : ['pods', 'deploy', 'endpoints', 'svc', 'nodes'];
+    case 'describe':
+      if (!a) return ['pod', 'deploy', 'nodes'];
+      return a === 'pod' || a === 'pods' ? (b ? [] : pods) : a === 'deploy' ? (b ? [] : Object.keys(w.deploys)) : [];
+    case 'logs':
+      return a ? [] : pods;
+    case 'delete':
+      if (!a) return ['pod'];
+      return b ? [] : pods;
+    case 'scale':
+      return !a ? deploys : [1, 2, 3, 4, 5, 6].map((n) => `--replicas=${n}`);
+    case 'rollout':
+      return !a ? ['undo', 'status'] : b ? [] : deploys;
+    case 'edit':
+      return a ? [] : deploys;
+    case 'set':
+      if (!a) return ['image', 'resources'];
+      if (!b) return deploys;
+      return words.length > 4 ? [] : a === 'image' ? Object.keys(IMAGES).map((i) => `web=${i}`) : ['--requests=memory=300Mi', '--limits=memory=500Mi'];
+    default:
+      return [];
+  }
+}

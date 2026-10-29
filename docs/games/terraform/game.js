@@ -2,6 +2,7 @@
 // The simulation is in sim.js (DOM-free); this file is the three panes, the terminal and the
 // registerGame wiring. The game is turn-based: the day only advances when you press Next day.
 import { registerGame } from '../shared/engine.js';
+import { createPrompt } from '../shared/prompt.js';
 import { el } from '../shared/ui.js';
 import {
   addMoved as simAddMoved,
@@ -12,13 +13,12 @@ import {
   extractModule as simExtractModule,
   isLost as simIsLost,
   isWon as simIsWon,
+  nextWords,
   runCommand,
   setAttr as simSetAttr,
   setVar as simSetVar,
   tick as simTick,
 } from './sim.js';
-
-const QUICK = ['terraform init', 'terraform plan', 'terraform apply', 'yes', 'terraform state list', 'terraform workspace list'];
 
 // ---------------------------------------------------------------- panes
 
@@ -44,11 +44,16 @@ function attrLines(attrs) {
   return Object.entries(attrs).map(([k, v]) => `${k} = ${JSON.stringify(v)}`);
 }
 
+// Tapping a name on the board adds it to the command being built.
+function insertButton(value, text = value) {
+  return el('button', { class: 'tf-name tf-insert', type: 'button', 'data-insert': value, 'aria-label': `Add ${value} to the command`, text });
+}
+
 function statePane(w) {
   const entries = Object.entries(w.envs[w.workspace].state);
   if (!entries.length) return [el('p', { class: 'tf-empty', role: 'listitem', text: 'Empty. Terraform manages nothing in this workspace yet.' })];
   return entries.map(([addr, s]) =>
-    el('div', { class: 'tf-item', role: 'listitem' }, el('strong', { class: 'tf-name', text: addr }), el('span', { class: 'tf-id', text: `id ${s.id}` }), el('pre', { class: 'tf-attrs', text: attrLines(s.attrs).join('\n') })),
+    el('div', { class: 'tf-item', role: 'listitem' }, insertButton(addr), el('span', { class: 'tf-id', text: `id ${s.id}` }), el('pre', { class: 'tf-attrs', text: attrLines(s.attrs).join('\n') })),
   );
 }
 
@@ -61,7 +66,7 @@ function realPane(w) {
     el(
       'div',
       { class: 'tf-item', role: 'listitem' },
-      el('strong', { class: 'tf-name', text: `${r.type} ${id}` }),
+      insertButton(id, `${r.type} ${id}`),
       managed.has(id) ? null : el('span', { class: 'tf-tag', text: 'not in state' }),
       el('pre', { class: 'tf-attrs', text: attrLines(r.attrs).join('\n') }),
     ),
@@ -145,8 +150,7 @@ function termLines(w) {
 function submit(state, ctx, line) {
   const text = line.trim();
   if (!text) return;
-  if (state.history[state.history.length - 1] !== text) state.history.push(text);
-  state.historyAt = state.history.length;
+  state.stickBottom = true;
   ctx.act('terraform', text);
 }
 
@@ -167,12 +171,10 @@ function render(state, ctx) {
   if (atBottom || state.stickBottom) d.term.scrollTop = d.term.scrollHeight;
   state.stickBottom = false;
   const over = ctx.over;
-  d.input.disabled = over;
-  d.run.disabled = over;
+  d.prompt.setDisabled(over);
   d.editor.save.disabled = over;
   d.editor.select.disabled = over;
   d.editor.input.disabled = over;
-  for (const b of d.quick) b.disabled = over || (b.dataset.cmd === 'yes' && !state.pending);
   d.pendingNote.hidden = !state.pending;
 }
 
@@ -184,8 +186,6 @@ registerGame({
 
   init(state, ctx) {
     Object.assign(state, createWorld(ctx.scenario));
-    state.history = [];
-    state.historyAt = 0;
     state.editorSig = null;
     state.refactorSig = null;
     state.stickBottom = true;
@@ -231,36 +231,12 @@ registerGame({
     refactorBox.hidden = !state.refactor;
 
     const term = el('pre', { class: 'tf-term', tabindex: 0, role: 'log', 'aria-label': 'Terminal output' });
-    const input = el('input', { class: 'tf-input tf-cmd', type: 'text', 'aria-label': 'Terminal command', placeholder: 'terraform plan', autocomplete: 'off', autocapitalize: 'off', spellcheck: 'false' });
-    const run = el('button', { class: 'tf-btn', type: 'submit', text: 'Run' });
-    const form = el('form', { class: 'tf-prompt' }, el('span', { class: 'tf-ps1', 'aria-hidden': 'true', text: '$' }), input, run);
-    form.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const line = input.value;
-      input.value = '';
-      state.stickBottom = true;
-      submit(state, ctx, line);
-      input.focus();
-    });
-    input.addEventListener('keydown', (e) => {
-      if (e.key === 'ArrowUp' && state.historyAt > 0) {
-        e.preventDefault();
-        state.historyAt -= 1;
-        input.value = state.history[state.historyAt];
-      } else if (e.key === 'ArrowDown') {
-        e.preventDefault();
-        state.historyAt = Math.min(state.history.length, state.historyAt + 1);
-        input.value = state.history[state.historyAt] || '';
-      }
-    });
-    const quick = QUICK.map((cmd) => {
-      const b = el('button', { class: 'tf-btn tf-quick', type: 'button', 'data-cmd': cmd, text: cmd.replace('terraform ', '') });
-      b.addEventListener('click', () => {
-        state.stickBottom = true;
-        submit(state, ctx, cmd);
-        input.focus();
-      });
-      return b;
+    const prompt = createPrompt({
+      label: 'Terminal command',
+      placeholder: 'terraform plan',
+      cls: { form: 'tf-prompt', ps1: 'tf-ps1', input: 'tf-input tf-cmd', run: 'tf-btn', chips: 'tf-quicks', chip: 'tf-btn tf-quick' },
+      next: (words) => nextWords(state, words),
+      onSubmit: (line) => submit(state, ctx, line),
     });
     const pendingNote = el('p', { class: 'tf-pending', text: 'An apply is waiting for you to type yes. Any other command cancels it.', hidden: true });
 
@@ -275,9 +251,13 @@ registerGame({
         el('section', { class: 'tf-panel' }, stateHead, stateList),
         el('section', { class: 'tf-panel' }, realHead, realList),
       ),
-      el('section', { class: 'tf-panel' }, el('h4', { class: 'tf-h', text: 'Terminal' }), term, pendingNote, form, el('div', { class: 'tf-quicks' }, ...quick)),
+      el('section', { class: 'tf-panel' }, el('h4', { class: 'tf-h', text: 'Terminal' }), term, pendingNote, prompt.form, prompt.tray),
     );
-    state.dom = { refactor: { box: refactorBox, extract, fromSel, toSel, add: addMoved }, root, status, config, state: stateList, real: realList, stateHead, realHead, term, input, run, quick, pendingNote, editor: { select, input: editInput, save } };
+    state.dom = { refactor: { box: refactorBox, extract, fromSel, toSel, add: addMoved }, root, status, config, state: stateList, real: realList, stateHead, realHead, term, prompt, pendingNote, editor: { select, input: editInput, save } };
+    root.addEventListener('click', (e) => {
+      const target = e.target.closest('[data-insert]');
+      if (target) prompt.insert(target.dataset.insert);
+    });
     ctx.ui.board.append(root);
     ctx.log('Run commands in the terminal. Reading a plan is free; every change costs a move. Next day (d) ends the day: anything still out of sync overnight costs trust.');
   },

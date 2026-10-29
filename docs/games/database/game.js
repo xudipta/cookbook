@@ -3,6 +3,7 @@
 // this file is the board (tables, query feed, migration files), the SQL prompt and the wiring.
 // The game is turn-based: the day only advances when you press Next day.
 import { registerGame } from '../shared/engine.js';
+import { createPrompt } from '../shared/prompt.js';
 import { el } from '../shared/ui.js';
 import {
   afterMove,
@@ -14,6 +15,7 @@ import {
   isWon as simIsWon,
   metrics,
   migrationRows,
+  nextWords,
   releaseList,
   runLine,
   saveFile as simSaveFile,
@@ -23,24 +25,6 @@ import {
   tick as simTick,
 } from './sim.js';
 import { indexBytes, indexesOf, tableBytes } from './sql.js';
-
-const TUNING_QUICK = [
-  ['\\dt', '\\dt'],
-  ['\\d orders', '\\d orders'],
-  ['\\di', '\\di'],
-  ['pg_stat_user_indexes', 'SELECT relname, indexrelname, idx_scan FROM pg_stat_user_indexes;'],
-  ['\\?', '\\?'],
-];
-const MIGRATION_QUICK = [
-  ['\\c staging', '\\c staging'],
-  ['\\c prod', '\\c prod'],
-  ['migrate status', 'migrate status'],
-  ['migrate up', 'migrate up'],
-  ['migrate down 1', 'migrate down 1'],
-  ['migrate validate', 'migrate validate'],
-  ['\\d orders', '\\d orders'],
-  ['\\?', '\\?'],
-];
 
 const fmtMs = (ms) => (ms >= 100 ? `${Math.round(ms)} ms` : ms >= 10 ? `${ms.toFixed(1)} ms` : `${ms.toFixed(2)} ms`);
 const fmtMb = (mb) => (mb >= 1024 ? `${(mb / 1024).toFixed(1)} GB` : `${Math.round(mb)} MB`);
@@ -117,7 +101,7 @@ function queryCard(state, ctx, q) {
     b.addEventListener('click', () => {
       ctx.act('sql', `EXPLAIN ANALYZE ${sql}`);
       state.stickBottom = true;
-      state.dom.input.focus();
+      state.dom.cmd.focus();
     });
     return b;
   };
@@ -129,7 +113,7 @@ function queryCard(state, ctx, q) {
     deploy.disabled = !state.lastSelect;
     deploy.addEventListener('click', () => {
       ctx.act('swap', q.id);
-      state.dom.input.focus();
+      state.dom.cmd.focus();
     });
     buttons.push(deploy);
   }
@@ -242,8 +226,6 @@ function termLines(w) {
 function submit(state, ctx, line) {
   const text = line.trim();
   if (!text) return;
-  if (state.history[state.history.length - 1] !== text) state.history.push(text);
-  state.historyAt = state.history.length;
   state.stickBottom = true;
   ctx.act('sql', text);
 }
@@ -274,10 +256,9 @@ function render(state, ctx) {
   d.term.replaceChildren(...(state.term.length ? termLines(state) : [el('span', { class: 'db-line db-line-note', text: 'Type SQL below, or press a button. \\? lists the commands.\n' })]));
   if (atBottom || state.stickBottom) d.term.scrollTop = d.term.scrollHeight;
   state.stickBottom = false;
-  d.prompt.textContent = `${state.conn}=#`;
+  d.cmd.ps1.textContent = `${state.conn}=#`;
   const over = ctx.over;
-  d.input.disabled = over;
-  d.run.disabled = over;
+  d.cmd.setDisabled(over);
   for (const b of d.root.querySelectorAll('.db-quick, .db-btn')) {
     const swap = b.classList.contains('db-deploy');
     b.disabled = over || (swap && !state.lastSelect);
@@ -292,7 +273,7 @@ function quickButton(state, ctx, label, cmd) {
   const b = el('button', { class: 'db-btn db-quick', type: 'button', 'data-cmd': cmd, text: label });
   b.addEventListener('click', () => {
     submit(state, ctx, cmd);
-    state.dom.input.focus();
+    state.dom.cmd.focus();
   });
   return b;
 }
@@ -305,44 +286,24 @@ registerGame({
 
   init(state, ctx) {
     Object.assign(state, createWorld(ctx.scenario));
-    state.history = [];
-    state.historyAt = 0;
     state.editorSig = null;
     state.stickBottom = true;
 
     const status = el('div', { class: 'db-status', role: 'status', 'aria-label': 'Latency, storage and connection' });
     const term = el('pre', { class: 'db-term', tabindex: 0, role: 'log', 'aria-label': 'Terminal output' });
-    const prompt = el('span', { class: 'db-ps1', 'aria-hidden': 'true' });
-    const input = el('textarea', { class: 'db-input', rows: 2, 'aria-label': 'SQL or command', placeholder: state.mode === 'tuning' ? 'EXPLAIN ANALYZE SELECT ...' : 'migrate up', autocomplete: 'off', autocapitalize: 'off', spellcheck: 'false' });
-    const run = el('button', { class: 'db-btn', type: 'submit', text: 'Run' });
-    const form = el('form', { class: 'db-prompt' }, prompt, input, run);
-    form.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const line = input.value;
-      input.value = '';
-      submit(state, ctx, line);
-      input.focus();
+    const cmd = createPrompt({
+      ps1: '',
+      label: 'SQL or command',
+      placeholder: state.mode === 'tuning' ? 'EXPLAIN ANALYZE SELECT ...' : 'migrate up',
+      multiline: true,
+      cls: { form: 'db-prompt', ps1: 'db-ps1', input: 'db-input', run: 'db-btn', chips: 'db-quicks', chip: 'db-btn db-quick' },
+      next: (words) => nextWords(state, words),
+      onSubmit: (line) => submit(state, ctx, line),
     });
-    input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        form.requestSubmit();
-      } else if (e.key === 'ArrowUp' && !input.value.includes('\n') && state.historyAt > 0) {
-        e.preventDefault();
-        state.historyAt -= 1;
-        input.value = state.history[state.historyAt];
-      } else if (e.key === 'ArrowDown' && !input.value.includes('\n')) {
-        e.preventDefault();
-        state.historyAt = Math.min(state.history.length, state.historyAt + 1);
-        input.value = state.history[state.historyAt] || '';
-      }
-    });
-    const quickSet = state.mode === 'tuning' ? TUNING_QUICK : MIGRATION_QUICK;
-    const quicks = el('div', { class: 'db-quicks' }, ...quickSet.map(([label, cmd]) => quickButton(state, ctx, label, cmd)));
-    const terminal = el('section', { class: 'db-panel' }, el('h4', { class: 'db-h', text: 'Terminal' }), term, form, quicks);
+    const terminal = el('section', { class: 'db-panel' }, el('h4', { class: 'db-h', text: 'Terminal' }), term, cmd.form, cmd.tray);
 
     const root = el('div', { class: 'db' }, status);
-    const dom = { root, status, term, input, run, prompt, editor: null };
+    const dom = { root, status, term, cmd, editor: null };
 
     if (state.mode === 'tuning') {
       dom.tables = el('div', { class: 'db-list', role: 'list', 'aria-label': 'Tables and their indexes' });

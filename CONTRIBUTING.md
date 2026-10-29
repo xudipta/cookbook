@@ -113,6 +113,27 @@ page must not zoom or jump); rotate the phone; try light and dark; set the brows
 check that the main action stays reachable and that nothing is clipped. Record what failed on the
 tracking issue.
 
+## Terminal prompts
+
+Every terminal-style game (Kubernetes, Terraform, Linux, GitHub, MCP, Database) builds its prompt with
+`createPrompt` from `docs/games/shared/prompt.js`, never its own `<input>`. The shared prompt gives you
+16px text on touch screens, no autocorrect or autocapitalise, history buttons (no arrow keys on a phone)
+and a tray of chips that builds a command by tapping. On desktop it is still type, Enter, and the arrow
+keys for history.
+
+A game supplies data only: `next(words, line)` returns what could come next given the words already on
+the line (a string, or `{ text, label?, full?, run?, raw? }`), and `onSubmit(line)` runs the command.
+Take the names from the live world (pods, resources, branches, files), so a player picks the real thing
+instead of typing it. Reading commands should be `full: true, run: true` chips; a command that changes
+something is filled in (`full: true`) and waits for the player to press Run. The function belongs in the
+game's DOM-free `sim.js` (or `kubectl.js`) next to the commands it describes. Call `prompt.refresh()` after
+the world changes (the shell does it for you when you call `setDisabled`).
+
+`scripts/compose_check.cjs` replays each game's scripted solution on a 390px touch screen by tapping chips
+only. The first level of every terminal game must be fully playable that way; later levels are reported,
+and a command that needs the keyboard (a commit message, a `sed` expression) is listed so you can decide
+whether a chip would help. When you add a game with a prompt, add it to `COMMAND_ACTION` in that script.
+
 ## Game page layout
 
 Every game page gets the same frame from the shared shell, so a game's own code only draws its board:

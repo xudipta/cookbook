@@ -2,6 +2,7 @@
 // The simulation lives in sim.js and the kubectl subset in kubectl.js (both DOM-free); this file
 // is the board, the prompt and the edit form, plus the registerGame wiring.
 import { registerGame } from '../shared/engine.js';
+import { createPrompt } from '../shared/prompt.js';
 import { el } from '../shared/ui.js';
 import {
   IMAGES,
@@ -13,7 +14,7 @@ import {
   podStatus,
   tick as simTick,
 } from './sim.js';
-import { exec, isMutating } from './kubectl.js';
+import { exec, isMutating, nextWords } from './kubectl.js';
 
 const STRIP_CELLS = 20;
 const MAX_TERM_LINES = 400;
@@ -40,8 +41,6 @@ function runCommand(state, ctx, line) {
 // through the action pipeline so it is counted, scored and blocked while paused.
 function submit(state, ctx, line) {
   if (!line) return;
-  state.history.push(line);
-  state.historyIndex = state.history.length;
   if (!isMutating(line)) return void runCommand(state, ctx, line);
   state.ran = false;
   ctx.act('kubectl', line);
@@ -134,30 +133,19 @@ function buildBoard(state, ctx) {
   const nodes = el('div', { class: 'k8s-nodes', role: 'list', 'aria-label': 'Nodes' });
   const pending = el('div', { class: 'k8s-pending', role: 'list', 'aria-label': 'Pods waiting for a node' });
   const term = el('pre', { class: 'k8s-term', tabindex: 0, role: 'log', 'aria-live': 'polite', 'aria-label': 'kubectl output' });
-  const input = el('input', { class: 'k8s-input', type: 'text', autocomplete: 'off', spellcheck: 'false', 'aria-label': 'kubectl command', placeholder: 'kubectl get pods' });
-  const run = el('button', { class: 'cg-btn', type: 'submit', text: 'Run' });
-  const prompt = el('form', { class: 'k8s-prompt' }, el('span', { class: 'k8s-ps1', 'aria-hidden': 'true', text: '$' }), input, run);
+  const cmd = createPrompt({
+    label: 'kubectl command',
+    placeholder: 'kubectl get pods',
+    cls: { form: 'k8s-prompt', ps1: 'k8s-ps1', input: 'k8s-input' },
+    next: (words) => nextWords(state, words),
+    onSubmit: (line) => submit(state, ctx, line.trim()),
+  });
+  const prompt = el('div', { class: 'k8s-promptbox' }, cmd.form, cmd.tray);
 
-  state.dom = { summary, strip, nodes, pending, term, input, sig: '' };
-  state.history = [];
-  state.historyIndex = 0;
+  state.dom = { summary, strip, nodes, pending, term, prompt: cmd, sig: '' };
   state.edit = null;
   const edit = buildEditForm(state, ctx);
   state.dom.edit = edit;
-
-  prompt.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const line = input.value.trim();
-    input.value = '';
-    submit(state, ctx, line);
-  });
-  input.addEventListener('keydown', (e) => {
-    if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
-    e.preventDefault();
-    const h = state.history;
-    state.historyIndex = Math.max(0, Math.min(h.length, state.historyIndex + (e.key === 'ArrowUp' ? -1 : 1)));
-    input.value = h[state.historyIndex] || '';
-  });
 
   ctx.ui.board.append(
     el('div', { class: 'k8s' }, summary, strip, nodes, pending, el('p', { class: 'k8s-hint', text: 'Click a pod to describe it. Type "help" for the commands.' }), prompt, term, edit),
@@ -198,6 +186,7 @@ function renderBoard(state, ctx) {
   const sig = JSON.stringify([state.pods.map((p) => [p.name, p.phase, p.node, p.restarts, p.terminating, p.age, p.template.app, p.template.readiness]), t.endpoints, Math.round(t.ok)]);
   if (sig === d.sig) return;
   d.sig = sig;
+  d.prompt.refresh();
 
   const byId = (a, b) => a.id - b.id;
   d.nodes.replaceChildren(

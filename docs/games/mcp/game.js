@@ -2,6 +2,7 @@
 // keep a rogue server out. The simulation is in sim.js (DOM-free); this file is the panes, the terminal
 // and the registerGame wiring. The game is turn-based: a request is served only when you press a button.
 import { registerGame } from '../shared/engine.js';
+import { createPrompt } from '../shared/prompt.js';
 import { el } from '../shared/ui.js';
 import {
   afterMove,
@@ -14,6 +15,7 @@ import {
   fileText,
   isLost as simIsLost,
   isWon as simIsWon,
+  nextWords,
   requestRows,
   runCommand,
   saveServer as simSaveServer,
@@ -23,8 +25,6 @@ import {
   start,
   tick as simTick,
 } from './sim.js';
-
-const QUICK = ['help', 'claude mcp list', '/mcp', 'cat .mcp.json'];
 
 // ---------------------------------------------------------------- panes
 
@@ -136,8 +136,7 @@ function termLines(w) {
 function submit(state, ctx, line) {
   const text = line.trim();
   if (!text) return;
-  if (state.history[state.history.length - 1] !== text) state.history.push(text);
-  state.historyAt = state.history.length;
+  state.stickBottom = true;
   ctx.act('sh', text);
 }
 
@@ -179,9 +178,7 @@ function render(state, ctx) {
   }
   renderBuilder(state, ctx);
   const over = ctx.over;
-  d.input.disabled = over;
-  d.run.disabled = over;
-  for (const b of d.quick) b.disabled = over;
+  d.prompt.setDisabled(over);
 }
 
 // ---------------------------------------------------------------- the game
@@ -219,8 +216,6 @@ registerGame({
 
   init(state, ctx) {
     Object.assign(state, createWorld(ctx.scenario));
-    state.history = [];
-    state.historyAt = 0;
     state.stickBottom = true;
 
     const status = el('div', { class: 'mc-status-strip', role: 'status', 'aria-label': 'Host, clients and who is asking' });
@@ -234,36 +229,12 @@ registerGame({
     const wire = el('pre', { class: 'mc-term mc-wire', tabindex: 0, role: 'log', 'aria-label': 'JSON-RPC wire log' });
 
     const term = el('pre', { class: 'mc-term', tabindex: 0, role: 'log', 'aria-label': 'Terminal output' });
-    const input = el('input', { class: 'mc-input mc-cmd', type: 'text', 'aria-label': 'Terminal command', placeholder: 'claude mcp list', autocomplete: 'off', autocapitalize: 'off', spellcheck: 'false' });
-    const run = el('button', { class: 'mc-btn', type: 'submit', text: 'Run' });
-    const form = el('form', { class: 'mc-prompt' }, el('span', { class: 'mc-ps1', 'aria-hidden': 'true', text: '$' }), input, run);
-    form.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const line = input.value;
-      input.value = '';
-      state.stickBottom = true;
-      submit(state, ctx, line);
-      input.focus();
-    });
-    input.addEventListener('keydown', (e) => {
-      if (e.key === 'ArrowUp' && state.historyAt > 0) {
-        e.preventDefault();
-        state.historyAt -= 1;
-        input.value = state.history[state.historyAt];
-      } else if (e.key === 'ArrowDown') {
-        e.preventDefault();
-        state.historyAt = Math.min(state.history.length, state.historyAt + 1);
-        input.value = state.history[state.historyAt] || '';
-      }
-    });
-    const quick = QUICK.map((cmd) => {
-      const b = el('button', { class: 'mc-btn mc-quick', type: 'button', 'data-cmd': cmd, text: cmd });
-      b.addEventListener('click', () => {
-        state.stickBottom = true;
-        submit(state, ctx, cmd);
-        input.focus();
-      });
-      return b;
+    const prompt = createPrompt({
+      label: 'Terminal command',
+      placeholder: 'claude mcp list',
+      cls: { form: 'mc-prompt', ps1: 'mc-ps1', input: 'mc-input mc-cmd', run: 'mc-btn', chips: 'mc-quicks', chip: 'mc-btn mc-quick' },
+      next: (words) => nextWords(state, words),
+      onSubmit: (line) => submit(state, ctx, line),
     });
 
     const workshop = buildWorkshop(state, ctx);
@@ -285,10 +256,10 @@ registerGame({
         el('div', { class: 'mc-col' }, fold('Available servers', 'Available servers', true, catalog, envBox), fold('Config files', 'Config files', false, files)),
       ),
       workshop ? workshop.panel : null,
-      el('section', { class: 'mc-panel', 'aria-label': 'Terminal' }, el('h4', { class: 'mc-h', text: 'Terminal' }), term, form, el('div', { class: 'mc-quicks' }, ...quick)),
+      el('section', { class: 'mc-panel', 'aria-label': 'Terminal' }, el('h4', { class: 'mc-h', text: 'Terminal' }), term, prompt.form, prompt.tray),
       fold('Wire (JSON-RPC 2.0)', 'Wire log', false, wire),
     );
-    state.dom = { root, status, requests, servers, files, catalog, env, envBox, wire, term, input, run, quick, builder: workshop };
+    state.dom = { root, status, requests, servers, files, catalog, env, envBox, wire, term, prompt, builder: workshop };
     ctx.ui.board.append(root);
     start(state, ctx);
     ctx.log('Wire servers with claude mcp commands, then serve each request. Reading is free; changes and serves are moves.');

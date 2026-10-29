@@ -82,6 +82,7 @@ jobs:
               - 'scripts/games_smoke.cjs'
               - 'scripts/site_quality.cjs'
               - 'scripts/mobile_quality.cjs'
+              - 'scripts/compose_check.cjs'
               - 'scripts/mobile_baseline.json'
               - 'scripts/build_docs.sh'
               - 'mkdocs.yml'
@@ -515,3 +516,4 @@ jobs:
           node scripts/games_smoke.cjs
           node scripts/site_quality.cjs
           node scripts/mobile_quality.cjs
+          node scripts/compose_check.cjs

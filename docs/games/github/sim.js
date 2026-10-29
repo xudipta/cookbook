@@ -2183,3 +2183,71 @@ export function prCards(w) {
       };
     });
 }
+
+// ---------------------------------------------------------------- tap-to-compose
+
+const NAME_IDEAS = ['feature/update', 'fix/typo', 'docs/update'];
+
+// What the prompt offers next, given the words already on the line (see shared/prompt.js). Reading
+// commands run when tapped; commands that change something are filled in and wait for Run.
+export function nextWords(w, words) {
+  const read = (text) => ({ text, full: true, run: true });
+  const fill = (text) => ({ text, full: true });
+  if (!words.length) {
+    return [read('git status'), read('git log --oneline --graph --all'), read('git diff'), read('git branch -a'), read('git fetch'), read('gh pr view'), fill('git add .'), fill('git commit -m "Update"'), 'git', 'gh'];
+  }
+  const [tool, cmd, a] = words;
+  const branches = Object.keys(w.branches);
+  const refs = [...branches, ...Object.keys(w.remote.refs).map((b) => `origin/${b}`), 'HEAD~1', 'HEAD~2'];
+  const files = Object.keys(w.worktree).sort();
+  if (tool === 'gh') {
+    if (!cmd) return ['pr'];
+    if (cmd !== 'pr') return [];
+    if (words.length === 2) return ['create', 'list', 'view', 'checks', 'ready', 'edit', 'merge'];
+    const sub = words[2];
+    const open = w.remote.prs.filter((p) => p.state === 'open').map((p) => String(p.n));
+    if (sub === 'merge') return [...(words.length === 3 ? open : []), '--squash', '--merge', '--rebase', '--delete-branch'];
+    if (words.length === 3 && ['view', 'checks', 'ready', 'edit'].includes(sub)) return open;
+    if (sub === 'create') return ['--fill', '--draft'];
+    return [];
+  }
+  if (tool !== 'git') return [];
+  if (!cmd) return ['status', 'log', 'diff', 'add', 'commit', 'switch', 'push', 'pull', 'fetch', 'branch', 'merge', 'rebase', 'stash', 'reset', 'restore', 'show', 'cherry-pick', 'revert', 'checkout', 'rm', 'tag', 'reflog'];
+  switch (cmd) {
+    case 'log':
+      return ['--oneline', '--graph', '--all', ...branches];
+    case 'diff':
+      return ['--staged', ...refs];
+    case 'show':
+    case 'merge':
+    case 'cherry-pick':
+    case 'revert':
+      return refs;
+    case 'switch':
+    case 'checkout':
+      return a === '-c' || a === '-b' ? (words.length === 3 ? NAME_IDEAS : []) : ['-c', ...branches];
+    case 'branch':
+      return ['-a', '-d', '-vv', ...(a === '-d' ? branches.filter((b) => b !== w.head.branch) : words.length === 2 ? NAME_IDEAS : [])];
+    case 'add':
+      return ['.', ...files];
+    case 'rm':
+    case 'restore':
+      return ['--staged', ...files];
+    case 'commit':
+      return a === '-m' ? [] : ['-m "Update"', '--amend', '--no-edit'];
+    case 'reset':
+      return ['--hard', '--soft', 'HEAD~1', ...refs.filter((r) => r.startsWith('origin/'))];
+    case 'stash':
+      return ['pop', 'list'];
+    case 'fetch':
+      return ['--all', '--prune'];
+    case 'pull':
+      return ['--rebase', '--no-rebase'];
+    case 'rebase':
+      return ['--continue', '--abort', ...refs];
+    case 'push':
+      return ['-u', 'origin', '--force-with-lease', ...(words.includes('origin') ? ['HEAD', ...branches] : [])];
+    default:
+      return [];
+  }
+}
