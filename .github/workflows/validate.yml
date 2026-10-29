@@ -81,6 +81,8 @@ jobs:
               - 'scripts/check_skill.py'
               - 'scripts/games_smoke.cjs'
               - 'scripts/site_quality.cjs'
+              - 'scripts/mobile_quality.cjs'
+              - 'scripts/mobile_baseline.json'
               - 'scripts/build_docs.sh'
               - 'mkdocs.yml'
               - 'requirements-docs.txt'
@@ -512,3 +514,4 @@ jobs:
           timeout 30 sh -c 'until curl -sf http://localhost:8000/ >/dev/null; do sleep 1; done'
           node scripts/games_smoke.cjs
           node scripts/site_quality.cjs
+          node scripts/mobile_quality.cjs
