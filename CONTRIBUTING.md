@@ -95,6 +95,24 @@ purpose, and delete its line in the same change; add new pages to the list), and
 Run it locally against a built site with
 `SITE_URL=http://localhost:8000/ NODE_PATH=<dir with playwright and axe-core> node scripts/site_quality.cjs`.
 
+## Phone checks
+
+`scripts/mobile_quality.cjs` plays no game; it opens every level of every game in touch mode at 390x844 and
+360x640 and counts: controls under 44px (the recommended touch target) and under 24px (the WCAG 2.2
+minimum), text inputs under 16px (iOS Safari zooms the page on focus), text under 11px, sideways page
+scroll, and whether a primary action button is still on screen at the end of the board. The counts are a
+**ratchet** in `scripts/mobile_baseline.json`: a count may go down but never up, and a new game or level
+(not in the baseline) must have zero of everything. When you fix things, run
+`SITE_URL=http://localhost:8000/ NODE_PATH=<dir with playwright> node scripts/mobile_quality.cjs --update`
+and commit the lower baseline. Landscape (844x390) is reported but not enforced.
+
+Emulation cannot replace a phone. Before a release that changes game UI, spend ten minutes on a real
+iPhone (Safari) and a real Android phone (Chrome) and tick each item for one game of each kind (a
+terminal game, a card game, a chart game): play one level one-handed; open and close the keyboard (the
+page must not zoom or jump); rotate the phone; try light and dark; set the browser text size to 200%;
+check that the main action stays reachable and that nothing is clipped. Record what failed on the
+tracking issue.
+
 ## Game page layout
 
 Every game page gets the same frame from the shared shell, so a game's own code only draws its board:
