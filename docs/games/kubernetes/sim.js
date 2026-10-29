@@ -33,6 +33,9 @@ const PHASE_FAILURES = new Set(['ImagePullBackOff', 'CreateContainerConfigError'
 export function createWorld(sc, variant = null) {
   const w = {
     nameShift: variant ? variant.seed : 0,
+    seq: 0,
+    fireSeq: 0,
+    diagSeq: 0,
     nodes: Array.from({ length: sc.nodes }, (_, i) => ({ name: `node-${i + 1}`, capacity: sc.nodeCapacity })),
     needed: sc.needed,
     configKeys: ['mode'],
@@ -286,6 +289,25 @@ export function servingCount(w) {
 function fire(w, ctx, id, detail) {
   ctx.fire(id, detail);
   w.open.push({ id, tick: ctx.ticks, mutations: w.mutations });
+  // A new fault is something to read about (describe, logs) before changing anything. A pod that
+  // simply died heals itself, so it asks for no diagnosis.
+  if (id !== 'pod-killed') w.fireSeq = ++w.seq;
+}
+
+// Faults in the pod template itself: deleting a pod does not remove them.
+export const TEMPLATE_FAULTS = ['bad-image', 'label-typo', 'config-key', 'oom', 'no-readiness', 'nonroot'];
+
+// The player read a describe or logs: whatever fired before this is now understood.
+export function noteDiagnosis(w) {
+  w.diagSeq = ++w.seq;
+}
+
+// True when a fix is about to be made for a fault nobody has read about yet. Asking clears it, so one blind
+// fix is charged once, not once per command.
+export function takeBlind(w) {
+  const blind = w.fireSeq > w.diagSeq;
+  if (blind) w.diagSeq = ++w.seq;
+  return blind;
 }
 
 function killPod(w, pod, tick) {

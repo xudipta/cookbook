@@ -379,6 +379,26 @@ body:has(#game[data-game]) .md-typeset h1 {
   font: 500 0.88rem/1.45 var(--font-body);
 }
 
+/* ---- pace (games on a clock) ------------------------------------------------------------ */
+
+.cg .cg-pace {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0 0 0.5rem;
+}
+
+.cg .cg-pace-label {
+  color: var(--muted);
+  font: 600 0.8rem/1 var(--font-mono);
+}
+
+.cg .cg-pace-btn[aria-pressed="true"] {
+  background: var(--cg-accent);
+  color: var(--accent-ink);
+}
+
 /* ---- par and stars ---------------------------------------------------------------------- */
 
 .cg .cg-stat[data-stat="moves"][data-over="true"] {

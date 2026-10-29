@@ -31,9 +31,18 @@ export function mulberry32(seed) {
 // Uniform scoring for every game: the topic's health meter (0-100) is worth up to 1000,
 // every action costs 10, every hint costs HINT_COST, and winning adds 500.
 export const HINT_COST = 25;
-export function computeScore({ health, actionsUsed, won, hintsUsed = 0 }) {
-  return Math.max(0, Math.round(health * 10) - actionsUsed * 10 - hintsUsed * HINT_COST + (won ? 500 : 0));
+export function computeScore({ health, actionsUsed, won, hintsUsed = 0, multiplier = 1 }) {
+  return Math.max(0, Math.round((Math.round(health * 10) - actionsUsed * 10 - hintsUsed * HINT_COST + (won ? 500 : 0)) * multiplier));
 }
+
+// Pace for the games that run on a clock: Slow gives you twice the time, Pressure runs the clock faster and
+// multiplies the score. Manual (turn-based) games have no pace.
+export const PACES = {
+  slow: { label: 'Slow', tickFactor: 2, multiplier: 1, note: 'twice the time per tick' },
+  normal: { label: 'Normal', tickFactor: 1, multiplier: 1, note: 'the standard clock' },
+  pressure: { label: 'Pressure', tickFactor: 0.6, multiplier: 1.5, note: 'a faster clock, score x1.5' },
+};
+let chosenPace = 'normal'; // kept while the page lives, so Next level and Play again keep the pace
 
 // One line for a move in the debrief and the efficient path: the command a terminal action ran, or the button's
 // label with its arguments. A game can shape its own with `describeMove(name, args)` on its definition.
@@ -112,7 +121,7 @@ export async function mountGame(container, { id }) {
   const autoplay = params.get('autoplay') !== '0';
   let seedOverride = null; // set by "Try a different version"; a level change clears it
   const seedFor = () => (seedOverride ?? (params.has('seed') ? Number(params.get('seed')) : scenario.seed));
-  const tickMsFor = () => Number(params.get('tick')) || scenario.tickMs || 1000;
+  const tickMsFor = () => (Number(params.get('tick')) || scenario.tickMs || 1000) * PACES[rt.pace].tickFactor;
 
   const rt = {
     id,
@@ -127,6 +136,8 @@ export async function mountGame(container, { id }) {
     paused: false,
     stars: 0,
     moves: [], // what the player did, in order: { tick, text, counted }
+    pace: chosenPace,
+    holds: new Set(), // reasons the clock is stopped while the player thinks (a prompt, a sheet, a form)
   };
   let rng;
   let fired;
@@ -135,7 +146,7 @@ export async function mountGame(container, { id }) {
   let ctx;
 
   const score = () =>
-    computeScore({ health: rt.state.health, actionsUsed: rt.actionsUsed, hintsUsed: rt.hintsUsed, won: rt.status === 'won' });
+    computeScore({ health: rt.state.health, actionsUsed: rt.actionsUsed, hintsUsed: rt.hintsUsed, won: rt.status === 'won', multiplier: PACES[rt.pace].multiplier });
 
   function refresh() {
     def.render?.(rt.state, ctx);
@@ -150,6 +161,8 @@ export async function mountGame(container, { id }) {
       paused: rt.paused,
       moves: rt.actionsUsed,
       par: scenario.par,
+      holding: rt.holds.size > 0,
+      pace: base.manual ? null : { current: rt.pace, options: PACES },
     });
     ui.setHints({ used: rt.hintsUsed, total: hintList().length, playing: rt.status === 'playing' });
   }
@@ -194,6 +207,7 @@ export async function mountGame(container, { id }) {
       hintsUsed: rt.hintsUsed,
       stars: rt.stars,
       par: scenario.par,
+      pace: base.manual || rt.pace === 'normal' ? null : PACES[rt.pace],
       debrief: {
         timeline,
         timed: !base.manual,
@@ -234,6 +248,18 @@ export async function mountGame(container, { id }) {
       get over() {
         return rt.status !== 'playing';
       },
+      // The clock stops while any reason is held (the player is typing, or a sheet or form is open), so thinking is
+      // not a race. Hold again with `false` to release; the same key can be held and released any number of times.
+      hold(key, on) {
+        const had = rt.holds.size > 0;
+        if (on) rt.holds.add(key);
+        else rt.holds.delete(key);
+        if (had !== rt.holds.size > 0 && ui) refresh();
+      },
+      // Adds a move that did not go through act() (a read-only command) to the player's run, free of cost.
+      record(text) {
+        if (rt.status === 'playing') rt.moves.push({ tick: rt.ticks, text, counted: false });
+      },
       // Lets a game's own UI (a prompt, a form) go through the same pipeline as the action buttons.
       act: (name, ...args) => rt.act(name, ...args),
       step: (n = 1) => rt.step(n),
@@ -264,7 +290,7 @@ export async function mountGame(container, { id }) {
     if (!autoplay || base.manual) return;
     timer = setInterval(() => {
       if (!container.isConnected) return stopTimer(); // navigated away (instant navigation)
-      if (!rt.paused) rt.step();
+      if (!rt.paused && rt.holds.size === 0) rt.step();
     }, tickMsFor());
   }
 
@@ -334,6 +360,14 @@ export async function mountGame(container, { id }) {
     rt.hint();
   };
 
+  rt.setPace = (pace) => {
+    if (!PACES[pace] || base.manual || pace === rt.pace) return false;
+    chosenPace = pace;
+    rt.pace = pace;
+    rt.restart();
+    return true;
+  };
+
   rt.togglePause = () => {
     if (rt.status !== 'playing') return;
     rt.paused = !rt.paused;
@@ -360,6 +394,7 @@ export async function mountGame(container, { id }) {
     rt.hintsUsed = 0;
     rt.stars = 0;
     rt.moves = [];
+    rt.holds.clear();
     rt.status = 'playing';
     rt.paused = false;
     rt.state = { health: 100 };
@@ -387,6 +422,7 @@ export async function mountGame(container, { id }) {
       togglePause: () => rt.togglePause(),
       restart: () => rt.restart(),
       hint: () => rt.hint(),
+      setPace: (pace) => rt.setPace(pace),
       retryWithHint: () => rt.retryWithHint(),
       nextVersion: () => rt.nextVersion(),
       standardVersion: () => rt.useSeed(scenario.seed),

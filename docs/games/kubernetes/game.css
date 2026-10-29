@@ -231,3 +231,48 @@
   gap: 0.5rem;
   margin-top: 0.6rem;
 }
+
+/* ---- pod action sheet ---- */
+
+.cg .k8s-sheet {
+  margin: 0.5rem 0;
+  padding: 0.6rem 0.7rem;
+  border: 2px solid var(--cg-accent);
+  border-radius: 0.4rem;
+  background: var(--cg-surface);
+}
+
+.cg .k8s-sheet-title {
+  margin: 0 0 0.5rem;
+  font: 700 0.9rem/1.3 var(--font-mono);
+  overflow-wrap: anywhere;
+}
+
+.cg .k8s-sheet-actions {
+  display: grid;
+  gap: 0.4rem;
+  margin-bottom: 0.5rem;
+}
+
+.cg .k8s-sheet-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.1rem;
+  width: 100%;
+  text-align: left;
+}
+
+.cg .k8s-sheet-label {
+  font-weight: 700;
+}
+
+.cg .k8s-sheet-cmd {
+  font: 500 0.78rem/1.3 var(--font-mono);
+  overflow-wrap: anywhere;
+}
+
+.cg .k8s-sheet-note {
+  font: 500 0.78rem/1.3 var(--font-body);
+  color: var(--muted);
+}

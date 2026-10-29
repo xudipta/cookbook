@@ -372,6 +372,84 @@ async function checkObservabilityPhone(browser, scenario) {
   return problems;
 }
 
+// Chaos Monkey Cluster on a phone (#89): typing and the action sheet stop the clock, a fix made before reading costs
+// error budget, every level asks for at least eight decisions, and Pressure pays more than Normal.
+async function checkKubernetesPlay(browser, scenario) {
+  const problems = [];
+  for (const level of scenario.levels) {
+    if ((level.path || []).length < 8) problems.push(`[${level.id}] has only ${(level.path || []).length} player decisions, expected at least 8`);
+  }
+  const first = scenario.levels[0];
+  const open = async (extra = '') => {
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+    const page = await ctx.newPage();
+    page.on('pageerror', (e) => problems.push(`page error: ${e.message}`));
+    await page.goto(`${SITE_URL}docs/games/kubernetes/?seed=${first.seed}&coach=0&level=${first.id}${extra}`, { waitUntil: 'load' });
+    await page.waitForFunction(() => window.cookbookGames && window.cookbookGames.kubernetes);
+    return { ctx, page };
+  };
+  const ticks = (page) => page.evaluate(() => window.cookbookGames.kubernetes.ticks);
+
+  // The clock runs on its own, stops while the prompt has focus, and stops while a pod sheet is open.
+  {
+    const { ctx, page } = await open('&tick=200');
+    await page.waitForFunction(() => window.cookbookGames.kubernetes.ticks >= 2, null, { timeout: 5000 }).catch(() => problems.push('the clock did not run on its own'));
+    await page.focus('.cg-prompt-input');
+    const frozen = await ticks(page);
+    await page.waitForTimeout(900);
+    if ((await ticks(page)) !== frozen) problems.push('typing in the prompt let the clock tick');
+    await page.evaluate(() => document.activeElement.blur());
+    await page.waitForFunction((t) => window.cookbookGames.kubernetes.ticks > t, frozen, { timeout: 4000 }).catch(() => problems.push('the clock did not resume after leaving the prompt'));
+    await page.locator('.k8s-pod').first().click();
+    if (!(await page.locator('.k8s-sheet:not([hidden])').count())) problems.push('tapping a pod did not open the action sheet');
+    const at = await ticks(page);
+    await page.waitForTimeout(900);
+    if ((await ticks(page)) !== at) problems.push('the clock ticked while the pod sheet was open');
+    const lines = await page.locator('.k8s-sheet-cmd').allInnerTexts();
+    if (!lines.some((l) => l.startsWith('kubectl describe pod ')) || !lines.some((l) => l.startsWith('kubectl logs '))) problems.push('the pod sheet does not show the kubectl commands it runs');
+    await page.click('[data-cg="close-sheet"]');
+    await ctx.close();
+  }
+
+  // A fix made before reading costs error budget; the same fix after a describe does not.
+  const run = async (diagnose) => {
+    const { ctx, page } = await open('&autoplay=0');
+    const health = await page.evaluate(({ diag }) => {
+      const g = window.cookbookGames.kubernetes;
+      g.step(12 - g.ticks);
+      if (diag) g.act('kubectl', 'kubectl describe deploy web');
+      g.act('kubectl', 'kubectl rollout undo deploy/web');
+      return g.state.health;
+    }, { diag: diagnose });
+    await ctx.close();
+    return health;
+  };
+  const blind = await run(false);
+  const read = await run(true);
+  if (!(read - blind >= 3)) problems.push(`fixing before reading should cost error budget (blind ${blind}, after describe ${read})`);
+
+  // Pressure pays more for the same run.
+  const scoreAt = async (pace) => {
+    const { ctx, page } = await open('&autoplay=0');
+    if (pace !== 'normal') await page.click(`[data-pace="${pace}"]`);
+    const score = await page.evaluate((sol) => {
+      const g = window.cookbookGames.kubernetes;
+      for (const step of [...sol].sort((a, b) => a.tick - b.tick)) {
+        if (step.tick > g.ticks) g.step(step.tick - g.ticks);
+        g.act(step.action, ...(step.args || []));
+      }
+      g.step(1000 - g.ticks);
+      return Number((document.querySelector('[data-stat="score"]').textContent || '').replace(/\D/g, ''));
+    }, first.solution);
+    await ctx.close();
+    return score;
+  };
+  const normal = await scoreAt('normal');
+  const pressure = await scoreAt('pressure');
+  if (Math.abs(pressure - Math.round(normal * 1.5)) > 2) problems.push(`Pressure should score 1.5x Normal (${normal} -> ${pressure})`);
+  return problems;
+}
+
 async function playGame(browser, id) {
   const scenario = JSON.parse(fs.readFileSync(path.join(GAMES_DIR, id, 'scenarios.json'), 'utf8'));
   const onBoard = JSON.parse(fs.readFileSync(path.join(GAMES_DIR, 'games.json'), 'utf8')).games.some((g) => g.id === id);
@@ -387,6 +465,7 @@ async function playGame(browser, id) {
 
   problems.push(...(await checkGuidance(browser, id, scenario)).map((p) => `[guidance] ${p}`));
   problems.push(...(await checkDebrief(browser, id, scenario)).map((p) => `[debrief] ${p}`));
+  if (id === 'kubernetes') problems.push(...(await checkKubernetesPlay(browser, scenario)).map((p) => `[play] ${p}`));
   if (id === 'observability') problems.push(...(await checkObservabilityPhone(browser, scenario)).map((p) => `[phone] ${p}`));
   const { VARIANT_SEEDS } = await import(pathToFileURL(path.join(GAMES_DIR, 'shared', 'engine.js')).href);
   problems.push(...(await checkVariants(browser, id, scenario, VARIANT_SEEDS)).map((p) => `[versions] ${p}`));

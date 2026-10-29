@@ -180,6 +180,8 @@ export function createUI(container, { def, scenario, levels, siteRoot, handlers,
   hintBtn.addEventListener('click', () => handlers.hint());
 
   if (scenario.manual) pauseBtn.hidden = true; // nothing runs on a clock, so there is nothing to pause
+  // Pace, for the games that run on a clock: twice the time, the standard clock, or a faster one worth more.
+  const paceBar = el('div', { class: 'cg-pace', role: 'group', 'aria-label': 'Pace', hidden: true });
   const hud = el(
     'div',
     { class: 'cg-hud' },
@@ -316,6 +318,7 @@ export function createUI(container, { def, scenario, levels, siteRoot, handlers,
       blurbBox,
       coach,
       hud,
+      paceBar,
       dock,
       el('div', { class: `cg-main${scenario.stacked ? ' cg-main-stacked' : ''}` }, board, side),
       resultSlot,
@@ -339,7 +342,7 @@ export function createUI(container, { def, scenario, levels, siteRoot, handlers,
       if (learn) li.append(learnLink(learn, siteRoot));
     },
 
-    setHud({ ticks, winTicks, tickLabel = 'Tick', health, score, best = 0, status, paused, moves = 0, par }) {
+    setHud({ ticks, winTicks, tickLabel = 'Tick', health, score, best = 0, status, paused, moves = 0, par, holding = false, pace = null }) {
       tickEl.textContent = winTicks ? `${tickLabel} ${ticks} / ${winTicks}` : `${tickLabel} ${ticks}`;
       scoreEl.textContent = `Score ${score}`;
       movesEl.textContent = par === undefined ? `Moves ${moves}` : `Moves ${moves} / par ${par}`;
@@ -353,10 +356,23 @@ export function createUI(container, { def, scenario, levels, siteRoot, handlers,
       meterValue.textContent = `${pct}%`;
       dockFill.style.width = `${pct}%`;
       dockFill.dataset.level = barFill.dataset.level;
-      statusEl.textContent = status === 'playing' ? (paused ? 'Paused' : 'Playing') : status === 'won' ? 'You won' : 'You lost';
+      statusEl.textContent = status === 'playing' ? (paused ? 'Paused' : holding ? 'Clock stopped while you think' : 'Playing') : status === 'won' ? 'You won' : 'You lost';
       dockStatus.textContent = `${pct}% · ${tickEl.textContent} · ${score}${status === 'playing' ? '' : ` · ${statusEl.textContent}`}`;
       statusEl.dataset.status = status;
       pauseBtn.textContent = paused ? 'Resume' : 'Pause';
+      // Pace buttons: built once, then only their pressed state and enabled state change.
+      paceBar.hidden = !pace;
+      if (pace) {
+        if (!paceBar.children.length) {
+          paceBar.append(el('span', { class: 'cg-pace-label', text: 'Pace' }));
+          for (const [key, p] of Object.entries(pace.options)) {
+            const b = el('button', { class: 'cg-btn cg-pace-btn', type: 'button', 'data-pace': key, title: p.note, text: p.label });
+            b.addEventListener('click', () => handlers.setPace(key));
+            paceBar.append(b);
+          }
+        }
+        for (const b of paceBar.querySelectorAll('button')) b.setAttribute('aria-pressed', String(b.dataset.pace === pace.current));
+      }
       pauseBtn.disabled = status !== 'playing';
       for (const btn of actionsBar.querySelectorAll('button')) btn.disabled = status !== 'playing' || paused;
     },
@@ -414,7 +430,7 @@ export function createUI(container, { def, scenario, levels, siteRoot, handlers,
       delete latest.dataset.kind;
     },
 
-    showResult({ status, score, best, ticks, actionsUsed, hintsUsed = 0, stars = 0, par, version, debrief, avgResolve, events, nextLevel }) {
+    showResult({ status, score, best, ticks, actionsUsed, hintsUsed = 0, stars = 0, par, version, pace, debrief, avgResolve, events, nextLevel }) {
       const won = status === 'won';
       const list = el('ul', { class: 'cg-result-events cg-list' });
       for (const e of events) {
@@ -438,6 +454,7 @@ export function createUI(container, { def, scenario, levels, siteRoot, handlers,
       const notes = meta ? el('a', { class: 'cg-btn', 'data-cg': 'notes', href: new URL(meta.notes, siteRoot).href, text: 'Read the notes' }) : null;
       const facts = [`Score ${score}`, `Best ${best}`, `${ticks} ticks`, `${actionsUsed} actions`];
       if (version && !version.standard) facts.push(`version ${version.seed}`);
+      if (pace) facts.push(`${pace.label.toLowerCase()} pace${pace.multiplier !== 1 ? ` (x${pace.multiplier})` : ''}`);
       if (hintsUsed) facts.push(`${hintsUsed} hint${hintsUsed === 1 ? '' : 's'} (−${hintsUsed * hintCost})`);
       if (avgResolve !== null) facts.push(`avg ${avgResolve.toFixed(1)} ticks to resolve an event`);
       resultSlot.replaceChildren(

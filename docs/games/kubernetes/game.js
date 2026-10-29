@@ -11,7 +11,9 @@ import {
   isLost as simIsLost,
   isWon as simIsWon,
   nodeUsed,
+  noteDiagnosis,
   podStatus,
+  takeBlind,
   tick as simTick,
 } from './sim.js';
 import { exec, isMutating, nextWords } from './kubectl.js';
@@ -28,12 +30,26 @@ function print(state, text) {
   term.scrollTop = term.scrollHeight;
 }
 
+const BLIND_COST = 4;
+
+// A fix made before reading about the fault (describe or logs) may work, but it is luck: it costs a little.
+function chargeBlind(state, ctx) {
+  if (!takeBlind(state)) return;
+  state.health = Math.max(0, state.health - BLIND_COST);
+  print(state, `You changed the cluster before reading what was wrong (kubectl describe, kubectl logs). If that worked it was luck: it cost ${BLIND_COST}% of the error budget.`);
+  ctx.log(`Fixed without diagnosing: -${BLIND_COST}%. Read first (describe, logs).`, { kind: 'warn' });
+}
+
 function runCommand(state, ctx, line) {
   print(state, `$ ${line}`);
   const res = exec(state, ctx, line);
   if (res.text) print(state, res.text);
-  if (res.edit) openEdit(state);
-  if (res.mutated) state.mutations += 1;
+  if (res.edit) openEdit(state, ctx);
+  if (/^(kubectl|k)\s+(describe|logs)\b/.test(line.trim()) && !res.error) noteDiagnosis(state);
+  if (res.mutated) {
+    state.mutations += 1;
+    chargeBlind(state, ctx);
+  }
   return res;
 }
 
@@ -41,7 +57,11 @@ function runCommand(state, ctx, line) {
 // through the action pipeline so it is counted, scored and blocked while paused.
 function submit(state, ctx, line) {
   if (!line) return;
-  if (!isMutating(line)) return void runCommand(state, ctx, line);
+  if (!isMutating(line)) {
+    runCommand(state, ctx, line);
+    ctx.record(line); // a read is part of the run: the debrief shows what you looked at before you acted
+    return;
+  }
   state.ran = false;
   ctx.act('kubectl', line);
   if (!state.ran) {
@@ -90,6 +110,7 @@ function buildEditForm(state, ctx) {
   form.hidden = true;
   cancel.addEventListener('click', () => {
     form.hidden = true;
+    ctx.hold('edit', false);
   });
   form.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -110,7 +131,8 @@ function buildEditForm(state, ctx) {
   return form;
 }
 
-function openEdit(state) {
+function openEdit(state, ctx) {
+  ctx.hold('edit', true); // the clock waits while the form is open
   const t = state.deploys.web.template;
   const f = state.dom.fields;
   f.image.value = t.image;
@@ -122,6 +144,41 @@ function openEdit(state) {
   f.nonRoot.checked = t.nonRoot;
   state.dom.edit.hidden = false;
   f.image.focus();
+}
+
+// ---------------------------------------------------------------- the pod action sheet
+
+function closeSheet(state, ctx) {
+  state.dom.sheet.hidden = true;
+  state.sheetPod = null;
+  ctx.hold('sheet', false);
+}
+
+// Tap a pod: its actions, each with the kubectl it runs, so tapping teaches the command. The clock waits while it is open.
+function openSheet(state, ctx, pod) {
+  const sheet = state.dom.sheet;
+  const { status } = podStatus(state, pod);
+  const act = (line) => {
+    closeSheet(state, ctx);
+    submit(state, ctx, line);
+  };
+  const choice = (label, line, note) => {
+    const b = el('button', { class: 'cg-btn k8s-sheet-btn', type: 'button', 'data-line': line }, el('span', { class: 'k8s-sheet-label', text: label }), el('code', { class: 'k8s-sheet-cmd', text: line }), note ? el('span', { class: 'k8s-sheet-note', text: note }) : null);
+    b.addEventListener('click', () => act(line));
+    return b;
+  };
+  const close = el('button', { class: 'cg-btn', type: 'button', 'data-cg': 'close-sheet', text: 'Close' });
+  close.addEventListener('click', () => closeSheet(state, ctx));
+  const buttons = [choice('Describe', `kubectl describe pod ${pod.name}`, 'Read why it is in this state'), choice('Logs', `kubectl logs ${pod.name}`, 'Read what the container said')];
+  if (pod.deploy === 'web') buttons.push(choice('Roll back web', 'kubectl rollout undo deploy/web', 'Undo the last change to the Deployment'));
+  buttons.push(choice('Delete pod', `kubectl delete pod ${pod.name}`, pod.deploy ? 'The Deployment makes a new one from the same template' : 'Nothing will bring a bare Pod back'));
+  sheet.replaceChildren(el('h4', { class: 'k8s-sheet-title', text: `${pod.name}: ${status}` }), el('div', { class: 'k8s-sheet-actions' }, ...buttons), close);
+  sheet.setAttribute('aria-label', `Actions for ${pod.name}`);
+  sheet.hidden = false;
+  state.sheetPod = pod.name;
+  ctx.hold('sheet', true);
+  buttons[0].focus({ preventScroll: true });
+  sheet.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
 }
 
 // ---------------------------------------------------------------- board
@@ -139,16 +196,18 @@ function buildBoard(state, ctx) {
     cls: { form: 'k8s-prompt', ps1: 'k8s-ps1', input: 'k8s-input' },
     next: (words) => nextWords(state, words),
     onSubmit: (line) => submit(state, ctx, line.trim()),
+    onActivity: (on) => ctx.hold('prompt', on), // typing is never a race against the tick
   });
   const prompt = el('div', { class: 'k8s-promptbox' }, cmd.form, cmd.tray);
 
-  state.dom = { summary, strip, nodes, pending, term, prompt: cmd, sig: '' };
+  const sheet = el('section', { class: 'k8s-sheet', role: 'region', hidden: true });
+  state.dom = { summary, strip, nodes, pending, term, prompt: cmd, sheet, sig: '' };
   state.edit = null;
   const edit = buildEditForm(state, ctx);
   state.dom.edit = edit;
 
   ctx.ui.board.append(
-    el('div', { class: 'k8s' }, summary, strip, nodes, pending, el('p', { class: 'k8s-hint', text: 'Click a pod to describe it. Type "help" for the commands.' }), prompt, term, edit),
+    el('div', { class: 'k8s' }, summary, strip, nodes, pending, sheet, el('p', { class: 'k8s-hint', text: 'Tap a pod for its actions, or build a command below. The clock waits while you do.' }), prompt, term, edit),
   );
 }
 
@@ -165,12 +224,12 @@ function podTile(state, ctx, pod) {
   const short = pod.name.replace(/^([a-z]+)-\w+-/, '$1-');
   const btn = el(
     'button',
-    { class: `k8s-pod k8s-pod-${classify(pod)}`, type: 'button', title: `${pod.name}: click to describe`, 'data-pod': pod.name },
+    { class: `k8s-pod k8s-pod-${classify(pod)}`, type: 'button', title: `${pod.name}: tap for actions`, 'data-pod': pod.name },
     el('span', { class: 'k8s-pod-name', text: short }),
     el('span', { class: 'k8s-pod-status', text: status }),
     el('span', { class: 'k8s-pod-meta', text: `ready ${ready}${pod.restarts ? ` · restarts ${pod.restarts}` : ''}${pod.template.app !== 'web' && pod.deploy !== 'batch' ? ` · app=${pod.template.app}` : ''}` }),
   );
-  btn.addEventListener('click', () => runCommand(state, ctx, `kubectl describe pod ${pod.name}`));
+  btn.addEventListener('click', () => openSheet(state, ctx, pod));
   return btn;
 }
 
@@ -236,7 +295,9 @@ registerGame({
       hidden: true,
       run(state, ctx, line) {
         state.ran = true;
-        return runCommand(state, ctx, line).mutated ? undefined : false;
+        const res = runCommand(state, ctx, line);
+        if (res.mutated) return undefined;
+        return isMutating(line) ? false : 'free'; // a read costs nothing but is part of the run
       },
     },
     applyEdit: {
@@ -256,6 +317,18 @@ registerGame({
         print(state, 'deployment.apps/web edited');
         state.mutations += 1;
         state.dom.edit.hidden = true;
+        ctx.hold('edit', false);
+        chargeBlind(state, ctx);
+      },
+    },
+    nextIncident: {
+      label: 'Next incident',
+      key: 'i',
+      run(state, ctx) {
+        // Skip the quiet ticks: run the clock to the next scheduled trouble (or a few ticks if none is left).
+        const later = (ctx.scenario.schedule || []).map((item) => item.tick).filter((t) => t > ctx.ticks);
+        ctx.step(later.length ? Math.min(...later) - ctx.ticks : 5);
+        return 'free';
       },
     },
     scaleUp: {
