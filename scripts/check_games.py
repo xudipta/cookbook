@@ -8,6 +8,8 @@ For every game directory (anything in docs/games/ except `shared/`) check that:
     (so a game can never point a reader at a note section that doesn't exist);
   * docs/games/games.json (the home page's board) lists every game, and each live entry matches its
     directory (level count, notes folder), is linked from its topic README and from docs/games/index.md;
+  * every level has a hint ladder (`hints`: 1-4 non-empty strings) and the game has a guided start
+    (`coach`: board, actions, firstMove), so a first-time player is never left guessing;
   * every action named in the scripted solution (one per level, if the scenario has `levels`) is
     defined in game.js, and every level's `schedule` only names declared events.
 
@@ -108,6 +110,20 @@ def check_game(game_dir: Path) -> list[str]:
         elif normalize_heading(section) not in headings(note):
             err(f"{where}: no heading {section!r} in {learn['note']}")
 
+    coach = scenario.get("coach")
+    if not isinstance(coach, dict):
+        err("coach must be an object with board, actions and firstMove (the guided start)")
+    else:
+        for key in ("board", "actions", "firstMove"):
+            if not isinstance(coach.get(key), str) or not coach[key].strip():
+                err(f"coach.{key} must be a non-empty string")
+
+    def check_hints(label: str, hints: object) -> None:
+        if not isinstance(hints, list) or not 1 <= len(hints) <= 4:
+            err(f"{label}: hints must be a list of 1-4 strings (where to look, what is wrong, what to do)")
+        elif not all(isinstance(h, str) and h.strip() for h in hints):
+            err(f"{label}: every hint must be a non-empty string")
+
     levels = scenario.get("levels")
     if levels is not None and not isinstance(levels, list):
         err("levels must be a list")
@@ -125,6 +141,7 @@ def check_game(game_dir: Path) -> list[str]:
             if not isinstance(level.get("title"), str):
                 err(f"level {lid!r} needs a title")
             runs.append((f"level {lid!r}", level.get("solution")))
+            check_hints(f"level {lid!r}", level.get("hints"))
             for j, item in enumerate(level.get("schedule", [])):
                 if not isinstance(item, dict) or item.get("event") not in seen:
                     err(f"level {lid!r} schedule[{j}] must name an event declared in events (got {item!r})")
@@ -132,6 +149,7 @@ def check_game(game_dir: Path) -> list[str]:
                     err(f"level {lid!r} schedule[{j}] needs an integer tick >= 1")
     else:
         runs.append(("scenario", scenario.get("solution")))
+        check_hints("scenario", scenario.get("hints"))
 
     for label, solution in runs:
         if not isinstance(solution, list) or not solution:

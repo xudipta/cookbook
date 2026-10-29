@@ -344,6 +344,85 @@ body:has(#game[data-game]) .md-typeset h1 {
   margin: 0.4rem 0 0;
 }
 
+.cg .cg-goal-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.cg .cg-guide {
+  margin-left: auto;
+  padding: 0.2rem 0.4rem;
+  border: 0;
+  background: transparent;
+  color: var(--accent);
+  font: 600 0.8rem/1.4 var(--font-mono);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  cursor: pointer;
+}
+
+/* Revealed hints stay in view: the log folds away on a phone. */
+.cg .cg-hints {
+  margin: 0.5rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cg .cg-hint {
+  margin: 0.3rem 0 0;
+  padding: 0.4rem 0.6rem;
+  border-left: 3px solid var(--accent);
+  border-radius: 0 0.3rem 0.3rem 0;
+  background: var(--surface-2, var(--surface));
+  font: 500 0.88rem/1.45 var(--font-body);
+}
+
+/* ---- guided start ----------------------------------------------------------------------- */
+
+.cg .cg-coach {
+  margin: 0 0 0.75rem;
+  padding: 0.7rem 0.8rem;
+  border: 2px solid var(--accent);
+  border-radius: 0.5rem;
+  background: var(--surface);
+}
+
+.cg .cg-coach-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.cg .cg-coach-title {
+  margin: 0;
+  font: 700 1rem/1.3 var(--font-body);
+}
+
+.cg .cg-coach-count {
+  color: var(--muted);
+  font: 500 0.78rem/1 var(--font-mono);
+}
+
+.cg .cg-coach-text {
+  margin: 0.35rem 0 0.6rem;
+  font: 500 0.92rem/1.5 var(--font-body);
+}
+
+.cg .cg-coach-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* The part of the page the current step is about. */
+.cg .cg-coach-on {
+  outline: 3px solid var(--accent);
+  outline-offset: -3px;
+}
+
 .cg .cg-result-actions {
   display: flex;
   flex-wrap: wrap;

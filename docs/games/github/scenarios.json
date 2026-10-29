@@ -1,6 +1,11 @@
 {
   "id": "github",
   "title": "Merge Conflict Rush",
+  "coach": {
+    "board": "The graph shows commits and branches. The panels show your working tree, the GitHub pull requests and the goals.",
+    "actions": "Wait lets time pass for a review. Everything else you do in the terminal or the file editor; reading is free, changing costs a step.",
+    "firstMove": "Run git status and git log --oneline --graph --all (both are free), then read the goals."
+  },
   "healthLabel": "Team trust",
   "tickLabel": "Step",
   "manual": true,
@@ -202,6 +207,11 @@
       "id": "first-pr",
       "title": "1. Everyday flow",
       "blurb": "A fresh clone of acme/site. Add a line to README.md that points at CONTRIBUTING.md and ship it the normal way: branch, commit, push, open a pull request, merge it. Reading is free; each change to the repo takes a step.",
+      "hints": [
+        "Look at the terminal and the graph: you are on main, and a pull request needs its own branch.",
+        "The everyday flow is branch, edit, add, commit, push, open the PR, merge it.",
+        "git switch -c docs/contributing, edit README.md in the editor, git add, git commit -m, git push -u origin HEAD, gh pr create --fill, gh pr merge --squash --delete-branch."
+      ],
       "seed": 1,
       "winTicks": 12,
       "minHealth": 50,
@@ -348,6 +358,11 @@
       "id": "behind-main",
       "title": "2. Behind main",
       "blurb": "Your branch feature/retries has an open PR (#7), but teammates merged to main while you worked, and one of them changed the line you edited. Bring the branch up to date (merge or rebase, your call), resolve the conflict in config.yml (ops raised the timeout to 60: keep 60 and keep your retries: 3), and get the PR merged.",
+      "hints": [
+        "Look at the commit graph: main has moved on past where your branch started.",
+        "Bring the branch up to date (merge or rebase). The conflict in config.yml has two sides to keep: timeout 60 and retries 3.",
+        "git fetch, git rebase origin/main, fix config.yml in the editor, git add it, git rebase --continue, git push --force-with-lease, then gh pr merge."
+      ],
       "seed": 2,
       "winTicks": 14,
       "minHealth": 50,
@@ -551,6 +566,11 @@
       "id": "protected-main",
       "title": "3. Protected main",
       "blurb": "main is protected: a pull request, a code-owner approval and a passing build. Marc's commit on main broke the build. You also committed a typo fix to your local main by mistake, and README.md has half-finished edits. Undo the bad commit without rewriting history, land the typo fix, and lose nothing.",
+      "hints": [
+        "Look at the graph: Marc's commit on main broke the build, and your local main has a stray typo commit.",
+        "You cannot rewrite main or push to it. You undo a commit with a new one (revert) on a branch, through a pull request, and you protect your own work first.",
+        "Stash the edits, branch the typo fix, reset main to origin/main, revert on a new branch and open a PR, then rebase and merge the typo PR."
+      ],
       "seed": 3,
       "winTicks": 30,
       "minHealth": 50,

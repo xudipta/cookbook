@@ -24,7 +24,8 @@ const PAGES = [
   { name: 'home', url: '', ready: '.tile' },
   { name: 'learn overview', url: 'docs/learn/', ready: '.md-content' },
   { name: 'note with a Play banner', url: 'topics/docker/notes/01-images-and-dockerfiles/', ready: '.admonition' },
-  ...games.map((g) => ({ name: `game ${g}`, url: `docs/games/${g}/?autoplay=0`, ready: '.cg-board' })),
+  // Games are audited with the guided start open and one hint revealed, the two things a first visit adds.
+  ...games.map((g) => ({ name: `game ${g}`, url: `docs/games/${g}/?autoplay=0&coach=1`, ready: '.cg-board', prepare: (tab) => tab.click('[data-cg="hint"]') })),
 ];
 
 const VIEWS = [
@@ -48,6 +49,7 @@ async function checkPage(browser, page, view) {
     await ctx.close();
     return problems;
   }
+  if (page.prepare) await page.prepare(tab);
   await tab.waitForTimeout(500);
 
   if (await tab.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)) {

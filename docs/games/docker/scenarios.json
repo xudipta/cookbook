@@ -1,6 +1,11 @@
 {
   "id": "docker",
   "title": "Layer Cake",
+  "coach": {
+    "board": "The cards are the Dockerfile, top line first. The build panel shows each layer, whether it came from cache, and the image size.",
+    "actions": "Build runs your Dockerfile. Builds are limited, so read the output before you build again.",
+    "firstMove": "Move the cards into a sensible order, then press Build and read what each layer did."
+  },
   "healthLabel": "Build budget",
   "tickLabel": "Build",
   "manual": true,
@@ -210,6 +215,11 @@
       "id": "hello",
       "title": "1. Hello nginx",
       "blurb": "Arrange the cards into the Dockerfile from topics/docker/examples/hello-nginx so it builds and serves the page. Then a teammate edits index.html: watch what rebuilds.",
+      "hints": [
+        "Look at the card tray: each card is one line of the Dockerfile, and the order is the build order.",
+        "A base image comes first, then the file you serve is copied in, then the port and the health check.",
+        "Arrange from-nginx, copy-index, expose-80, healthcheck, then Build twice: the second build shows what the cache reused."
+      ],
       "winTicks": 2,
       "minHealth": 50,
       "drainRate": 0.25,
@@ -306,6 +316,11 @@
       "id": "cache",
       "title": "2. Cache order",
       "blurb": "This Dockerfile works but reinstalls every dependency whenever anyone touches the code. Reorder it (and add what's missing) so edits rebuild only what they must, and keep the cache alive on a fresh CI runner. You have five builds.",
+      "hints": [
+        "Look at which steps rebuild when only the code changes: everything after a changed file runs again.",
+        "Copying all the code before installing dependencies invalidates the install layer on every edit.",
+        "Copy only the manifest, run npm ci, then copy the rest; add the cache flag so a fresh CI runner can reuse layers."
+      ],
       "winTicks": 5,
       "minHealth": 75,
       "drainRate": 0.25,
@@ -479,6 +494,11 @@
       "id": "bloat",
       "title": "3. Bloat",
       "blurb": "The app is a static site, but this image ships Node, every dependency and the source. Split it into a build stage and a small runtime stage so the final image is under 80 MB.",
+      "hints": [
+        "Look at the final image size and what it still contains.",
+        "A multi-stage build keeps Node, the dependencies and the source in the first stage only.",
+        "Build in a node stage, then start a second FROM nginx and copy just the dist folder into it."
+      ],
       "winTicks": 3,
       "minHealth": 70,
       "drainRate": 0.25,
@@ -677,6 +697,11 @@
       "id": "hygiene",
       "title": "4. Hygiene",
       "blurb": "A Python service that builds, but the image is huge, leaks a secret, and runs as root. Pick the right variant of each card (and add what's missing) until it is under 200 MB, holds no secrets, and runs as a non-root user.",
+      "hints": [
+        "Look at the three problems in the goal: size, a leaked secret and running as root.",
+        "A .dockerignore keeps secrets out of the build context, a slim base and clean apt and pip steps keep it small, and USER drops root.",
+        "Pick the dockerignore, the slim Python base, the apt-good and pip-good variants, then add useradd and user-app."
+      ],
       "winTicks": 2,
       "minHealth": 50,
       "drainRate": 0.1,
@@ -885,6 +910,11 @@
       "id": "broken",
       "title": "5. Broken build",
       "blurb": "This build fails. Read the log, find the offending step, fix it, and repeat: there is more than one problem. Each failed build costs budget, so read before you rebuild.",
+      "hints": [
+        "Read the failed build log from the bottom: it names the step that broke.",
+        "There is more than one problem: fix one and the next step fails.",
+        "Copy the manifest before npm ci, copy the sources before the build step, and end with the CMD."
+      ],
       "winTicks": 1,
       "minHealth": 50,
       "drainRate": 0.25,
@@ -1025,6 +1055,11 @@
       "id": "compose",
       "title": "6. Compose wiring",
       "blurb": "A web, api and db stack that does not work yet. Pick one line for each slot of compose.yaml so api reaches db by name, waits for it, and the data survives a down and up, without publishing anything that only containers need.",
+      "hints": [
+        "Look at the three services and what each slot of compose.yaml connects.",
+        "Containers reach each other by service name, not localhost; depends_on only waits with a healthcheck; data needs a named volume.",
+        "Point the api at the host db, make it depend on db being healthy with a pg healthcheck, use a named volume, and publish nothing on db."
+      ],
       "mode": "compose",
       "tickLabel": "Run",
       "actionLabels": {

@@ -2136,11 +2136,6 @@ export function isLost(w) {
   return w.ticks >= w.winTicks && !isWon(w);
 }
 
-export function nextHint(w) {
-  const open = goalStatus(w).find((g) => !g.done);
-  return open ? open.hint : 'Everything on the list is done. Leave no merge or rebase half-finished.';
-}
-
 // ---------------------------------------------------------------- views for the UI
 
 export function repoBadges(w) {

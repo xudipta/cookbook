@@ -1,6 +1,11 @@
 {
   "id": "cicd",
   "title": "Pipeline Panic",
+  "coach": {
+    "board": "The board shows your pipeline (or your release) and the next event it will face, before it happens.",
+    "actions": "Place, remove or promote to change the pipeline. Run next event or Wait lets time pass and shows the result.",
+    "firstMove": "Read the next event on the board, then place or promote the one thing that answers it before you run it."
+  },
   "healthLabel": "Delivery health",
   "tickLabel": "Event",
   "manual": true,
@@ -281,6 +286,11 @@
       "id": "fast-feedback",
       "title": "1. Fast feedback",
       "blurb": "Pipeline Tycoon. The team ships through one slow workflow. Add cards so each PR gets fast feedback without burning the monthly runner minutes. The next event is shown before you run it.",
+      "hints": [
+        "Look at the event shown before each run: it names the cost you are about to pay (minutes, a cache miss, a slow job).",
+        "Docs-only changes, reinstalled dependencies, jobs that run one after another and old runs that keep going all burn minutes.",
+        "Place paths-ignore, cache-setup, needs-lint, concurrency and matrix, then run the next event."
+      ],
       "mode": "pipeline",
       "tickLabel": "Event",
       "seed": 1,
@@ -453,6 +463,11 @@
       "id": "locked-down",
       "title": "2. Locked down",
       "blurb": "Pipeline Tycoon. Someone switched the workflow to pull_request_target to get secrets into fork builds. Make it safe, pin what you do not control, and stop the copy-paste before the next fork PR arrives.",
+      "hints": [
+        "Look at the red cards in the workflow: the trigger and the checkout.",
+        "pull_request_target runs with secrets, and checking out the fork's head code in it is the dangerous pair.",
+        "Remove on-prt and checkout-head, place on-pr, perms-read and ref-sha, then the reusable-lint and composite-setup cards."
+      ],
       "mode": "pipeline",
       "tickLabel": "Event",
       "seed": 2,
@@ -636,6 +651,11 @@
       "id": "deploy-day",
       "title": "3. Deploy Day",
       "blurb": "Deploy Day. Three releases wait in dev. Promote each through staging, then pick rolling, blue-green or canary for prod. Watch the error graph and roll back before users notice. Keep delivery health at 70 or more.",
+      "hints": [
+        "Watch the error graph while a release bakes: the strategies differ in how many users see a bad build.",
+        "Rolling replaces pods gradually, canary sends a few users first, blue-green flips everyone at once with an instant way back.",
+        "Promote to staging and wait, then pick a strategy; the riskier the release, the smaller the first step. Roll back as soon as errors climb."
+      ],
       "mode": "deploy",
       "tickLabel": "Minute",
       "seed": 3,
@@ -778,6 +798,11 @@
       "id": "gates-and-drift",
       "title": "4. Gates and drift",
       "blurb": "Deploy Day. A release that staging would catch, someone hot-fixing prod by hand, and a migration that drops a column. Use the gates, keep prod matching git, and never ship a change you cannot undo.",
+      "hints": [
+        "Look at each release before you promote it: the gates are there for builds staging would catch.",
+        "Three traps: a release staging would reject, a hot-fix made by hand in prod, and a migration that drops a column.",
+        "Reject the bad build, expand the schema before removing anything, commit the hand-fix to git, deploy with a canary and roll back if it fails."
+      ],
       "mode": "deploy",
       "tickLabel": "Minute",
       "seed": 4,

@@ -29,9 +29,10 @@ export function mulberry32(seed) {
 }
 
 // Uniform scoring for every game: the topic's health meter (0-100) is worth up to 1000,
-// every action costs 10, and winning adds 500.
-export function computeScore({ health, actionsUsed, won }) {
-  return Math.max(0, Math.round(health * 10) - actionsUsed * 10 + (won ? 500 : 0));
+// every action costs 10, every hint costs HINT_COST, and winning adds 500.
+export const HINT_COST = 25;
+export function computeScore({ health, actionsUsed, won, hintsUsed = 0 }) {
+  return Math.max(0, Math.round(health * 10) - actionsUsed * 10 - hintsUsed * HINT_COST + (won ? 500 : 0));
 }
 
 export async function mountGame(container, { id }) {
@@ -86,6 +87,7 @@ export async function mountGame(container, { id }) {
     state: null,
     ticks: 0,
     actionsUsed: 0,
+    hintsUsed: 0,
     status: 'playing',
     paused: false,
   };
@@ -96,7 +98,7 @@ export async function mountGame(container, { id }) {
   let ctx;
 
   const score = () =>
-    computeScore({ health: rt.state.health, actionsUsed: rt.actionsUsed, won: rt.status === 'won' });
+    computeScore({ health: rt.state.health, actionsUsed: rt.actionsUsed, hintsUsed: rt.hintsUsed, won: rt.status === 'won' });
 
   function refresh() {
     def.render?.(rt.state, ctx);
@@ -110,7 +112,11 @@ export async function mountGame(container, { id }) {
       status: rt.status,
       paused: rt.paused,
     });
+    ui.setHints({ used: rt.hintsUsed, total: hintList().length, playing: rt.status === 'playing' });
   }
+
+  // A level's hints are a ladder in scenarios.json (`hints: [where to look, what is wrong, what to do]`).
+  const hintList = () => scenario.hints || [];
 
   function finish(status) {
     rt.status = status;
@@ -131,7 +137,7 @@ export async function mountGame(container, { id }) {
     refresh();
     const at = levels ? levels.findIndex((l) => l.id === level.id) : -1;
     const nextLevel = at >= 0 && at < levels.length - 1 ? levels[at + 1] : null;
-    ui.showResult({ status, score: score(), best, ticks: rt.ticks, actionsUsed: rt.actionsUsed, avgResolve, events: eventList, nextLevel });
+    ui.showResult({ status, score: score(), best, ticks: rt.ticks, actionsUsed: rt.actionsUsed, hintsUsed: rt.hintsUsed, avgResolve, events: eventList, nextLevel });
   }
 
   function makeCtx() {
@@ -211,6 +217,16 @@ export async function mountGame(container, { id }) {
     return true;
   };
 
+  // Reveals the next rung of the ladder. Each one costs HINT_COST points; reading them again is free.
+  rt.hint = () => {
+    const list = hintList();
+    if (rt.status !== 'playing' || rt.hintsUsed >= list.length) return false;
+    rt.hintsUsed += 1;
+    ui.showHint(list[rt.hintsUsed - 1], rt.hintsUsed, list.length);
+    refresh();
+    return true;
+  };
+
   rt.togglePause = () => {
     if (rt.status !== 'playing') return;
     rt.paused = !rt.paused;
@@ -233,10 +249,12 @@ export async function mountGame(container, { id }) {
     fired = [];
     rt.ticks = 0;
     rt.actionsUsed = 0;
+    rt.hintsUsed = 0;
     rt.status = 'playing';
     rt.paused = false;
     rt.state = { health: 100 };
     ui.clearLog();
+    ui.clearHints();
     ui.clearResult();
     ui.setLevel(level);
     ui.setProgress(completedLevels(id));
@@ -252,11 +270,13 @@ export async function mountGame(container, { id }) {
     levels,
     siteRoot: SITE_ROOT,
     meta,
+    hintCost: HINT_COST,
     handlers: {
       act: (name) => rt.act(name),
       setLevel: (levelId) => rt.setLevel(levelId),
       togglePause: () => rt.togglePause(),
       restart: () => rt.restart(),
+      hint: () => rt.hint(),
     },
   });
   ctx = makeCtx();
@@ -274,6 +294,7 @@ export async function mountGame(container, { id }) {
     };
     if (key === 'p' && !base.manual) return handled(() => rt.togglePause());
     if (key === 'r') return handled(() => rt.restart());
+    if (key === '?') return handled(() => rt.hint());
     for (const [name, action] of Object.entries(def.actions)) {
       if (typeof action === 'object' && action.key && action.key.toLowerCase() === key) {
         return handled(() => rt.act(name));
@@ -282,6 +303,8 @@ export async function mountGame(container, { id }) {
   });
 
   rt.restart();
+  // The guided start runs once per game in a browser; a scripted run (autoplay=0) skips it, ?coach=1 forces it.
+  if (params.get('coach') === '1' || (autoplay && params.get('coach') !== '0')) ui.startCoach({ onlyIfNew: params.get('coach') !== '1' });
   window.cookbookGames = window.cookbookGames || {};
   window.cookbookGames[id] = rt;
   return rt;

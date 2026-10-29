@@ -1,6 +1,11 @@
 {
   "id": "database",
   "title": "Index Fund",
+  "coach": {
+    "board": "The database and its schema on one side, the queries (or migration files) on the other, with how long each takes.",
+    "actions": "Next day lets traffic run and bills you for what is still slow. The terminal changes the schema.",
+    "firstMove": "Press EXPLAIN ANALYZE on the slowest query and look for a Seq Scan in the plan."
+  },
   "healthLabel": "Error budget",
   "tickLabel": "Day",
   "manual": true,
@@ -175,6 +180,11 @@
       "id": "seq-scans",
       "title": "1. Seq scans",
       "blurb": "A small shop on Postgres: logins and order history get slower as the tables grow. EXPLAIN a query to see its plan, add the indexes that help, and keep reads under 20 ms without making writes or storage pay for indexes nobody uses.",
+      "hints": [
+        "Look at the query cards: EXPLAIN ANALYZE shows how each one is run.",
+        "A Seq Scan on a big table means no index fits the WHERE column, and every index you add costs writes and storage.",
+        "Index users(email) as unique and orders(user_id), and leave the nightly report alone: it runs once."
+      ],
       "seed": 11,
       "mode": "tuning",
       "winTicks": 5,
@@ -558,6 +568,11 @@
       "id": "plans",
       "title": "2. Read the plan",
       "blurb": "A wholesale shop with big accounts. Some indexes are missing, one is the wrong shape, and two old ones nothing uses. A new order page launches tomorrow. Use EXPLAIN and pg_stat_user_indexes to decide, then keep every endpoint within budget.",
+      "hints": [
+        "Look at pg_stat_user_indexes: an index with no scans costs writes and storage for nothing.",
+        "Drop the unused ones, give the recent-orders query an index in the order it filters and sorts, and index the foreign key behind the buyers query.",
+        "Drop idx_orders_status, idx_orders_created_at and idx_users_created_at, create (user_id, created_at) on orders and (product_id) on order_items, and when the order page launches deploy one JOIN in place of the per-item queries."
+      ],
       "seed": 22,
       "mode": "tuning",
       "winTicks": 6,
@@ -1058,6 +1073,11 @@
       "id": "migrations",
       "title": "3. Safe migrations",
       "blurb": "Ship four releases through numbered up/down migrations: test on staging, migrate production, roll the app in the right order, and roll back when a release goes bad. Production never stops serving: some changes need the migration first, some need the code first.",
+      "hints": [
+        "Look at the migration list and which database the prompt is connected to: staging first, then production.",
+        "Some changes need the migration first (adding a column), some need the code first (dropping one), and every up needs a working down.",
+        "Run migrate up and down on staging before prod, deploy the app in the order the release needs, and when a release goes bad roll the app back and migrate down."
+      ],
       "seed": 33,
       "mode": "migrations",
       "winTicks": 5,

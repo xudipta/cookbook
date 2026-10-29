@@ -1,6 +1,11 @@
 {
   "id": "mcp",
   "title": "Patch Bay",
+  "coach": {
+    "board": "Requests arrive one at a time. The wired servers and the wire log show what your host can do and what it just said.",
+    "actions": "Call tool, Attach resource and Run prompt serve the request in front of you. Wiring a server is done in the terminal.",
+    "firstMove": "Tap claude, mcp, add to wire the server a request needs, then serve it."
+  },
   "healthLabel": "Trust",
   "tickLabel": "Request",
   "manual": true,
@@ -612,6 +617,11 @@
       "id": "first-plugs",
       "title": "1. First plugs",
       "blurb": "Wire a local filesystem server (stdio) and the hosted Grafana (Streamable HTTP) into the project's .mcp.json. A teammate clones the repo halfway through, and no token may land in git.",
+      "hints": [
+        "Look at the requests: each needs a server that is not wired yet.",
+        "A local server runs a command (stdio) and a hosted one is a URL (HTTP). Project scope writes .mcp.json, which goes in git, so no token may go in it.",
+        "claude mcp add filesystem with --scope project and its npx command, then Grafana with --transport http and the token as ${GRAFANA_TOKEN}, never its value."
+      ],
       "winTicks": 4,
       "catalog": [
         "filesystem",
@@ -722,6 +732,11 @@
       "id": "scopes-secrets",
       "title": "2. Scopes and secrets",
       "blurb": "Add GitHub and the ticketing system. An old local entry is in the way, GitHub's README asks for an admin token, and each request needs the right primitive: a tool, a resource or a prompt.",
+      "hints": [
+        "Look at the wired servers: an old local tickets entry will shadow the project one.",
+        "GitHub's README asks for an admin token, but it only needs to read issues, so bind the narrower variable. OAuth servers need /mcp auth.",
+        "Remove the local tickets entry, add it at project scope and sign in, add github with -e bound to ${GITHUB_TOKEN}, then serve each request with its own primitive."
+      ],
       "winTicks": 6,
       "catalog": [
         "filesystem",
@@ -906,6 +921,11 @@
       "id": "vet-build",
       "title": "3. Vet and build",
       "blurb": "A teammate's commit adds a free word-count server. Read its tool descriptions before you approve anything, then build your own from the minimal-server blocks, test it with the inspector and plug it in.",
+      "hints": [
+        "Read the new free-utils server's tool descriptions in full before you approve anything.",
+        "One description hides instructions aimed at the model, which is tool poisoning. Never approve a server you have not read.",
+        "Reject free-utils, then in the builder choose the name count_words, a full description, a described input and a content result over stdio, save it and claude mcp add wordcount."
+      ],
       "winTicks": 4,
       "catalog": [
         "filesystem",
