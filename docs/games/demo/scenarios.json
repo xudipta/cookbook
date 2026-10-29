@@ -1,6 +1,11 @@
 {
   "id": "demo",
   "title": "Replica Rescue (demo)",
+  "coach": {
+    "board": "Each box is a pod. The meter is your error budget.",
+    "actions": "Add replica starts another pod.",
+    "firstMove": "Add a few replicas before the chaos starts."
+  },
   "healthLabel": "Error budget",
   "seed": 7,
   "tickMs": 1000,
@@ -13,18 +18,38 @@
       "id": "pod-killed",
       "title": "Chaos monkey killed a pod",
       "fix": "A Deployment's ReplicaSet notices the missing pod and starts a replacement on its own; spare replicas just cover the gap.",
-      "learn": { "note": "topics/kubernetes/notes/02-pods-and-workloads.md", "section": "ReplicaSets" }
+      "learn": {
+        "note": "topics/kubernetes/notes/02-pods-and-workloads.md",
+        "section": "ReplicaSets"
+      }
     },
     {
       "id": "node-down",
       "title": "A node went down and took two pods with it",
       "fix": "Self-healing is not instant, so run spare replicas: losing two pods at once still leaves enough serving.",
-      "learn": { "note": "topics/kubernetes/notes/02-pods-and-workloads.md", "section": "Deployments" }
+      "learn": {
+        "note": "topics/kubernetes/notes/02-pods-and-workloads.md",
+        "section": "Deployments"
+      }
     }
   ],
   "solution": [
-    { "tick": 0, "action": "addReplica" },
-    { "tick": 0, "action": "addReplica" },
-    { "tick": 0, "action": "addReplica" }
+    {
+      "tick": 0,
+      "action": "addReplica"
+    },
+    {
+      "tick": 0,
+      "action": "addReplica"
+    },
+    {
+      "tick": 0,
+      "action": "addReplica"
+    }
+  ],
+  "hints": [
+    "Look at the pod count and the error budget.",
+    "The chaos monkey kills a pod now and then, and a node goes down at tick 8.",
+    "Add replicas early so losing a node still leaves enough pods serving."
   ]
 }

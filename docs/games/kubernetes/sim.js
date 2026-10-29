@@ -395,7 +395,7 @@ export function tick(w, ctx) {
   for (const item of sc.schedule || []) {
     if (item.tick !== t) continue;
     applyEvent(w, ctx, item);
-    if (sc.hints && item.hint) ctx.log(`Hint: ${item.hint}`, { kind: 'hint' });
+    if (sc.eventHints && item.hint) ctx.log(`Hint: ${item.hint}`, { kind: 'hint' });
   }
   if (sc.killChance && roll < sc.killChance) {
     const running = webPods(w).filter((p) => p.phase === 'Running' && p.deploy === 'web');

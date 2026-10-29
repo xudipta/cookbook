@@ -1,6 +1,11 @@
 {
   "id": "observability",
   "title": "Quiet Hours",
+  "coach": {
+    "board": "Charts and rules for one night on call. Every rule decides who gets woken, and the page count is what you are keeping low.",
+    "actions": "Next hour moves time on one step and Run to morning plays the rest. Rules cost a move to change; time is free.",
+    "firstMove": "Do the warm-up quiz first, then open a rule and read what it fires on."
+  },
   "healthLabel": "Sleep or SLO (the lower one)",
   "tickLabel": "Hour",
   "manual": true,
@@ -122,6 +127,11 @@
       "id": "first-shift",
       "title": "1. First shift",
       "blurb": "Classify four signals, then fix two starter rules that are too twitchy. Page me for the real error spike, and let me sleep through traffic surges and a CPU blip. Rules are free to change all night, but the pages you earn are not.",
+      "hints": [
+        "Do the warm-up first: classify each signal as a counter, gauge, histogram or summary.",
+        "A counter only goes up, so alert on its rate. The twitchy rules fire on blips and surges you should sleep through.",
+        "Make the error rule use the error ratio over several minutes with a for duration, make CPU a warning, then Run to morning."
+      ],
       "seed": 7,
       "winTicks": 9,
       "budgetMin": 50,
@@ -337,6 +347,11 @@
       "id": "slow-burn",
       "title": "2. Slow burn",
       "blurb": "Two quiet killers: p95 latency creeping up over two hours, and a disk that fills in the small hours. Averages and static thresholds notice too late. Alert on the tail and on where the disk is heading.",
+      "hints": [
+        "Look at the p95 and disk panels: an average and a fixed threshold notice too late.",
+        "Alert on the tail (p95 with histogram_quantile) and on where the disk is heading (predict_linear), not where it is now.",
+        "Save a p95 latency rule and a DiskFillingUp rule using predict_linear, keep CPU as a warning, then Run to morning."
+      ],
       "seed": 11,
       "winTicks": 9,
       "budgetMin": 60,
@@ -525,6 +540,11 @@
       "id": "storm-night",
       "title": "3. Storm night",
       "blurb": "The earlier rules are in place. Now a rack goes dark and fifteen alerts fire at once, a scrape flap looks like an outage, and the request-rate panel is too slow to use while you debug. Group the storm, tame the flap, and record the expensive query.",
+      "hints": [
+        "Look at the Alertmanager route: with nothing grouped, fifteen alerts mean fifteen pages.",
+        "Group by alertname and job so a dead rack is one page, ride out a flapping scrape with a for clause, and record the expensive query as a rule.",
+        "Set group_by to alertname,job, save the InstanceDown rule with a for duration, add a recording rule for the request rate, then Run to morning."
+      ],
       "seed": 19,
       "winTicks": 9,
       "budgetMin": 100,

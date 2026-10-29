@@ -211,8 +211,17 @@ the meter it shows. A few rules keep the games consistent:
 - **Build boards from `<div>`s** (with `role="list"`/`"listitem"` where it helps), not `<ul>`:
   Material styles lists in a way a single class can't override. Use `.cg .your-class` selectors
   in `game.css`.
-- **Keys `p` and `r` are reserved** (pause, restart), and the shell stops them reaching
+- **Keys `p`, `r` and `?` are reserved** (pause, restart, hint), and the shell stops them reaching
   Material's own shortcuts. Avoid `f`, `s`, `n` and `/` for actions.
+- **Every level has a hint ladder and every game a guided start**, both data in `scenarios.json`
+  (`scripts/check_games.py` fails without them). `hints: [where to look, what is wrong, what to do]` is
+  per level (a single-level game puts it at the top): one to four strings, shown one at a time by the shell's
+  **Hint** button, each costing 25 points (`HINT_COST` in `engine.js`, shown in the score and the result
+  panel). Write the first rung so it says where to look without saying what is wrong, and make the last
+  one enough to finish the level. `coach: { board, actions, firstMove }` at the top feeds the guided
+  start: four short steps that each light up one part of the page, shown once per game per browser
+  (`localStorage`), skippable, and replayable from the **Guide** button. A scripted run (`autoplay=0`)
+  skips it; `?coach=1` forces it. Do not add a game-specific hint button.
 - Keep everything static: no build step, no network calls.
 - **Keep the game page short.** The game carries the understanding, so `index.md` is a few lines
   of rules plus the key commands or syntax and a pointer to the notes, not a second copy of them.

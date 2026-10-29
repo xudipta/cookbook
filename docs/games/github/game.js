@@ -17,7 +17,6 @@ import {
   isWon as simIsWon,
   listFiles,
   mainBuild,
-  nextHint,
   nextWords,
   ownersLines,
   prCards,
@@ -305,20 +304,12 @@ registerGame({
     state.dom = { root, goals, term, prompt, graph, tree, repo, editor };
     wireEditor(state, ctx);
     ctx.ui.board.append(root);
-    ctx.log('Reading (status, log, diff) is free; each change takes a step. Hint (h) names the next goal. Wait (w) lets time pass for a review or a teammate.');
+    ctx.log('Reading (status, log, diff) is free; each change takes a step. Wait (w) lets time pass for a review or a teammate.');
   },
 
   tick: (state, ctx) => simTick(state, ctx),
 
   actions: {
-    hint: {
-      label: 'Hint',
-      key: 'h',
-      run(state, ctx) {
-        ctx.log(`Hint: ${nextHint(state)}`, { kind: 'hint' });
-        return false;
-      },
-    },
     wait: {
       label: 'Wait',
       key: 'w',

@@ -1,6 +1,11 @@
 {
   "id": "skills",
   "title": "Skill Issue",
+  "coach": {
+    "board": "The shelf holds your skill. The meter shows how much of the context window each request uses.",
+    "actions": "Send serves the next request to your skill setup and shows whether it was triggered and whether it fit.",
+    "firstMove": "Look at what is in SKILL.md and move the bulky parts out of the body."
+  },
   "healthLabel": "Requests served well",
   "tickLabel": "Request",
   "manual": true,
@@ -149,6 +154,11 @@
       "id": "disclosure",
       "title": "1. Disclosure",
       "blurb": "Your release-notes skill is one big SKILL.md with everything pasted into the body. Sort its pieces into frontmatter (always loaded), body (loaded when the skill is chosen) and bundled files (loaded only when a request needs them), so every request fits the window, even if the conversation grows and the window shrinks. Then send the requests.",
+      "hints": [
+        "Look at the context meter: everything in the body counts every time the skill is chosen.",
+        "Frontmatter is always loaded, the body loads when the skill is picked, and bundled files load only when a request needs them.",
+        "Move the script, the labels and the example into bundled files, then send the requests."
+      ],
       "mode": "layers",
       "skillName": "release-notes",
       "winTicks": 7,
@@ -336,6 +346,11 @@
       "id": "descriptions",
       "title": "2. Descriptions",
       "blurb": "The agent picks a skill from its name and description alone. Yours says \"Helps with notes.\" Rewrite the description so the requests that are yours trigger it and the others do not, then save and check the queue. A rival skill is about to join the shelf.",
+      "hints": [
+        "The agent picks a skill from its name and description alone, and \"Helps with notes\" matches nothing.",
+        "Say what the skill does and when to use it, in the words people actually ask with, and keep out what the rival skill covers.",
+        "Write a description that names release notes and changelogs and what they are built from, with clear use-when triggers, then save and send the queue."
+      ],
       "mode": "file",
       "skillName": "release-notes",
       "winTicks": 7,
@@ -444,6 +459,11 @@
       "id": "ship-it",
       "title": "3. Ship it",
       "blurb": "The skill is drafted but the team gate will reject it, and it is in the wrong place. Fix SKILL.md until the gate is happy, name the folder, put it where Claude Code looks, and give it only the tools it needs: it may run the script and read files, but never write them on its own.",
+      "hints": [
+        "Run the gate: it lists what the team will reject.",
+        "Fix the frontmatter, name the folder to match the skill, put it under .claude/skills, and allow only the tools it needs.",
+        "Save SKILL.md with a matching name and a good description, allow only running the script and reading files, folder release-notes, location .claude/skills."
+      ],
       "mode": "file",
       "skillName": "release-notes",
       "winTicks": 6,

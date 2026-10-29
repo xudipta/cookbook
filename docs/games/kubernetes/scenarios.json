@@ -1,6 +1,11 @@
 {
   "id": "kubernetes",
   "title": "Chaos Monkey Cluster",
+  "coach": {
+    "board": "Each tile is a pod, grouped by the node it runs on. The strip shows how many requests succeed each tick.",
+    "actions": "The buttons scale, roll back or edit the web deployment, and the prompt runs kubectl. Reading is free; changing the cluster costs a move.",
+    "firstMove": "Run kubectl get pods, click any pod that is not Running to describe it, then fix what it tells you."
+  },
   "healthLabel": "Error budget",
   "seed": 11,
   "tickMs": 3000,
@@ -10,7 +15,7 @@
   "drainRate": 0.05,
   "batchRequest": 350,
   "killChance": 0,
-  "hints": false,
+  "eventHints": false,
   "barePod": false,
   "web": {
     "replicas": 4,
@@ -106,11 +111,16 @@
       "id": "tutorial",
       "title": "1. Tutorial",
       "blurb": "One problem at a time, with hints. Look first (kubectl get pods, kubectl describe), then act. Keep the Service healthy for 30 ticks.",
+      "hints": [
+        "Look at the pod tiles: a pod that is not Running is your lead. Click one to describe it.",
+        "A bad rollout leaves the new pods failing while the old ones are fine, and a pod restarts because of a missing setting.",
+        "Run kubectl rollout undo deploy/web, then use Edit to add the missing environment key (mode)."
+      ],
       "seed": 11,
       "tickMs": 5000,
       "winTicks": 30,
       "minHealth": 60,
-      "hints": true,
+      "eventHints": true,
       "schedule": [
         {
           "tick": 5,
@@ -153,6 +163,11 @@
       "id": "shift",
       "title": "2. Shift",
       "blurb": "No hints and overlapping trouble. One of your pods is a bare Pod (legacy-web) and the release process is sloppy. Survive 45 ticks.",
+      "hints": [
+        "Look at the pods and the node bars: restarts and Pending pods point at memory and at rollouts.",
+        "legacy-web is a bare pod, so nothing replaces it; the memory limit is too tight, and a release is bad.",
+        "Scale web to 3, roll back the bad release, raise the memory limit with set resources, and add a readiness probe in Edit."
+      ],
       "seed": 23,
       "tickMs": 4000,
       "winTicks": 45,
@@ -223,6 +238,11 @@
       "id": "incident",
       "title": "3. Incident night",
       "blurb": "Compound failures: a noisy neighbour, a bad rollout and a security change land close together. Survive 50 ticks.",
+      "hints": [
+        "Look at the node bars first: a noisy neighbour is eating the memory the web pods need.",
+        "Three things overlap: the batch deployment crowds out web, a web rollout is bad, and a security change now needs a non-root image.",
+        "Scale batch to 0, undo the web rollout, switch the image to web:1.0-nonroot in Edit, and raise the memory limit."
+      ],
       "seed": 41,
       "tickMs": 3500,
       "winTicks": 50,

@@ -150,6 +150,50 @@ async function playRun(browser, id, run) {
   return problems;
 }
 
+// The guided start and the hint ladder, on the first level: the guide shows once (?coach=1 forces it on a
+// scripted run), walks every step, can be skipped or replayed; each hint is shown, costs points and runs out.
+async function checkGuidance(browser, id, scenario) {
+  const problems = [];
+  const first = scenario.levels ? scenario.levels[0] : scenario;
+  const hints = first.hints || [];
+  const page = await browser.newPage();
+  page.on('pageerror', (e) => problems.push(`page error: ${e.message}`));
+  const level = scenario.levels ? `&level=${encodeURIComponent(first.id)}` : '';
+  await page.goto(`${SITE_URL}docs/games/${id}/?seed=${first.seed ?? scenario.seed}&autoplay=0&coach=1${level}`, { waitUntil: 'load' });
+  try {
+    await page.waitForSelector('.cg-coach:not([hidden])', { timeout: 15000 });
+  } catch {
+    problems.push('the guided start did not show with ?coach=1');
+    await page.close();
+    return problems;
+  }
+  let steps = 0;
+  while (await page.locator('.cg-coach:not([hidden])').count()) {
+    steps += 1;
+    if ((await page.locator('.cg-coach-on').count()) !== 1) problems.push(`guided start step ${steps} highlights ${await page.locator('.cg-coach-on').count()} parts of the page, expected 1`);
+    await page.click('[data-cg="coach-next"]');
+    if (steps > 8) break;
+  }
+  if (steps < 3 || steps > 4) problems.push(`guided start has ${steps} steps, expected 3 or 4`);
+  await page.click('[data-cg="guide"]');
+  if (!(await page.locator('.cg-coach:not([hidden])').count())) problems.push('the Guide button does not replay the guided start');
+  await page.click('[data-cg="coach-skip"]');
+  if (await page.locator('.cg-coach:not([hidden])').count()) problems.push('Skip guide did not close the guided start');
+  // Remembered per game: a normal visit (no ?coach) after finishing it does not show it again.
+  await page.goto(`${SITE_URL}docs/games/${id}/?seed=${first.seed ?? scenario.seed}${level}`, { waitUntil: 'load' });
+  await page.waitForSelector('.cg-board');
+  if (await page.locator('.cg-coach:not([hidden])').count()) problems.push('the guided start came back after it was skipped');
+
+  const score = async () => Number((await page.textContent('[data-stat="score"]')).replace(/\D/g, ''));
+  const before = await score();
+  for (let i = 0; i < hints.length; i++) await page.click('[data-cg="hint"]');
+  if ((await page.locator('.cg-hint').count()) !== hints.length) problems.push(`expected ${hints.length} hints on screen, saw ${await page.locator('.cg-hint').count()}`);
+  if (before - (await score()) !== 25 * hints.length) problems.push(`${hints.length} hints should cost ${25 * hints.length} points, cost ${before - (await score())}`);
+  if (!(await page.isDisabled('[data-cg="hint"]'))) problems.push('the Hint button is still enabled after every hint was shown');
+  await page.close();
+  return problems;
+}
+
 async function playGame(browser, id) {
   const scenario = JSON.parse(fs.readFileSync(path.join(GAMES_DIR, id, 'scenarios.json'), 'utf8'));
   const onBoard = JSON.parse(fs.readFileSync(path.join(GAMES_DIR, 'games.json'), 'utf8')).games.some((g) => g.id === id);
@@ -162,6 +206,8 @@ async function playGame(browser, id) {
     if (run.label) console.log(` level: ${run.label}`);
     problems.push(...(await playRun(browser, id, run)).map((p) => (run.label ? `[${run.label}] ${p}` : p)));
   }
+
+  problems.push(...(await checkGuidance(browser, id, scenario)).map((p) => `[guidance] ${p}`));
 
   const { learnUrl } = await import(pathToFileURL(path.join(GAMES_DIR, 'shared', 'learn.js')).href);
   problems.push(...(await checkLearnLinks(scenario, learnUrl)));

@@ -1,6 +1,11 @@
 {
   "id": "terraform",
   "title": "Drift Detective",
+  "coach": {
+    "board": "Config, state and the real infrastructure sit side by side. A good day is all three agreeing.",
+    "actions": "Next day ends the day, and drift lands overnight. Everything else you do in the terminal.",
+    "firstMove": "Tap terraform, then init, then plan, and read what it says before you apply."
+  },
   "healthLabel": "Team trust",
   "tickLabel": "Day",
   "manual": true,
@@ -135,6 +140,11 @@
       "id": "first-apply",
       "title": "1. First apply",
       "blurb": "The workflow from topics/terraform/examples/local-file: init, plan, apply. Then a teammate changes a variable and someone edits the file by hand. Read each plan before you apply.",
+      "hints": [
+        "Look at the state panel: nothing is managed until you init and apply.",
+        "A plan shows what will change before you apply it. After the first apply, changes arrive from outside.",
+        "terraform init, terraform apply -auto-approve; then press Next day and apply again whenever the plan shows a difference."
+      ],
       "winTicks": 4,
       "minHealth": 50,
       "workspace": "default",
@@ -229,6 +239,11 @@
       "id": "drift",
       "title": "2. Drift and imports",
       "blurb": "An instance, a bucket and a database are running. Reality will move without Terraform, and a teammate will make a change that looks harmless in the diff. Keep config, state and reality in agreement without destroying data.",
+      "hints": [
+        "Look at the state and real infrastructure panels side by side: anything real but missing from state is drift.",
+        "A bucket was made outside Terraform and needs importing, and a rename that looks harmless would destroy and recreate the database.",
+        "Apply what the plan shows, import aws_s3_bucket.assets acme-assets, and set the identifier back to orders-db so the plan stays empty."
+      ],
       "winTicks": 5,
       "minHealth": 50,
       "workspace": "default",
@@ -361,6 +376,11 @@
       "id": "team",
       "title": "3. Team chaos",
       "blurb": "Two workspaces, dev and prod, and a teammate who just added a remote backend block. CI shares your state, locks come and go, and you start in prod. Check which workspace you are in before every plan.",
+      "hints": [
+        "Check the workspace in the status strip before every plan: you start in prod.",
+        "The new backend block needs a state migration, and a stale lock blocks you until it is released.",
+        "terraform init -migrate-state, select dev before applying, then prod; for a stale lock, force-unlock with the ID the error prints."
+      ],
       "winTicks": 6,
       "minHealth": 50,
       "workspace": "prod",
@@ -544,6 +564,11 @@
       "id": "module",
       "title": "4. Copy-paste to module",
       "blurb": "Two stacks (an instance and a log bucket each) are copy-pasted in main.tf. Extract them into a module without touching the real infrastructure: read the plan after you extract, and make Terraform move the state instead of destroying the buckets.",
+      "hints": [
+        "Look at main.tf: the two stacks are the same code pasted twice.",
+        "Moving code into a module changes the resource addresses, so Terraform would destroy and recreate; a moved block says the old address is the new one.",
+        "Extract the module, add a moved entry for each of the four resources, then apply and check the plan touches nothing real."
+      ],
       "winTicks": 3,
       "minHealth": 50,
       "nagCost": 3,

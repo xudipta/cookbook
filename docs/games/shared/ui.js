@@ -14,7 +14,28 @@ export function el(tag, props = {}, ...kids) {
   return node;
 }
 
-export function createUI(container, { def, scenario, levels, siteRoot, handlers, meta }) {
+const HINT_LABELS = ['Where to look', 'What is wrong', 'What to do'];
+const COACH_KEY = 'cookbook-game-coach';
+
+// Storage can be blocked (private windows, site data off): the guided start then just shows each visit.
+function coachSeen(id) {
+  try {
+    return Boolean(JSON.parse(localStorage.getItem(COACH_KEY) || '{}')[id]);
+  } catch {
+    return false;
+  }
+}
+function rememberCoach(id) {
+  try {
+    const seen = JSON.parse(localStorage.getItem(COACH_KEY) || '{}');
+    seen[id] = true;
+    localStorage.setItem(COACH_KEY, JSON.stringify(seen));
+  } catch {
+    // Nothing to do: the guide shows again next time.
+  }
+}
+
+export function createUI(container, { def, scenario, levels, siteRoot, handlers, meta, hintCost }) {
   container.replaceChildren();
   container.classList.add('cg');
   container.tabIndex = 0;
@@ -51,8 +72,10 @@ export function createUI(container, { def, scenario, levels, siteRoot, handlers,
   const meterValue = el('span', { class: 'cg-meter-value' });
   const pauseBtn = el('button', { class: 'cg-btn', type: 'button', 'data-cg': 'pause', text: 'Pause' });
   const restartBtn = el('button', { class: 'cg-btn', type: 'button', 'data-cg': 'restart', text: 'Restart' });
+  const hintBtn = el('button', { class: 'cg-btn', type: 'button', 'data-cg': 'hint', title: 'Shortcut: ?' });
   pauseBtn.addEventListener('click', () => handlers.togglePause());
   restartBtn.addEventListener('click', () => handlers.restart());
+  hintBtn.addEventListener('click', () => handlers.hint());
 
   if (scenario.manual) pauseBtn.hidden = true; // nothing runs on a clock, so there is nothing to pause
   const hud = el(
@@ -63,7 +86,7 @@ export function createUI(container, { def, scenario, levels, siteRoot, handlers,
     scoreEl,
     bestEl,
     statusEl,
-    el('div', { class: 'cg-controls' }, pauseBtn, restartBtn),
+    el('div', { class: 'cg-controls' }, pauseBtn, restartBtn, hintBtn),
   );
 
   // Level picker (only when scenarios.json defines `levels`).
@@ -71,7 +94,11 @@ export function createUI(container, { def, scenario, levels, siteRoot, handlers,
   const blurb = el('p', { class: 'cg-blurb' });
   // On a phone the level goal folds away so the board stays near the top of the screen.
   const goalToggle = el('button', { class: 'cg-goal-toggle', type: 'button', 'aria-expanded': 'true' });
-  const blurbBox = el('div', { class: 'cg-goal' }, goalToggle, blurb);
+  const guideBtn = el('button', { class: 'cg-guide', type: 'button', 'data-cg': 'guide', text: 'Guide' });
+  // Revealed hints stay on screen (the log folds away on a phone); each is announced as it appears.
+  const hintList = el('ol', { class: 'cg-hints cg-list' });
+  const hintBox = el('div', { class: 'cg-hints-box', hidden: true, role: 'status', 'aria-label': 'Hints' }, hintList);
+  const blurbBox = el('div', { class: 'cg-goal' }, el('div', { class: 'cg-goal-row' }, goalToggle, guideBtn), blurb, hintBox);
   const showGoal = (open) => {
     blurb.hidden = !open;
     goalToggle.setAttribute('aria-expanded', String(open));
@@ -134,11 +161,57 @@ export function createUI(container, { def, scenario, levels, siteRoot, handlers,
     if (open) side.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   });
 
+  // The guided start: a few inline steps that each light up one part of the page. It is data-driven
+  // (`coach: { board, actions, firstMove }` in scenarios.json), skippable, remembered per game in
+  // localStorage, and can be replayed with the Guide button.
+  const coachData = scenario.coach || {};
+  const coachSteps = [
+    { target: board, title: 'The board', text: coachData.board || 'This is what you are keeping healthy. It changes as you act and as time passes.' },
+    { target: actionsBar, title: 'Your moves', text: coachData.actions || 'Each button is a move. Most cost a few points, so look before you press.' },
+    { target: latest, title: 'The log', text: 'Events land here with the fix and a link to the notes. On a phone, tap the latest line to open the whole log.' },
+    { target: hintBtn, title: 'A good first move', text: `${coachData.firstMove || 'Read the level goal, then look at the board.'} Stuck? Hint reveals a clue and costs ${hintCost} points.` },
+  ];
+  const coachTitle = el('h3', { class: 'cg-coach-title' });
+  const coachText = el('p', { class: 'cg-coach-text' });
+  const coachCount = el('span', { class: 'cg-coach-count' });
+  const coachNext = el('button', { class: 'cg-btn cg-btn-primary', type: 'button', 'data-cg': 'coach-next' });
+  const coachSkip = el('button', { class: 'cg-btn', type: 'button', 'data-cg': 'coach-skip', text: 'Skip guide' });
+  const coach = el(
+    'section',
+    { class: 'cg-coach', hidden: true, 'aria-label': 'Guided start', 'aria-live': 'polite' },
+    el('div', { class: 'cg-coach-head' }, coachTitle, coachCount),
+    coachText,
+    el('div', { class: 'cg-coach-actions' }, coachNext, coachSkip),
+  );
+  let coachAt = 0;
+  const lit = () => container.querySelectorAll('.cg-coach-on');
+  const coachStop = (remember) => {
+    coach.hidden = true;
+    for (const node of lit()) node.classList.remove('cg-coach-on');
+    if (remember) rememberCoach(def.id);
+  };
+  const coachShow = (i) => {
+    coachAt = i;
+    const step = coachSteps[i];
+    for (const node of lit()) node.classList.remove('cg-coach-on');
+    step.target.classList.add('cg-coach-on');
+    coachTitle.textContent = step.title;
+    coachText.textContent = step.text;
+    coachCount.textContent = `${i + 1} of ${coachSteps.length}`;
+    coachNext.textContent = i === coachSteps.length - 1 ? 'Got it' : 'Next';
+    coach.hidden = false;
+    step.target.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  };
+  coachNext.addEventListener('click', () => (coachAt === coachSteps.length - 1 ? coachStop(true) : coachShow(coachAt + 1)));
+  coachSkip.addEventListener('click', () => coachStop(true));
+  guideBtn.addEventListener('click', () => coachShow(0));
+
   container.append(
     ...[
       head,
       levelBar,
       blurbBox,
+      coach,
       hud,
       dock,
       el('div', { class: `cg-main${scenario.stacked ? ' cg-main-stacked' : ''}` }, board, side),
@@ -187,7 +260,7 @@ export function createUI(container, { def, scenario, levels, siteRoot, handlers,
       for (const [id, btn] of levelButtons) btn.setAttribute('aria-pressed', String(Boolean(level) && id === level.id));
       for (const [name, a] of actionButtons) a.setLabel((level && level.actionLabels && level.actionLabels[name]) || a.label);
       blurb.textContent = (level && level.blurb) || '';
-      blurbBox.hidden = !blurb.textContent;
+      goalToggle.hidden = !blurb.textContent; // the box stays: it also holds the Guide button and the hints
       showGoal(matchMedia('(min-width: 700px)').matches);
     },
 
@@ -202,13 +275,40 @@ export function createUI(container, { def, scenario, levels, siteRoot, handlers,
       }
     },
 
+    // Hint button: how many rungs are left, and the cost, in the label and for screen readers.
+    setHints({ used, total, playing }) {
+      const left = total - used;
+      hintBtn.hidden = total === 0;
+      hintBtn.textContent = left > 0 ? `Hint −${hintCost}` : 'No more hints';
+      hintBtn.setAttribute('aria-label', left > 0 ? `Hint, costs ${hintCost} points, ${left} of ${total} left` : 'No more hints');
+      hintBtn.disabled = !playing || left <= 0;
+    },
+
+    showHint(text, n, total) {
+      const label = total === HINT_LABELS.length ? HINT_LABELS[n - 1] : `Hint ${n}`;
+      hintList.append(el('li', { class: 'cg-hint' }, el('strong', { text: `${label}: ` }), text));
+      hintBox.hidden = false;
+      showGoal(true);
+      latestText.textContent = `Hint ${n} of ${total}: ${text}`;
+    },
+
+    clearHints() {
+      hintList.replaceChildren();
+      hintBox.hidden = true;
+    },
+
+    // Starts the guided start. `onlyIfNew` skips it for a player who has seen it on this browser.
+    startCoach({ onlyIfNew = true } = {}) {
+      if (!onlyIfNew || !coachSeen(def.id)) coachShow(0);
+    },
+
     clearLog() {
       logList.replaceChildren();
       latestText.textContent = 'No events yet';
       delete latest.dataset.kind;
     },
 
-    showResult({ status, score, best, ticks, actionsUsed, avgResolve, events, nextLevel }) {
+    showResult({ status, score, best, ticks, actionsUsed, hintsUsed = 0, avgResolve, events, nextLevel }) {
       const won = status === 'won';
       const list = el('ul', { class: 'cg-result-events cg-list' });
       for (const e of events) {
@@ -223,6 +323,7 @@ export function createUI(container, { def, scenario, levels, siteRoot, handlers,
       again.addEventListener('click', () => handlers.restart());
       const notes = meta ? el('a', { class: 'cg-btn', 'data-cg': 'notes', href: new URL(meta.notes, siteRoot).href, text: 'Read the notes' }) : null;
       const facts = [`Score ${score}`, `Best ${best}`, `${ticks} ticks`, `${actionsUsed} actions`];
+      if (hintsUsed) facts.push(`${hintsUsed} hint${hintsUsed === 1 ? '' : 's'} (−${hintsUsed * hintCost})`);
       if (avgResolve !== null) facts.push(`avg ${avgResolve.toFixed(1)} ticks to resolve an event`);
       resultSlot.replaceChildren(
         el(

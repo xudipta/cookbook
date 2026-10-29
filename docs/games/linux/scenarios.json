@@ -1,6 +1,11 @@
 {
   "id": "linux",
   "title": "Night Shift",
+  "coach": {
+    "board": "The pager on the left lists the incidents. The server panel shows disk, load and services.",
+    "actions": "Wait a minute lets time pass. A command that changes something costs a move and a minute; reading is free.",
+    "firstMove": "Read the pager message, then run cat or ls on whatever it names."
+  },
   "healthLabel": "Service health",
   "tickLabel": "Minute",
   "manual": true,
@@ -421,6 +426,11 @@
       "id": "first-night",
       "title": "1. First night",
       "blurb": "Three pages in a row: a script that will not run, a pegged CPU and a full disk. Reading is free; each command that changes something costs a move and a minute, and every open incident costs service health.",
+      "hints": [
+        "Read the README first: reading is free, and the pager names three separate problems.",
+        "A script that is not executable, one process pegging the CPU, and a log filling the disk.",
+        "chmod +x the deploy script, find the busiest process with ps aux --sort=-%cpu and kill it, then truncate the huge log file."
+      ],
       "seed": 1,
       "winTicks": 6,
       "minHealth": 40,
@@ -751,6 +761,11 @@
       "id": "web-tier",
       "title": "2. The web tier",
       "blurb": "A service that crash-loops, a flood of 500s and a port nobody can reach. Use the logs and the sockets to find the cause, then change the one thing that fixes it.",
+      "hints": [
+        "Start with systemctl status and journalctl -u for the crash-looping service: the log names the cause.",
+        "Three causes: a config path that does not exist, one IP flooding nginx, and a service listening only on localhost.",
+        "Fix the config path in the unit and restart it, deny the abusive IP in an nginx conf and reload, then make the API listen on 0.0.0.0:8080."
+      ],
       "seed": 2,
       "winTicks": 8,
       "minHealth": 40,
@@ -1375,6 +1390,11 @@
       "id": "bad-friday",
       "title": "3. Bad Friday",
       "blurb": "Four problems overlap, and one is silent: the backups. A job ignores a polite kill, a deploy broke a directory, and the biggest file on the disk is not the one to delete.",
+      "hints": [
+        "The backup is the silent one: read its cron entry, its script and the newest file in /backups.",
+        "The script ignores failures, a worker ignores a polite kill, a directory has the wrong owner after the deploy, and the biggest file is not the one to delete.",
+        "Add set -euo pipefail and rerun the backup, kill -9 the stuck job, chown the worker's directory, and remove the old temp export, not live data."
+      ],
       "seed": 3,
       "winTicks": 10,
       "minHealth": 40,
