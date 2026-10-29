@@ -185,6 +185,7 @@
         "A Seq Scan on a big table means no index fits the WHERE column, and every index you add costs writes and storage.",
         "Index users(email) as unique and orders(user_id), and leave the nightly report alone: it runs once."
       ],
+      "par": 2,
       "seed": 11,
       "mode": "tuning",
       "winTicks": 5,
@@ -573,6 +574,7 @@
         "Drop the unused ones, give the recent-orders query an index in the order it filters and sorts, and index the foreign key behind the buyers query.",
         "Drop idx_orders_status, idx_orders_created_at and idx_users_created_at, create (user_id, created_at) on orders and (product_id) on order_items, and when the order page launches deploy one JOIN in place of the per-item queries."
       ],
+      "par": 6,
       "seed": 22,
       "mode": "tuning",
       "winTicks": 6,
@@ -1078,6 +1080,7 @@
         "Some changes need the migration first (adding a column), some need the code first (dropping one), and every up needs a working down.",
         "Run migrate up and down on staging before prod, deploy the app in the order the release needs, and when a release goes bad roll the app back and migrate down."
       ],
+      "par": 24,
       "seed": 33,
       "mode": "migrations",
       "winTicks": 5,

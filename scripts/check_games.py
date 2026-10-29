@@ -10,6 +10,8 @@ For every game directory (anything in docs/games/ except `shared/`) check that:
     directory (level count, notes folder), is linked from its topic README and from docs/games/index.md;
   * every level has a hint ladder (`hints`: 1-4 non-empty strings) and the game has a guided start
     (`coach`: board, actions, firstMove), so a first-time player is never left guessing;
+  * every level has a `par` (an integer move count: the scripted solution's counted moves; the smoke test
+    checks they agree), which the stars are measured against;
   * every action named in the scripted solution (one per level, if the scenario has `levels`) is
     defined in game.js, and every level's `schedule` only names declared events.
 
@@ -118,6 +120,10 @@ def check_game(game_dir: Path) -> list[str]:
             if not isinstance(coach.get(key), str) or not coach[key].strip():
                 err(f"coach.{key} must be a non-empty string")
 
+    def check_par(label: str, par: object) -> None:
+        if not isinstance(par, int) or isinstance(par, bool) or par < 0:
+            err(f"{label}: par must be a non-negative integer (the scripted solution's move count)")
+
     def check_hints(label: str, hints: object) -> None:
         if not isinstance(hints, list) or not 1 <= len(hints) <= 4:
             err(f"{label}: hints must be a list of 1-4 strings (where to look, what is wrong, what to do)")
@@ -142,6 +148,7 @@ def check_game(game_dir: Path) -> list[str]:
                 err(f"level {lid!r} needs a title")
             runs.append((f"level {lid!r}", level.get("solution")))
             check_hints(f"level {lid!r}", level.get("hints"))
+            check_par(f"level {lid!r}", level.get("par"))
             for j, item in enumerate(level.get("schedule", [])):
                 if not isinstance(item, dict) or item.get("event") not in seen:
                     err(f"level {lid!r} schedule[{j}] must name an event declared in events (got {item!r})")
@@ -150,6 +157,7 @@ def check_game(game_dir: Path) -> list[str]:
     else:
         runs.append(("scenario", scenario.get("solution")))
         check_hints("scenario", scenario.get("hints"))
+        check_par("scenario", scenario.get("par"))
 
     for label, solution in runs:
         if not isinstance(solution, list) or not solution:

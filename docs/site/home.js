@@ -1,5 +1,5 @@
 // Home page: the board (built from docs/games/games.json), the hero teaser game and the theme toggle.
-import { bestScore, completedLevels, resetProgress } from '../games/shared/progress.js';
+import { bestScore, completedLevels, resetProgress, starsEarned } from '../games/shared/progress.js';
 import { initTheme } from './theme.js';
 
 const el = (tag, props = {}, ...kids) => {
@@ -42,6 +42,8 @@ function tile(game) {
     { class: 'tile-progress' },
     el('span', { class: 'pips', 'aria-hidden': 'true' }, Array.from({ length: game.levels }, (_, i) => el('i', { 'data-done': String(i < done) }))),
     el('span', { text: `${done} of ${game.levels} levels done` }),
+    // Stars are par-based: three per level for finishing in the scripted solution's moves.
+    done ? el('span', { class: 'tile-stars', 'aria-label': `${starsEarned(game.id)} of ${game.levels * 3} stars`, text: `★ ${starsEarned(game.id)}/${game.levels * 3}` }) : null,
   );
   return el(
     'a',

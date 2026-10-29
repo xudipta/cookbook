@@ -379,6 +379,31 @@ body:has(#game[data-game]) .md-typeset h1 {
   font: 500 0.88rem/1.45 var(--font-body);
 }
 
+/* ---- par and stars ---------------------------------------------------------------------- */
+
+.cg .cg-stat[data-stat="moves"][data-over="true"] {
+  color: var(--bad, var(--ink));
+  font-weight: 700;
+}
+
+.cg .cg-stars-line {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  margin: 0.4rem 0;
+}
+
+.cg .cg-stars {
+  flex: none;
+  color: var(--warn, var(--accent));
+  font-size: 1.6rem;
+  letter-spacing: 0.08em;
+}
+
+.cg .cg-stars-text {
+  font: 500 0.9rem/1.4 var(--font-body);
+}
+
 /* ---- guided start ----------------------------------------------------------------------- */
 
 .cg .cg-coach {

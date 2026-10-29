@@ -132,6 +132,8 @@
         "A counter only goes up, so alert on its rate. The twitchy rules fire on blips and surges you should sleep through.",
         "Make the error rule use the error ratio over several minutes with a for duration, make CPU a warning, then Run to morning."
       ],
+      "par": 6,
+      "variants": true,
       "seed": 7,
       "winTicks": 9,
       "budgetMin": 50,
@@ -352,6 +354,8 @@
         "Alert on the tail (p95 with histogram_quantile) and on where the disk is heading (predict_linear), not where it is now.",
         "Save a p95 latency rule and a DiskFillingUp rule using predict_linear, keep CPU as a warning, then Run to morning."
       ],
+      "par": 3,
+      "variants": true,
       "seed": 11,
       "winTicks": 9,
       "budgetMin": 60,
@@ -545,6 +549,8 @@
         "Group by alertname and job so a dead rack is one page, ride out a flapping scrape with a for clause, and record the expensive query as a rule.",
         "Set group_by to alertname,job, save the InstanceDown rule with a for duration, add a recording rule for the request rate, then Run to morning."
       ],
+      "par": 3,
+      "variants": true,
       "seed": 19,
       "winTicks": 9,
       "budgetMin": 100,

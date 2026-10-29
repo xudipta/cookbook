@@ -622,6 +622,7 @@
         "A local server runs a command (stdio) and a hosted one is a URL (HTTP). Project scope writes .mcp.json, which goes in git, so no token may go in it.",
         "claude mcp add filesystem with --scope project and its npx command, then Grafana with --transport http and the token as ${GRAFANA_TOKEN}, never its value."
       ],
+      "par": 6,
       "winTicks": 4,
       "catalog": [
         "filesystem",
@@ -737,6 +738,7 @@
         "GitHub's README asks for an admin token, but it only needs to read issues, so bind the narrower variable. OAuth servers need /mcp auth.",
         "Remove the local tickets entry, add it at project scope and sign in, add github with -e bound to ${GITHUB_TOKEN}, then serve each request with its own primitive."
       ],
+      "par": 10,
       "winTicks": 6,
       "catalog": [
         "filesystem",
@@ -926,6 +928,7 @@
         "One description hides instructions aimed at the model, which is tool poisoning. Never approve a server you have not read.",
         "Reject free-utils, then in the builder choose the name count_words, a full description, a described input and a content result over stdio, save it and claude mcp add wordcount."
       ],
+      "par": 7,
       "winTicks": 4,
       "catalog": [
         "filesystem",

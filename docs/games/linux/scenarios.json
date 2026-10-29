@@ -431,6 +431,7 @@
         "A script that is not executable, one process pegging the CPU, and a log filling the disk.",
         "chmod +x the deploy script, find the busiest process with ps aux --sort=-%cpu and kill it, then truncate the huge log file."
       ],
+      "par": 3,
       "seed": 1,
       "winTicks": 6,
       "minHealth": 40,
@@ -766,6 +767,7 @@
         "Three causes: a config path that does not exist, one IP flooding nginx, and a service listening only on localhost.",
         "Fix the config path in the unit and restart it, deny the abusive IP in an nginx conf and reload, then make the API listen on 0.0.0.0:8080."
       ],
+      "par": 3,
       "seed": 2,
       "winTicks": 8,
       "minHealth": 40,
@@ -1395,6 +1397,7 @@
         "The script ignores failures, a worker ignores a polite kill, a directory has the wrong owner after the deploy, and the biggest file is not the one to delete.",
         "Add set -euo pipefail and rerun the backup, kill -9 the stuck job, chown the worker's directory, and remove the old temp export, not live data."
       ],
+      "par": 6,
       "seed": 3,
       "winTicks": 10,
       "minHealth": 40,

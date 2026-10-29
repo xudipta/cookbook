@@ -291,6 +291,7 @@
         "Docs-only changes, reinstalled dependencies, jobs that run one after another and old runs that keep going all burn minutes.",
         "Place paths-ignore, cache-setup, needs-lint, concurrency and matrix, then run the next event."
       ],
+      "par": 6,
       "mode": "pipeline",
       "tickLabel": "Event",
       "seed": 1,
@@ -468,6 +469,7 @@
         "pull_request_target runs with secrets, and checking out the fork's head code in it is the dangerous pair.",
         "Remove on-prt and checkout-head, place on-pr, perms-read and ref-sha, then the reusable-lint and composite-setup cards."
       ],
+      "par": 6,
       "mode": "pipeline",
       "tickLabel": "Event",
       "seed": 2,
@@ -656,6 +658,8 @@
         "Rolling replaces pods gradually, canary sends a few users first, blue-green flips everyone at once with an instant way back.",
         "Promote to staging and wait, then pick a strategy; the riskier the release, the smaller the first step. Roll back as soon as errors climb."
       ],
+      "par": 8,
+      "variants": true,
       "mode": "deploy",
       "tickLabel": "Minute",
       "seed": 3,
@@ -803,6 +807,7 @@
         "Three traps: a release staging would reject, a hot-fix made by hand in prod, and a migration that drops a column.",
         "Reject the bad build, expand the schema before removing anything, commit the hand-fix to git, deploy with a canary and roll back if it fails."
       ],
+      "par": 7,
       "mode": "deploy",
       "tickLabel": "Minute",
       "seed": 4,

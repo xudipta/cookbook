@@ -1,7 +1,7 @@
 // Shared engine for the cookbook games. A game module calls registerGame() with its
 // definition; boot.js then calls mountGame() to run it on the page. See "Adding a game" in
 // CONTRIBUTING.md for the contract.
-import { completedLevels, levelBest, recordRun } from './progress.js';
+import { levelBest, recordRun, starsByLevel } from './progress.js';
 import { createUI } from './ui.js';
 
 const registry = new Map();
@@ -34,6 +34,17 @@ export const HINT_COST = 25;
 export function computeScore({ health, actionsUsed, won, hintsUsed = 0 }) {
   return Math.max(0, Math.round(health * 10) - actionsUsed * 10 - hintsUsed * HINT_COST + (won ? 500 : 0));
 }
+
+// Stars for a won level, from the moves used against the level's par (the scripted solution's move count):
+// three at par or better, two within half as many moves again, one for any win.
+export function starsFor({ won, actionsUsed, par }) {
+  if (!won) return 0;
+  if (actionsUsed <= par) return 3;
+  return actionsUsed <= Math.ceil(par * 1.5) ? 2 : 1;
+}
+
+// "Try a different version" walks a fixed set of seeds, so CI can prove each one is still winnable.
+export const VARIANT_SEEDS = [1001, 1002, 1003, 1004, 1005, 1006, 1007, 1008];
 
 export async function mountGame(container, { id }) {
   const def = registry.get(id);
@@ -76,7 +87,8 @@ export async function mountGame(container, { id }) {
   }
 
   const autoplay = params.get('autoplay') !== '0';
-  const seedFor = () => (params.has('seed') ? Number(params.get('seed')) : scenario.seed);
+  let seedOverride = null; // set by "Try a different version"; a level change clears it
+  const seedFor = () => (seedOverride ?? (params.has('seed') ? Number(params.get('seed')) : scenario.seed));
   const tickMsFor = () => Number(params.get('tick')) || scenario.tickMs || 1000;
 
   const rt = {
@@ -90,6 +102,7 @@ export async function mountGame(container, { id }) {
     hintsUsed: 0,
     status: 'playing',
     paused: false,
+    stars: 0,
   };
   let rng;
   let fired;
@@ -111,6 +124,8 @@ export async function mountGame(container, { id }) {
       best: levelBest(id, rt.level),
       status: rt.status,
       paused: rt.paused,
+      moves: rt.actionsUsed,
+      par: scenario.par,
     });
     ui.setHints({ used: rt.hintsUsed, total: hintList().length, playing: rt.status === 'playing' });
   }
@@ -121,8 +136,9 @@ export async function mountGame(container, { id }) {
   function finish(status) {
     rt.status = status;
     stopTimer();
-    const best = recordRun(id, rt.level, { score: score(), won: status === 'won' });
-    ui.setProgress(completedLevels(id));
+    rt.stars = starsFor({ won: status === 'won', actionsUsed: rt.actionsUsed, par: scenario.par ?? Infinity });
+    const best = recordRun(id, rt.level, { score: score(), won: status === 'won', stars: rt.stars });
+    ui.setProgress(starsByLevel(id));
     const resolved = fired.filter((f) => f.resolvedAt !== null);
     const avgResolve = resolved.length
       ? resolved.reduce((sum, f) => sum + (f.resolvedAt - f.firedAt), 0) / resolved.length
@@ -137,7 +153,20 @@ export async function mountGame(container, { id }) {
     refresh();
     const at = levels ? levels.findIndex((l) => l.id === level.id) : -1;
     const nextLevel = at >= 0 && at < levels.length - 1 ? levels[at + 1] : null;
-    ui.showResult({ status, score: score(), best, ticks: rt.ticks, actionsUsed: rt.actionsUsed, hintsUsed: rt.hintsUsed, avgResolve, events: eventList, nextLevel });
+    ui.showResult({
+      status,
+      score: score(),
+      best,
+      ticks: rt.ticks,
+      actionsUsed: rt.actionsUsed,
+      hintsUsed: rt.hintsUsed,
+      stars: rt.stars,
+      par: scenario.par,
+      version: scenario.variants ? { seed: rt.seed, standard: rt.seed === scenario.seed } : null,
+      avgResolve,
+      events: eventList,
+      nextLevel,
+    });
   }
 
   function makeCtx() {
@@ -149,6 +178,13 @@ export async function mountGame(container, { id }) {
       },
       get ticks() {
         return rt.ticks;
+      },
+      // The seed this run uses, and whether it is a variant (not the level's standard version).
+      get seed() {
+        return rt.seed;
+      },
+      get variant() {
+        return rt.seed !== scenario.seed;
       },
       get paused() {
         return rt.paused;
@@ -227,6 +263,29 @@ export async function mountGame(container, { id }) {
     return true;
   };
 
+  // "Try a different version": the next seed in VARIANT_SEEDS (and back to the standard one after the last).
+  // The seed goes in the address bar so a version can be shared and reloaded.
+  rt.nextVersion = () => {
+    if (!scenario.variants) return false;
+    const at = VARIANT_SEEDS.indexOf(rt.seed);
+    const seed = at === VARIANT_SEEDS.length - 1 ? scenario.seed : VARIANT_SEEDS[at + 1] ?? VARIANT_SEEDS[0];
+    rt.useSeed(seed);
+    return true;
+  };
+
+  rt.useSeed = (seed) => {
+    seedOverride = seed;
+    try {
+      const url = new URL(location.href);
+      if (seed === scenario.seed) url.searchParams.delete('seed');
+      else url.searchParams.set('seed', String(seed));
+      history.replaceState(history.state, '', url);
+    } catch {
+      // The address bar is a convenience; the run does not need it.
+    }
+    rt.restart();
+  };
+
   rt.togglePause = () => {
     if (rt.status !== 'playing') return;
     rt.paused = !rt.paused;
@@ -239,6 +298,7 @@ export async function mountGame(container, { id }) {
     level = next;
     scenario = mergeLevel(level);
     rt.level = level.id;
+    seedOverride = null;
     rt.restart();
   };
 
@@ -250,6 +310,7 @@ export async function mountGame(container, { id }) {
     rt.ticks = 0;
     rt.actionsUsed = 0;
     rt.hintsUsed = 0;
+    rt.stars = 0;
     rt.status = 'playing';
     rt.paused = false;
     rt.state = { health: 100 };
@@ -257,7 +318,7 @@ export async function mountGame(container, { id }) {
     ui.clearHints();
     ui.clearResult();
     ui.setLevel(level);
-    ui.setProgress(completedLevels(id));
+    ui.setProgress(starsByLevel(id));
     ui.board.replaceChildren();
     def.init(rt.state, ctx);
     refresh();
@@ -277,6 +338,8 @@ export async function mountGame(container, { id }) {
       togglePause: () => rt.togglePause(),
       restart: () => rt.restart(),
       hint: () => rt.hint(),
+      nextVersion: () => rt.nextVersion(),
+      standardVersion: () => rt.useSeed(scenario.seed),
     },
   });
   ctx = makeCtx();

@@ -211,6 +211,17 @@ the meter it shows. A few rules keep the games consistent:
 - **Build boards from `<div>`s** (with `role="list"`/`"listitem"` where it helps), not `<ul>`:
   Material styles lists in a way a single class can't override. Use `.cg .your-class` selectors
   in `game.css`.
+- **Every level has a `par` and earns stars.** `par` is the number of counted moves in the scripted
+  `solution` (reads and `'free'` actions do not count); `games_smoke.cjs` fails if it disagrees, so
+  changing a solution means changing its par. Stars come from `starsFor` in `engine.js`: three at par or
+  fewer, two within half as many moves again, one for any win. They are saved per level
+  (`progress.js`) and shown on the result, in the level picker and on the home board.
+- **Variants** are opt-in per level: set `variants: true` and the result panel offers "Try a different
+  version", which walks `VARIANT_SEEDS` (`?seed=` in the address bar, so a version can be shared). Make
+  the seed change something the player can see through `ctx.seed` / `ctx.variant` or `ctx.rng` (Kubernetes
+  renames its pods and the chaos monkey strikes elsewhere; Quiet Hours draws different traffic), but never
+  make the standard seed change: CI plays the scripted solution on every version and requires a win and
+  that the versions differ. A level whose solution depends on names or timings should not offer variants.
 - **Keys `p`, `r` and `?` are reserved** (pause, restart, hint), and the shell stops them reaching
   Material's own shortcuts. Avoid `f`, `s`, `n` and `/` for actions.
 - **Every level has a hint ladder and every game a guided start**, both data in `scenarios.json`

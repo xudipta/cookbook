@@ -49,7 +49,7 @@ async function checkHome(browser) {
     if (!localStorage.getItem('seeded')) {
       localStorage.setItem('seeded', '1');
       localStorage.setItem('cookbook-game-best:kubernetes', '1234');
-      localStorage.setItem('cookbook-game-progress:docker', JSON.stringify({ levels: { hello: { best: 900, won: true, plays: 1, last: 1 } } }));
+      localStorage.setItem('cookbook-game-progress:docker', JSON.stringify({ levels: { hello: { best: 900, won: true, stars: 2, plays: 1, last: 1 } } }));
     }
   });
   await page.goto(SITE_URL, { waitUntil: 'load' });
@@ -71,6 +71,7 @@ async function checkHome(browser) {
   const dockerLevels = manifest.find((g) => g.id === 'docker').levels;
   const docker = await page.locator('a.tile[href="docs/games/docker/"]').innerText();
   if (!docker.includes(`1 of ${dockerLevels} levels done`) || !docker.includes('900')) problems.push('the board does not show saved per-level progress');
+  if (!docker.includes(`★ 2/${dockerLevels * 3}`)) problems.push('the board does not show the stars saved for a level');
   await page.click('#reset-progress');
   await page.click('#reset-progress');
   await page.waitForFunction((n) => document.querySelector('a.tile[href="docs/games/docker/"]').innerText.includes(`0 of ${n} levels done`), dockerLevels);
@@ -114,11 +115,18 @@ async function playRun(browser, id, run) {
         }
       }
       if (!manual) game.step(maxTicks - game.ticks);
-      return { status: game.status, ticks: game.ticks, health: Math.round(game.state.health) };
+      return { status: game.status, ticks: game.ticks, actions: game.actionsUsed, health: Math.round(game.state.health) };
     },
     { gid: id, solution: run.solution, maxTicks: MAX_TICKS, manual: Boolean(run.manual) },
   );
 
+  if (!outcome.error && outcome.status === 'won') {
+    // Par is the scripted solution's counted moves, so playing it earns three stars.
+    const par = run.par;
+    if (typeof par === 'number' && outcome.actions !== par) problems.push(`par is ${par} but the scripted solution used ${outcome.actions} counted moves: set par to ${outcome.actions}`);
+    const stars = await page.locator('.cg-result-won .cg-stars').innerText().catch(() => '');
+    if (stars !== '★★★') problems.push(`the scripted solution should earn three stars, the result shows "${stars}"`);
+  }
   if (outcome.error) problems.push(outcome.error);
   else if (outcome.status !== 'won') problems.push(`scripted solution ended "${outcome.status}" after ${outcome.ticks} ticks (health ${outcome.health})`);
   else console.log(`  won after ${outcome.ticks} ticks, health ${outcome.health}`);
@@ -138,11 +146,13 @@ async function playRun(browser, id, run) {
       const saved = await page.evaluate((k) => JSON.parse(localStorage.getItem(k) || 'null'), key);
       const entry = saved && saved.levels && saved.levels[run.level || '_'];
       if (!entry || !entry.won || !(entry.best > 0)) problems.push(`the win was not saved under ${key}`);
+      else if (entry.stars !== 3) problems.push(`the win was saved with ${entry.stars} stars, expected 3`);
       if (run.level) {
         await page.reload({ waitUntil: 'load' });
         await page.waitForSelector(`.cg-btn-level[data-level="${run.level}"]`, { timeout: 15000 });
         const done = await page.getAttribute(`.cg-btn-level[data-level="${run.level}"]`, 'data-done');
         if (done !== 'true') problems.push('after a reload the won level is not marked done');
+        if ((await page.getAttribute(`.cg-btn-level[data-level="${run.level}"]`, 'data-stars')) !== '3') problems.push('after a reload the level picker does not show three stars');
       }
     }
   }
@@ -194,12 +204,72 @@ async function checkGuidance(browser, id, scenario) {
   return problems;
 }
 
+// A level that offers "Try a different version" must stay winnable on every version, and the versions must
+// actually differ. Each version is played with the scripted solution; the board of each is fingerprinted.
+async function checkVariants(browser, id, scenario, VARIANT_SEEDS) {
+  const problems = [];
+  const levels = scenario.levels || [scenario];
+  for (const level of levels.filter((l) => l.variants)) {
+    const standard = level.seed ?? scenario.seed;
+    const prints = new Set();
+    for (const seed of [standard, ...VARIANT_SEEDS]) {
+      const page = await browser.newPage();
+      page.on('pageerror', (e) => problems.push(`[${level.id}] page error: ${e.message}`));
+      await page.goto(`${SITE_URL}docs/games/${id}/?seed=${seed}&autoplay=0&coach=0${scenario.levels ? `&level=${encodeURIComponent(level.id)}` : ''}`, { waitUntil: 'load' });
+      await page.waitForFunction((g) => window.cookbookGames && window.cookbookGames[g], id);
+      const out = await page.evaluate(
+        ({ gid, solution, manual }) => {
+          const game = window.cookbookGames[gid];
+          for (const step of [...solution].sort((a, b) => a.tick - b.tick)) {
+            if (!manual && step.tick > game.ticks) game.step(step.tick - game.ticks);
+            if (game.act(step.action, ...(step.args || [])) === false) return { error: `action "${step.action}" was rejected at tick ${game.ticks}` };
+          }
+          if (!manual) game.step(1000 - game.ticks);
+          return { status: game.status, html: document.querySelector('.cg-board').innerHTML };
+        },
+        { gid: id, solution: level.solution, manual: Boolean(scenario.manual) },
+      );
+      if (out.error) problems.push(`[${level.id}] version ${seed}: ${out.error}`);
+      else if (out.status !== 'won') problems.push(`[${level.id}] version ${seed}: the scripted solution ended "${out.status}", so this version is not winnable as scripted`);
+      else prints.add(out.html);
+      await page.close();
+    }
+    if (prints.size < 2) problems.push(`[${level.id}] every version looks the same: a variant must change something the player can see`);
+
+    // The buttons: a win offers the next version, which restarts on a new seed, and a way back to the standard one.
+    const page = await browser.newPage();
+    await page.goto(`${SITE_URL}docs/games/${id}/?seed=${standard}&autoplay=0&coach=0${scenario.levels ? `&level=${encodeURIComponent(level.id)}` : ''}`, { waitUntil: 'load' });
+    await page.waitForFunction((g) => window.cookbookGames && window.cookbookGames[g], id);
+    await page.evaluate(
+      ({ gid, solution, manual }) => {
+        const game = window.cookbookGames[gid];
+        for (const step of [...solution].sort((a, b) => a.tick - b.tick)) {
+          if (!manual && step.tick > game.ticks) game.step(step.tick - game.ticks);
+          game.act(step.action, ...(step.args || []));
+        }
+        if (!manual) game.step(1000 - game.ticks);
+      },
+      { gid: id, solution: level.solution, manual: Boolean(scenario.manual) },
+    );
+    if (!(await page.locator('.cg-result [data-cg="version"]').count())) problems.push(`[${level.id}] the result has no "Try a different version" button`);
+    else {
+      await page.click('.cg-result [data-cg="version"]');
+      const seedNow = await page.evaluate((g) => window.cookbookGames[g].seed, id);
+      if (seedNow !== VARIANT_SEEDS[0]) problems.push(`[${level.id}] "Try a different version" used seed ${seedNow}, expected ${VARIANT_SEEDS[0]}`);
+      if (await page.locator('.cg-result').count()) problems.push(`[${level.id}] "Try a different version" did not restart the level`);
+      if (!new URL(page.url()).searchParams.get('seed')) problems.push(`[${level.id}] the version is not in the address bar`);
+    }
+    await page.close();
+  }
+  return problems;
+}
+
 async function playGame(browser, id) {
   const scenario = JSON.parse(fs.readFileSync(path.join(GAMES_DIR, id, 'scenarios.json'), 'utf8'));
   const onBoard = JSON.parse(fs.readFileSync(path.join(GAMES_DIR, 'games.json'), 'utf8')).games.some((g) => g.id === id);
   const runs = scenario.levels
-    ? scenario.levels.map((l, i) => ({ label: l.id, level: l.id, seed: l.seed ?? scenario.seed, solution: l.solution, manual: scenario.manual, isLast: i === scenario.levels.length - 1, onBoard }))
-    : [{ label: null, level: null, seed: scenario.seed, solution: scenario.solution, manual: scenario.manual, isLast: true, onBoard }];
+    ? scenario.levels.map((l, i) => ({ label: l.id, level: l.id, seed: l.seed ?? scenario.seed, solution: l.solution, par: l.par, manual: scenario.manual, isLast: i === scenario.levels.length - 1, onBoard }))
+    : [{ label: null, level: null, seed: scenario.seed, solution: scenario.solution, par: scenario.par, manual: scenario.manual, isLast: true, onBoard }];
 
   const problems = [];
   for (const run of runs) {
@@ -208,6 +278,8 @@ async function playGame(browser, id) {
   }
 
   problems.push(...(await checkGuidance(browser, id, scenario)).map((p) => `[guidance] ${p}`));
+  const { VARIANT_SEEDS } = await import(pathToFileURL(path.join(GAMES_DIR, 'shared', 'engine.js')).href);
+  problems.push(...(await checkVariants(browser, id, scenario, VARIANT_SEEDS)).map((p) => `[versions] ${p}`));
 
   const { learnUrl } = await import(pathToFileURL(path.join(GAMES_DIR, 'shared', 'learn.js')).href);
   problems.push(...(await checkLearnLinks(scenario, learnUrl)));

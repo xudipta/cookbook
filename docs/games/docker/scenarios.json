@@ -220,6 +220,7 @@
         "A base image comes first, then the file you serve is copied in, then the port and the health check.",
         "Arrange from-nginx, copy-index, expose-80, healthcheck, then Build twice: the second build shows what the cache reused."
       ],
+      "par": 2,
       "winTicks": 2,
       "minHealth": 50,
       "drainRate": 0.25,
@@ -321,6 +322,7 @@
         "Copying all the code before installing dependencies invalidates the install layer on every edit.",
         "Copy only the manifest, run npm ci, then copy the rest; add the cache flag so a fresh CI runner can reuse layers."
       ],
+      "par": 5,
       "winTicks": 5,
       "minHealth": 75,
       "drainRate": 0.25,
@@ -499,6 +501,7 @@
         "A multi-stage build keeps Node, the dependencies and the source in the first stage only.",
         "Build in a node stage, then start a second FROM nginx and copy just the dist folder into it."
       ],
+      "par": 3,
       "winTicks": 3,
       "minHealth": 70,
       "drainRate": 0.25,
@@ -702,6 +705,7 @@
         "A .dockerignore keeps secrets out of the build context, a slim base and clean apt and pip steps keep it small, and USER drops root.",
         "Pick the dockerignore, the slim Python base, the apt-good and pip-good variants, then add useradd and user-app."
       ],
+      "par": 2,
       "winTicks": 2,
       "minHealth": 50,
       "drainRate": 0.1,
@@ -915,6 +919,7 @@
         "There is more than one problem: fix one and the next step fails.",
         "Copy the manifest before npm ci, copy the sources before the build step, and end with the CMD."
       ],
+      "par": 1,
       "winTicks": 1,
       "minHealth": 50,
       "drainRate": 0.25,
@@ -1060,6 +1065,7 @@
         "Containers reach each other by service name, not localhost; depends_on only waits with a healthcheck; data needs a named volume.",
         "Point the api at the host db, make it depend on db being healthy with a pg healthcheck, use a named volume, and publish nothing on db."
       ],
+      "par": 2,
       "mode": "compose",
       "tickLabel": "Run",
       "actionLabels": {
