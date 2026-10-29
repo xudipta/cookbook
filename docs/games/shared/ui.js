@@ -103,6 +103,21 @@ export function createUI(container, { def, scenario, levels, siteRoot, handlers,
     actionsBar.append(btn);
   }
 
+  // On a phone the actions, a one-line status and the latest event are pinned to the bottom of the screen
+  // (the "dock", see shell.css); on a wide screen the dock is invisible and the action bar sits where it always did.
+  const dockFill = el('div', { class: 'cg-meter-fill' });
+  const dockStatus = el('span', { class: 'cg-dock-status', 'aria-hidden': 'true' }); // the HUD above is the accessible version
+  const latestText = el('span', { class: 'cg-latest-text', text: 'No events yet' });
+  const latestToggle = el('span', { class: 'cg-latest-toggle', 'aria-hidden': 'true', text: 'Log ▾' });
+  const latest = el('button', { class: 'cg-latest', type: 'button', 'aria-expanded': 'false' }, latestText, latestToggle);
+  const dock = el(
+    'div',
+    { class: 'cg-dock', role: 'group', 'aria-label': 'Controls and status' },
+    el('div', { class: 'cg-dock-meter', 'aria-hidden': 'true' }, dockFill),
+    el('div', { class: 'cg-dock-row' }, actionsBar, dockStatus),
+    latest,
+  );
+
   const board = el('div', { class: 'cg-board', role: 'region', 'aria-label': 'Game board' });
   // role="log" on a wrapper (not on the list, which would hide its list items); the list itself is
   // focusable so a long log can be scrolled with the keyboard.
@@ -110,14 +125,23 @@ export function createUI(container, { def, scenario, levels, siteRoot, handlers,
   const logRegion = el('div', { role: 'log', 'aria-live': 'polite', 'aria-label': 'Event log' }, logList);
   const resultSlot = el('div', { class: 'cg-result-slot' });
 
+  const side = el('div', { class: 'cg-side' }, el('h3', { class: 'cg-h', text: 'Event log' }), logRegion);
+  latest.addEventListener('click', () => {
+    const open = side.dataset.open !== 'true';
+    side.dataset.open = String(open);
+    latest.setAttribute('aria-expanded', String(open));
+    latestToggle.textContent = open ? 'Log ▴' : 'Log ▾';
+    if (open) side.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  });
+
   container.append(
     ...[
       head,
       levelBar,
       blurbBox,
       hud,
-      actionsBar,
-      el('div', { class: `cg-main${scenario.stacked ? ' cg-main-stacked' : ''}` }, board, el('div', { class: 'cg-side' }, el('h3', { class: 'cg-h', text: 'Event log' }), logRegion)),
+      dock,
+      el('div', { class: `cg-main${scenario.stacked ? ' cg-main-stacked' : ''}` }, board, side),
       resultSlot,
     ].filter(Boolean),
   );
@@ -129,6 +153,8 @@ export function createUI(container, { def, scenario, levels, siteRoot, handlers,
       const li = el('li', { class: `cg-log-item cg-log-${kind}` });
       li.append(el('span', { class: 'cg-log-text', text }));
       logList.prepend(li);
+      latestText.textContent = text;
+      latest.dataset.kind = kind;
       return li;
     },
 
@@ -147,6 +173,9 @@ export function createUI(container, { def, scenario, levels, siteRoot, handlers,
       barFill.dataset.level = pct >= 70 ? 'ok' : pct >= 40 ? 'warn' : 'bad';
       meter.setAttribute('aria-valuenow', String(pct));
       meterValue.textContent = `${pct}%`;
+      dockFill.style.width = `${pct}%`;
+      dockFill.dataset.level = barFill.dataset.level;
+      dockStatus.textContent = `${pct}% · ${tickEl.textContent} · ${score}${status === 'playing' ? '' : ` · ${statusEl.textContent}`}`;
       statusEl.textContent = status === 'playing' ? (paused ? 'Paused' : 'Playing') : status === 'won' ? 'You won' : 'You lost';
       statusEl.dataset.status = status;
       pauseBtn.textContent = paused ? 'Resume' : 'Pause';
@@ -175,6 +204,8 @@ export function createUI(container, { def, scenario, levels, siteRoot, handlers,
 
     clearLog() {
       logList.replaceChildren();
+      latestText.textContent = 'No events yet';
+      delete latest.dataset.kind;
     },
 
     showResult({ status, score, best, ticks, actionsUsed, avgResolve, events, nextLevel }) {

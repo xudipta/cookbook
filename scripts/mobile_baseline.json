@@ -1,11 +1,20 @@
 {
+ "cicd/locked-down@390x844": {
+  "small44": 0,
+  "small24": 0,
+  "input16": 0,
+  "tiny11": 0,
+  "overflow": 0,
+  "action": 0,
+  "narrow": 0
+ },
  "cicd/gates-and-drift@390x844": {
   "small44": 0,
   "small24": 0,
   "input16": 0,
   "tiny11": 0,
   "overflow": 0,
-  "action": 1,
+  "action": 0,
   "narrow": 0
  },
  "cicd/fast-feedback@390x844": {
@@ -14,7 +23,7 @@
   "input16": 0,
   "tiny11": 0,
   "overflow": 0,
-  "action": 1,
+  "action": 0,
   "narrow": 0
  },
  "cicd/deploy-day@390x844": {
@@ -23,25 +32,7 @@
   "input16": 0,
   "tiny11": 0,
   "overflow": 0,
-  "action": 1,
-  "narrow": 0
- },
- "cicd/locked-down@390x844": {
-  "small44": 0,
-  "small24": 0,
-  "input16": 0,
-  "tiny11": 0,
-  "overflow": 0,
-  "action": 1,
-  "narrow": 0
- },
- "database/migrations@390x844": {
-  "small44": 0,
-  "small24": 0,
-  "input16": 2,
-  "tiny11": 0,
-  "overflow": 0,
-  "action": 1,
+  "action": 0,
   "narrow": 0
  },
  "database/seq-scans@390x844": {
@@ -50,7 +41,7 @@
   "input16": 1,
   "tiny11": 0,
   "overflow": 0,
-  "action": 1,
+  "action": 0,
   "narrow": 0
  },
  "database/plans@390x844": {
@@ -59,10 +50,46 @@
   "input16": 1,
   "tiny11": 0,
   "overflow": 0,
-  "action": 1,
+  "action": 0,
+  "narrow": 0
+ },
+ "database/migrations@390x844": {
+  "small44": 0,
+  "small24": 0,
+  "input16": 2,
+  "tiny11": 0,
+  "overflow": 0,
+  "action": 0,
   "narrow": 0
  },
  "demo/_@390x844": {
+  "small44": 0,
+  "small24": 0,
+  "input16": 0,
+  "tiny11": 0,
+  "overflow": 0,
+  "action": 0,
+  "narrow": 0
+ },
+ "docker/broken@390x844": {
+  "small44": 0,
+  "small24": 0,
+  "input16": 0,
+  "tiny11": 0,
+  "overflow": 0,
+  "action": 0,
+  "narrow": 0
+ },
+ "docker/bloat@390x844": {
+  "small44": 0,
+  "small24": 0,
+  "input16": 0,
+  "tiny11": 0,
+  "overflow": 0,
+  "action": 0,
+  "narrow": 0
+ },
+ "docker/hygiene@390x844": {
   "small44": 0,
   "small24": 0,
   "input16": 0,
@@ -77,43 +104,7 @@
   "input16": 0,
   "tiny11": 0,
   "overflow": 0,
-  "action": 1,
-  "narrow": 0
- },
- "docker/hygiene@390x844": {
-  "small44": 0,
-  "small24": 0,
-  "input16": 0,
-  "tiny11": 0,
-  "overflow": 0,
-  "action": 1,
-  "narrow": 0
- },
- "docker/broken@390x844": {
-  "small44": 0,
-  "small24": 0,
-  "input16": 0,
-  "tiny11": 0,
-  "overflow": 0,
-  "action": 1,
-  "narrow": 0
- },
- "docker/compose@390x844": {
-  "small44": 0,
-  "small24": 0,
-  "input16": 0,
-  "tiny11": 0,
-  "overflow": 0,
-  "action": 1,
-  "narrow": 0
- },
- "docker/bloat@390x844": {
-  "small44": 0,
-  "small24": 0,
-  "input16": 0,
-  "tiny11": 0,
-  "overflow": 0,
-  "action": 1,
+  "action": 0,
   "narrow": 0
  },
  "docker/cache@390x844": {
@@ -122,7 +113,16 @@
   "input16": 0,
   "tiny11": 0,
   "overflow": 0,
-  "action": 1,
+  "action": 0,
+  "narrow": 0
+ },
+ "docker/compose@390x844": {
+  "small44": 0,
+  "small24": 0,
+  "input16": 0,
+  "tiny11": 0,
+  "overflow": 0,
+  "action": 0,
   "narrow": 0
  },
  "github/first-pr@390x844": {
@@ -131,7 +131,7 @@
   "input16": 2,
   "tiny11": 0,
   "overflow": 0,
-  "action": 1,
+  "action": 0,
   "narrow": 0
  },
  "github/protected-main@390x844": {
@@ -140,7 +140,7 @@
   "input16": 2,
   "tiny11": 0,
   "overflow": 0,
-  "action": 1,
+  "action": 0,
   "narrow": 0
  },
  "github/behind-main@390x844": {
@@ -149,7 +149,7 @@
   "input16": 2,
   "tiny11": 0,
   "overflow": 0,
-  "action": 1,
+  "action": 0,
   "narrow": 0
  },
  "kubernetes/shift@390x844": {
@@ -158,7 +158,7 @@
   "input16": 0,
   "tiny11": 0,
   "overflow": 0,
-  "action": 1,
+  "action": 0,
   "narrow": 0
  },
  "kubernetes/incident@390x844": {
@@ -167,7 +167,7 @@
   "input16": 0,
   "tiny11": 0,
   "overflow": 0,
-  "action": 1,
+  "action": 0,
   "narrow": 0
  },
  "kubernetes/tutorial@390x844": {
@@ -176,7 +176,7 @@
   "input16": 0,
   "tiny11": 0,
   "overflow": 0,
-  "action": 1,
+  "action": 0,
   "narrow": 0
  },
  "linux/web-tier@390x844": {
@@ -185,7 +185,7 @@
   "input16": 0,
   "tiny11": 0,
   "overflow": 0,
-  "action": 1,
+  "action": 0,
   "narrow": 0
  },
  "linux/first-night@390x844": {
@@ -194,7 +194,7 @@
   "input16": 0,
   "tiny11": 0,
   "overflow": 0,
-  "action": 1,
+  "action": 0,
   "narrow": 0
  },
  "linux/bad-friday@390x844": {
@@ -203,7 +203,7 @@
   "input16": 0,
   "tiny11": 0,
   "overflow": 0,
-  "action": 1,
+  "action": 0,
   "narrow": 0
  },
  "mcp/first-plugs@390x844": {
@@ -212,16 +212,7 @@
   "input16": 1,
   "tiny11": 0,
   "overflow": 0,
-  "action": 1,
-  "narrow": 0
- },
- "mcp/vet-build@390x844": {
-  "small44": 0,
-  "small24": 0,
-  "input16": 1,
-  "tiny11": 0,
-  "overflow": 0,
-  "action": 1,
+  "action": 0,
   "narrow": 0
  },
  "mcp/scopes-secrets@390x844": {
@@ -230,7 +221,16 @@
   "input16": 1,
   "tiny11": 0,
   "overflow": 0,
-  "action": 1,
+  "action": 0,
+  "narrow": 0
+ },
+ "mcp/vet-build@390x844": {
+  "small44": 0,
+  "small24": 0,
+  "input16": 1,
+  "tiny11": 0,
+  "overflow": 0,
+  "action": 0,
   "narrow": 0
  },
  "observability/first-shift@390x844": {
@@ -239,7 +239,7 @@
   "input16": 0,
   "tiny11": 32,
   "overflow": 0,
-  "action": 1,
+  "action": 0,
   "narrow": 0
  },
  "observability/slow-burn@390x844": {
@@ -248,7 +248,7 @@
   "input16": 0,
   "tiny11": 33,
   "overflow": 0,
-  "action": 1,
+  "action": 0,
   "narrow": 0
  },
  "observability/storm-night@390x844": {
@@ -257,7 +257,7 @@
   "input16": 0,
   "tiny11": 34,
   "overflow": 0,
-  "action": 1,
+  "action": 0,
   "narrow": 0
  },
  "skills/descriptions@390x844": {
@@ -266,7 +266,7 @@
   "input16": 1,
   "tiny11": 0,
   "overflow": 0,
-  "action": 1,
+  "action": 0,
   "narrow": 0
  },
  "skills/ship-it@390x844": {
@@ -275,7 +275,7 @@
   "input16": 2,
   "tiny11": 0,
   "overflow": 0,
-  "action": 1,
+  "action": 0,
   "narrow": 0
  },
  "skills/disclosure@390x844": {
@@ -284,16 +284,7 @@
   "input16": 0,
   "tiny11": 0,
   "overflow": 0,
-  "action": 1,
-  "narrow": 0
- },
- "terraform/team@390x844": {
-  "small44": 0,
-  "small24": 0,
-  "input16": 2,
-  "tiny11": 0,
-  "overflow": 0,
-  "action": 1,
+  "action": 0,
   "narrow": 0
  },
  "terraform/first-apply@390x844": {
@@ -302,7 +293,7 @@
   "input16": 2,
   "tiny11": 0,
   "overflow": 0,
-  "action": 1,
+  "action": 0,
   "narrow": 0
  },
  "terraform/drift@390x844": {
@@ -311,7 +302,16 @@
   "input16": 2,
   "tiny11": 0,
   "overflow": 0,
-  "action": 1,
+  "action": 0,
+  "narrow": 0
+ },
+ "terraform/team@390x844": {
+  "small44": 0,
+  "small24": 0,
+  "input16": 2,
+  "tiny11": 0,
+  "overflow": 0,
+  "action": 0,
   "narrow": 0
  },
  "terraform/module@390x844": {
@@ -320,7 +320,7 @@
   "input16": 2,
   "tiny11": 0,
   "overflow": 0,
-  "action": 1,
+  "action": 0,
   "narrow": 0
  },
  "cicd/gates-and-drift@360x640": {
@@ -329,7 +329,7 @@
   "input16": 0,
   "tiny11": 0,
   "overflow": 0,
-  "action": 1,
+  "action": 0,
   "narrow": 0
  },
  "cicd/deploy-day@360x640": {
@@ -338,16 +338,7 @@
   "input16": 0,
   "tiny11": 0,
   "overflow": 0,
-  "action": 1,
-  "narrow": 0
- },
- "cicd/fast-feedback@360x640": {
-  "small44": 0,
-  "small24": 0,
-  "input16": 0,
-  "tiny11": 0,
-  "overflow": 0,
-  "action": 1,
+  "action": 0,
   "narrow": 0
  },
  "cicd/locked-down@360x640": {
@@ -356,25 +347,16 @@
   "input16": 0,
   "tiny11": 0,
   "overflow": 0,
-  "action": 1,
+  "action": 0,
   "narrow": 0
  },
- "database/plans@360x640": {
+ "cicd/fast-feedback@360x640": {
   "small44": 0,
   "small24": 0,
-  "input16": 1,
+  "input16": 0,
   "tiny11": 0,
   "overflow": 0,
-  "action": 1,
-  "narrow": 0
- },
- "database/migrations@360x640": {
-  "small44": 0,
-  "small24": 0,
-  "input16": 2,
-  "tiny11": 0,
-  "overflow": 0,
-  "action": 1,
+  "action": 0,
   "narrow": 0
  },
  "database/seq-scans@360x640": {
@@ -383,7 +365,25 @@
   "input16": 1,
   "tiny11": 0,
   "overflow": 0,
-  "action": 1,
+  "action": 0,
+  "narrow": 0
+ },
+ "database/plans@360x640": {
+  "small44": 0,
+  "small24": 0,
+  "input16": 1,
+  "tiny11": 0,
+  "overflow": 0,
+  "action": 0,
+  "narrow": 0
+ },
+ "database/migrations@360x640": {
+  "small44": 0,
+  "small24": 0,
+  "input16": 2,
+  "tiny11": 0,
+  "overflow": 0,
+  "action": 0,
   "narrow": 0
  },
  "demo/_@360x640": {
@@ -401,43 +401,7 @@
   "input16": 0,
   "tiny11": 0,
   "overflow": 0,
-  "action": 1,
-  "narrow": 0
- },
- "docker/compose@360x640": {
-  "small44": 0,
-  "small24": 0,
-  "input16": 0,
-  "tiny11": 0,
-  "overflow": 0,
-  "action": 1,
-  "narrow": 0
- },
- "docker/bloat@360x640": {
-  "small44": 0,
-  "small24": 0,
-  "input16": 0,
-  "tiny11": 0,
-  "overflow": 0,
-  "action": 1,
-  "narrow": 0
- },
- "docker/broken@360x640": {
-  "small44": 0,
-  "small24": 0,
-  "input16": 0,
-  "tiny11": 0,
-  "overflow": 0,
-  "action": 1,
-  "narrow": 0
- },
- "docker/cache@360x640": {
-  "small44": 0,
-  "small24": 0,
-  "input16": 0,
-  "tiny11": 0,
-  "overflow": 0,
-  "action": 1,
+  "action": 0,
   "narrow": 0
  },
  "docker/hygiene@360x640": {
@@ -446,16 +410,43 @@
   "input16": 0,
   "tiny11": 0,
   "overflow": 0,
-  "action": 1,
+  "action": 0,
   "narrow": 0
  },
- "github/first-pr@360x640": {
+ "docker/compose@360x640": {
   "small44": 0,
   "small24": 0,
-  "input16": 2,
+  "input16": 0,
   "tiny11": 0,
   "overflow": 0,
-  "action": 1,
+  "action": 0,
+  "narrow": 0
+ },
+ "docker/cache@360x640": {
+  "small44": 0,
+  "small24": 0,
+  "input16": 0,
+  "tiny11": 0,
+  "overflow": 0,
+  "action": 0,
+  "narrow": 0
+ },
+ "docker/bloat@360x640": {
+  "small44": 0,
+  "small24": 0,
+  "input16": 0,
+  "tiny11": 0,
+  "overflow": 0,
+  "action": 0,
+  "narrow": 0
+ },
+ "docker/broken@360x640": {
+  "small44": 0,
+  "small24": 0,
+  "input16": 0,
+  "tiny11": 0,
+  "overflow": 0,
+  "action": 0,
   "narrow": 0
  },
  "github/behind-main@360x640": {
@@ -464,7 +455,16 @@
   "input16": 2,
   "tiny11": 0,
   "overflow": 0,
-  "action": 1,
+  "action": 0,
+  "narrow": 0
+ },
+ "github/first-pr@360x640": {
+  "small44": 0,
+  "small24": 0,
+  "input16": 2,
+  "tiny11": 0,
+  "overflow": 0,
+  "action": 0,
   "narrow": 0
  },
  "github/protected-main@360x640": {
@@ -473,7 +473,7 @@
   "input16": 2,
   "tiny11": 0,
   "overflow": 0,
-  "action": 1,
+  "action": 0,
   "narrow": 0
  },
  "kubernetes/incident@360x640": {
@@ -482,16 +482,7 @@
   "input16": 0,
   "tiny11": 0,
   "overflow": 0,
-  "action": 1,
-  "narrow": 0
- },
- "kubernetes/shift@360x640": {
-  "small44": 0,
-  "small24": 0,
-  "input16": 0,
-  "tiny11": 0,
-  "overflow": 0,
-  "action": 1,
+  "action": 0,
   "narrow": 0
  },
  "kubernetes/tutorial@360x640": {
@@ -500,7 +491,16 @@
   "input16": 0,
   "tiny11": 0,
   "overflow": 0,
-  "action": 1,
+  "action": 0,
+  "narrow": 0
+ },
+ "kubernetes/shift@360x640": {
+  "small44": 0,
+  "small24": 0,
+  "input16": 0,
+  "tiny11": 0,
+  "overflow": 0,
+  "action": 0,
   "narrow": 0
  },
  "linux/first-night@360x640": {
@@ -509,16 +509,7 @@
   "input16": 0,
   "tiny11": 0,
   "overflow": 0,
-  "action": 1,
-  "narrow": 0
- },
- "linux/web-tier@360x640": {
-  "small44": 0,
-  "small24": 0,
-  "input16": 0,
-  "tiny11": 0,
-  "overflow": 0,
-  "action": 1,
+  "action": 0,
   "narrow": 0
  },
  "linux/bad-friday@360x640": {
@@ -527,25 +518,16 @@
   "input16": 0,
   "tiny11": 0,
   "overflow": 0,
-  "action": 1,
+  "action": 0,
   "narrow": 0
  },
- "mcp/vet-build@360x640": {
+ "linux/web-tier@360x640": {
   "small44": 0,
   "small24": 0,
-  "input16": 1,
+  "input16": 0,
   "tiny11": 0,
   "overflow": 0,
-  "action": 1,
-  "narrow": 0
- },
- "mcp/first-plugs@360x640": {
-  "small44": 0,
-  "small24": 0,
-  "input16": 1,
-  "tiny11": 0,
-  "overflow": 0,
-  "action": 1,
+  "action": 0,
   "narrow": 0
  },
  "mcp/scopes-secrets@360x640": {
@@ -554,16 +536,25 @@
   "input16": 1,
   "tiny11": 0,
   "overflow": 0,
-  "action": 1,
+  "action": 0,
   "narrow": 0
  },
- "observability/slow-burn@360x640": {
+ "mcp/first-plugs@360x640": {
   "small44": 0,
   "small24": 0,
-  "input16": 0,
-  "tiny11": 33,
+  "input16": 1,
+  "tiny11": 0,
   "overflow": 0,
-  "action": 1,
+  "action": 0,
+  "narrow": 0
+ },
+ "mcp/vet-build@360x640": {
+  "small44": 0,
+  "small24": 0,
+  "input16": 1,
+  "tiny11": 0,
+  "overflow": 0,
+  "action": 0,
   "narrow": 0
  },
  "observability/first-shift@360x640": {
@@ -572,7 +563,7 @@
   "input16": 0,
   "tiny11": 32,
   "overflow": 0,
-  "action": 1,
+  "action": 0,
   "narrow": 0
  },
  "observability/storm-night@360x640": {
@@ -581,25 +572,16 @@
   "input16": 0,
   "tiny11": 34,
   "overflow": 0,
-  "action": 1,
+  "action": 0,
   "narrow": 0
  },
- "skills/disclosure@360x640": {
+ "observability/slow-burn@360x640": {
   "small44": 0,
   "small24": 0,
   "input16": 0,
-  "tiny11": 0,
+  "tiny11": 33,
   "overflow": 0,
-  "action": 1,
-  "narrow": 0
- },
- "skills/ship-it@360x640": {
-  "small44": 0,
-  "small24": 0,
-  "input16": 2,
-  "tiny11": 0,
-  "overflow": 0,
-  "action": 1,
+  "action": 0,
   "narrow": 0
  },
  "skills/descriptions@360x640": {
@@ -608,7 +590,25 @@
   "input16": 1,
   "tiny11": 0,
   "overflow": 0,
-  "action": 1,
+  "action": 0,
+  "narrow": 0
+ },
+ "skills/ship-it@360x640": {
+  "small44": 0,
+  "small24": 0,
+  "input16": 2,
+  "tiny11": 0,
+  "overflow": 0,
+  "action": 0,
+  "narrow": 0
+ },
+ "skills/disclosure@360x640": {
+  "small44": 0,
+  "small24": 0,
+  "input16": 0,
+  "tiny11": 0,
+  "overflow": 0,
+  "action": 0,
   "narrow": 0
  },
  "terraform/module@360x640": {
@@ -617,16 +617,7 @@
   "input16": 2,
   "tiny11": 0,
   "overflow": 0,
-  "action": 1,
-  "narrow": 0
- },
- "terraform/first-apply@360x640": {
-  "small44": 0,
-  "small24": 0,
-  "input16": 2,
-  "tiny11": 0,
-  "overflow": 0,
-  "action": 1,
+  "action": 0,
   "narrow": 0
  },
  "terraform/drift@360x640": {
@@ -635,7 +626,16 @@
   "input16": 2,
   "tiny11": 0,
   "overflow": 0,
-  "action": 1,
+  "action": 0,
+  "narrow": 0
+ },
+ "terraform/first-apply@360x640": {
+  "small44": 0,
+  "small24": 0,
+  "input16": 2,
+  "tiny11": 0,
+  "overflow": 0,
+  "action": 0,
   "narrow": 0
  },
  "terraform/team@360x640": {
@@ -644,7 +644,7 @@
   "input16": 2,
   "tiny11": 0,
   "overflow": 0,
-  "action": 1,
+  "action": 0,
   "narrow": 0
  }
 }
