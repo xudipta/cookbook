@@ -3,8 +3,8 @@
   "title": "Chaos Monkey Cluster",
   "coach": {
     "board": "Each tile is a pod, grouped by the node it runs on. The strip shows how many requests succeed each tick.",
-    "actions": "The buttons scale, roll back or edit the web deployment, and the prompt runs kubectl. Reading is free; changing the cluster costs a move.",
-    "firstMove": "Run kubectl get pods, click any pod that is not Running to describe it, then fix what it tells you."
+    "actions": "Tap a pod for its actions (each shows the kubectl it runs). The buttons scale, roll back or edit the web deployment, and the prompt runs kubectl. The clock stops while you type or a sheet is open. Reading is free; changing the cluster costs a move.",
+    "firstMove": "Tap any pod that is not Running and choose Describe, read what it says, then fix what it names. Fixing before you read costs error budget."
   },
   "lossRule": "The error budget ran out: too many requests failed before the Service was healthy again.",
   "healthLabel": "Error budget",
@@ -113,14 +113,21 @@
       "title": "1. Tutorial",
       "blurb": "One problem at a time, with hints. Look first (kubectl get pods, kubectl describe), then act. Keep the Service healthy for 30 ticks.",
       "hints": [
-        "Look at the pod tiles: a pod that is not Running is your lead. Click one to describe it.",
+        "Look at the pod tiles: a pod that is not Running is your lead. Tap it and choose Describe (or run kubectl describe deploy web).",
         "A bad rollout leaves the new pods failing while the old ones are fine, and a pod restarts because of a missing setting.",
         "Run kubectl rollout undo deploy/web, then use Edit to add the missing environment key (mode)."
       ],
       "par": 2,
       "path": [
+        "kubectl get deploy",
+        "kubectl get pods",
+        "kubectl describe deploy web",
         "kubectl rollout undo deploy/web",
-        "Edit the deployment: envKey = mode"
+        "kubectl rollout status deploy/web",
+        "kubectl get endpoints",
+        "kubectl describe deploy web",
+        "Edit the deployment: envKey = mode",
+        "kubectl get pods"
       ],
       "lessons": [
         "kubectl get and describe are free and tell you where to look: the Events at the bottom of describe name the failure.",
@@ -155,10 +162,52 @@
       ],
       "solution": [
         {
+          "tick": 1,
+          "action": "kubectl",
+          "args": [
+            "kubectl get deploy"
+          ]
+        },
+        {
+          "tick": 5,
+          "action": "kubectl",
+          "args": [
+            "kubectl get pods"
+          ]
+        },
+        {
+          "tick": 12,
+          "action": "kubectl",
+          "args": [
+            "kubectl describe deploy web"
+          ]
+        },
+        {
           "tick": 12,
           "action": "kubectl",
           "args": [
             "kubectl rollout undo deploy/web"
+          ]
+        },
+        {
+          "tick": 13,
+          "action": "kubectl",
+          "args": [
+            "kubectl rollout status deploy/web"
+          ]
+        },
+        {
+          "tick": 13,
+          "action": "kubectl",
+          "args": [
+            "kubectl get endpoints"
+          ]
+        },
+        {
+          "tick": 22,
+          "action": "kubectl",
+          "args": [
+            "kubectl describe deploy web"
           ]
         },
         {
@@ -168,6 +217,13 @@
             {
               "envKey": "mode"
             }
+          ]
+        },
+        {
+          "tick": 24,
+          "action": "kubectl",
+          "args": [
+            "kubectl get pods"
           ]
         }
       ],
@@ -185,10 +241,17 @@
       ],
       "par": 4,
       "path": [
+        "kubectl get pods",
+        "kubectl describe deploy web",
         "kubectl scale deploy/web --replicas=3",
+        "kubectl describe deploy web",
         "kubectl rollout undo deploy/web",
+        "kubectl get endpoints",
+        "kubectl describe deploy web",
         "kubectl set resources deploy/web --limits=memory=500Mi",
-        "Edit the deployment: readiness = true"
+        "kubectl describe deploy web",
+        "Edit the deployment: readiness = true",
+        "kubectl get pods"
       ],
       "lessons": [
         "A bare Pod is not replaced when it dies: run workloads under a Deployment.",
@@ -233,6 +296,20 @@
       ],
       "solution": [
         {
+          "tick": 1,
+          "action": "kubectl",
+          "args": [
+            "kubectl get pods"
+          ]
+        },
+        {
+          "tick": 5,
+          "action": "kubectl",
+          "args": [
+            "kubectl describe deploy web"
+          ]
+        },
+        {
           "tick": 5,
           "action": "kubectl",
           "args": [
@@ -243,7 +320,28 @@
           "tick": 15,
           "action": "kubectl",
           "args": [
+            "kubectl describe deploy web"
+          ]
+        },
+        {
+          "tick": 15,
+          "action": "kubectl",
+          "args": [
             "kubectl rollout undo deploy/web"
+          ]
+        },
+        {
+          "tick": 16,
+          "action": "kubectl",
+          "args": [
+            "kubectl get endpoints"
+          ]
+        },
+        {
+          "tick": 26,
+          "action": "kubectl",
+          "args": [
+            "kubectl describe deploy web"
           ]
         },
         {
@@ -255,11 +353,25 @@
         },
         {
           "tick": 36,
+          "action": "kubectl",
+          "args": [
+            "kubectl describe deploy web"
+          ]
+        },
+        {
+          "tick": 36,
           "action": "applyEdit",
           "args": [
             {
               "readiness": true
             }
+          ]
+        },
+        {
+          "tick": 38,
+          "action": "kubectl",
+          "args": [
+            "kubectl get pods"
           ]
         }
       ],
@@ -277,10 +389,16 @@
       ],
       "par": 4,
       "path": [
+        "kubectl get nodes",
+        "kubectl describe nodes",
         "kubectl scale deploy/batch --replicas=0",
+        "kubectl describe deploy web",
         "kubectl rollout undo deploy/web",
+        "kubectl describe deploy web",
         "Edit the deployment: image = web:1.0-nonroot",
-        "kubectl set resources deploy/web --limits=memory=500Mi"
+        "kubectl describe deploy web",
+        "kubectl set resources deploy/web --limits=memory=500Mi",
+        "kubectl get pods"
       ],
       "lessons": [
         "One workload can starve the others: scale the noisy one down or give it requests and limits.",
@@ -319,6 +437,20 @@
       ],
       "solution": [
         {
+          "tick": 1,
+          "action": "kubectl",
+          "args": [
+            "kubectl get nodes"
+          ]
+        },
+        {
+          "tick": 4,
+          "action": "kubectl",
+          "args": [
+            "kubectl describe nodes"
+          ]
+        },
+        {
           "tick": 4,
           "action": "kubectl",
           "args": [
@@ -329,7 +461,21 @@
           "tick": 11,
           "action": "kubectl",
           "args": [
+            "kubectl describe deploy web"
+          ]
+        },
+        {
+          "tick": 11,
+          "action": "kubectl",
+          "args": [
             "kubectl rollout undo deploy/web"
+          ]
+        },
+        {
+          "tick": 20,
+          "action": "kubectl",
+          "args": [
+            "kubectl describe deploy web"
           ]
         },
         {
@@ -345,7 +491,21 @@
           "tick": 30,
           "action": "kubectl",
           "args": [
+            "kubectl describe deploy web"
+          ]
+        },
+        {
+          "tick": 30,
+          "action": "kubectl",
+          "args": [
             "kubectl set resources deploy/web --limits=memory=500Mi"
+          ]
+        },
+        {
+          "tick": 32,
+          "action": "kubectl",
+          "args": [
+            "kubectl get pods"
           ]
         }
       ],

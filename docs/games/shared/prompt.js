@@ -10,6 +10,8 @@
 //       raw: true             like a word chip, but with no space after it (a directory: keep going)
 //       full: true            replaces the whole line; with run: true it is also submitted
 //   onSubmit(line)  -> called with the raw line when the player presses Enter or Run
+//   onActivity(active) -> true while the player is composing (the field has focus or text), false when idle:
+//     a game on a clock holds it while true, so typing is not a race
 //
 // Desktop behaviour is unchanged: type, Enter to run, ArrowUp/ArrowDown for history.
 import { el } from './ui.js';
@@ -29,6 +31,7 @@ export function createPrompt({
   next = () => [],
   onSubmit,
   onKeydown,
+  onActivity,
 }) {
   const history = [];
   let at = 0;
@@ -89,7 +92,10 @@ export function createPrompt({
     focus();
   }
 
+  const activity = () => onActivity && onActivity(document.activeElement === input || input.value.trim() !== '');
+
   function refresh() {
+    activity();
     const list = candidates().map((c) => {
       const b = el('button', { class: `cg-chip ${cls.chip || 'cg-btn'} ${c.full ? 'cg-chip-cmd' : ''}`.trim(), type: 'button', 'data-cmd': c.full ? c.text : null, 'data-text': c.text, 'data-run': c.run ? 'true' : null, text: c.label || c.text });
       b.disabled = disabled;
@@ -118,6 +124,8 @@ export function createPrompt({
     submit();
   });
   input.addEventListener('input', refresh);
+  input.addEventListener('focus', activity);
+  input.addEventListener('blur', activity);
   prev.addEventListener('click', () => goto(at - 1));
   nextBtn.addEventListener('click', () => goto(at + 1));
   input.addEventListener('keydown', (e) => {

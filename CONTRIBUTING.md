@@ -231,6 +231,12 @@ the meter it shows. A few rules keep the games consistent:
   renames its pods and the chaos monkey strikes elsewhere; Quiet Hours draws different traffic), but never
   make the standard seed change: CI plays the scripted solution on every version and requires a win and
   that the versions differ. A level whose solution depends on names or timings should not offer variants.
+- **Games on a clock** (not `manual`) get a **Pace** control (Slow x2 time, Normal, Pressure x1.5 score; changing
+  it restarts the level) and may stop the clock while the player thinks: `ctx.hold('prompt', true)` while a
+  prompt has focus or text (the shared prompt calls `onActivity` for this), `ctx.hold('sheet', true)` for a
+  sheet or form, released with `false`. A read-only command that does not go through `act()` can still be part
+  of the run (and the debrief) with `ctx.record(text)`. Make sure a scripted solution's reads do not name things
+  that change between versions (pod names), or the versions of a level will stop being winnable.
 - **Keys `p`, `r` and `?` are reserved** (pause, restart, hint), and the shell stops them reaching
   Material's own shortcuts. Avoid `f`, `s`, `n` and `/` for actions.
 - **Every level has a hint ladder and every game a guided start**, both data in `scenarios.json`

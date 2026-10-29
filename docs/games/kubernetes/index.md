@@ -11,8 +11,13 @@ Keep a Service healthy while a chaos monkey breaks the cluster. Every failure le
 - A Service needs a fixed amount of capacity. Requests that find too few ready pods fail and burn
   your **error budget**. Stay above the minimum for the whole timer, **and** leave nothing broken:
   open problems extend the game.
-- Reading is free and works while paused: `get`, `describe`, `logs`, or click a pod. Changing the
-  cluster costs score, so look before you act. Not every event needs an action.
+- Reading is free and works while paused: `get`, `describe`, `logs`, or tap a pod for its actions (each
+  shows the `kubectl` it runs). Changing the cluster costs score, and **fixing a fault you have not read
+  about** (no `describe` or `logs` since it appeared) costs 4% of the error budget, so diagnose, then act.
+  Not every event needs an action.
+- **The clock stops while you think**: while the prompt has text or focus, a pod sheet is open, or the edit
+  form is open. **Next incident** (`i`) skips the quiet ticks. **Pace** chooses Slow (twice the time per
+  tick), Normal or Pressure (a faster clock, score x1.5); changing it restarts the level.
 - Pause (`p`) and restart (`r`) work any time. Click the game once to give it keyboard focus.
 
 ## Commands

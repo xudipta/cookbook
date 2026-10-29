@@ -3,6 +3,7 @@
 // shaped like the real tool. exec() returns { text, error?, mutated?, edit? } and never throws.
 import {
   IMAGES,
+  TEMPLATE_FAULTS,
   deletePod,
   editTemplate,
   endpoints,
@@ -355,7 +356,8 @@ export function exec(w, ctx, line) {
       const p = name && findPod(w, name);
       if (!p) return fail(`Error from server (NotFound): pods "${name || ''}" not found`);
       deletePod(w, p, t);
-      return ok(`pod "${p.name}" deleted`, { mutated: true });
+      const broken = p.deploy && w.open.some((e) => TEMPLATE_FAULTS.includes(e.id));
+      return ok(`pod "${p.name}" deleted${broken ? '\nThe Deployment recreates it from the same pod template, so the replacement is broken in the same way. Fix the template (rollout undo, set image, edit).' : ''}`, { mutated: true });
     }
     default:
       return fail(`error: unknown command "${verb || ''}" for "kubectl" (type "help")`);
