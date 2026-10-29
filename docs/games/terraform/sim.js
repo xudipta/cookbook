@@ -776,3 +776,42 @@ export function tick(w, ctx) {
 
 export const isWon = (w) => (!w.refactor || w.refactored) && w.days >= w.winTicks && !w.open.length && !w.lock && w.health >= w.minHealth && outOfSync(w).size === 0;
 export const isLost = (w) => w.health < w.minHealth;
+
+// ---------------------------------------------------------------- tap-to-compose
+
+// What the prompt offers next, given the words already on the line (see shared/prompt.js).
+export function nextWords(w, words) {
+  const full = (text, label) => ({ text, label, full: true, run: true });
+  const env = w.envs[w.workspace];
+  if (!words.length) {
+    return [...(w.pending ? [full('yes')] : []), full('terraform init'), full('terraform plan'), full('terraform apply'), full('terraform state list'), full('terraform workspace list'), 'terraform'];
+  }
+  if (words[0] !== 'terraform' && words[0] !== 'tf') return [];
+  const [, cmd, sub, third] = words;
+  const managed = Object.keys(env.state);
+  const unmanaged = Object.keys(w.config.resources).filter((a) => !env.state[a]);
+  if (!cmd) return ['init', 'plan', 'apply', 'import', 'state', 'workspace', 'force-unlock', 'validate', 'fmt', 'help'];
+  switch (cmd) {
+    case 'init':
+      return ['-migrate-state', '-reconfigure'];
+    case 'apply':
+      return ['-auto-approve'];
+    case 'import': {
+      if (!sub) return unmanaged;
+      const type = w.config.resources[sub]?.type;
+      return third ? [] : Object.entries(env.real).filter(([, r]) => r.type === type).map(([id]) => id);
+    }
+    case 'state':
+      if (!sub) return ['list', 'show', 'mv', 'rm'];
+      if (sub === 'show' || sub === 'rm') return third ? [] : managed;
+      if (sub === 'mv') return !third ? managed : words.length > 4 ? [] : unmanaged;
+      return [];
+    case 'workspace':
+      if (!sub) return ['show', 'list', 'select', 'new'];
+      return sub === 'select' && !third ? Object.keys(w.envs) : [];
+    case 'force-unlock':
+      return sub || !w.lock ? [] : [w.lock.id];
+    default:
+      return [];
+  }
+}

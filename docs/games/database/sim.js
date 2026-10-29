@@ -897,3 +897,49 @@ export function schemaLines(w) {
   const db = curDb(w);
   return Object.keys(db.tables).flatMap((t) => [...Q.describeTable(db, t), '']);
 }
+
+// ---------------------------------------------------------------- tap-to-compose
+
+const MIGRATION_QUICK = ['\\c staging', '\\c prod', 'migrate status', 'migrate up', 'migrate down 1', 'migrate validate', '\\d orders', '\\?'];
+
+// What the prompt offers next, given the words already on the line (see shared/prompt.js). Reads run
+// when tapped; statements that change the schema are filled in and wait for Run.
+export function nextWords(w, words) {
+  const read = (text, label) => ({ text, label, full: true, run: true });
+  if (w.mode !== 'tuning') return words.length ? [] : MIGRATION_QUICK.map((c) => read(c));
+  const db = shopDb(w);
+  const tables = Object.keys(db.tables);
+  if (!words.length) {
+    return [
+      read('\\dt'),
+      read('\\di'),
+      ...w.queries.filter((q) => q.visible && q.kind !== 'write').map((q) => read(`EXPLAIN ANALYZE\n${q.sql}`, `Explain: ${q.name}`)),
+      read('SELECT relname, indexrelname, idx_scan FROM pg_stat_user_indexes;', 'index usage'),
+      'CREATE',
+      'DROP',
+      read('\\?'),
+    ];
+  }
+  const up = words.map((t) => t.toUpperCase());
+  if (up[0] === 'CREATE') {
+    const unique = up[1] === 'UNIQUE';
+    const at = unique ? 2 : 1;
+    if (up.length === 1) return ['UNIQUE', 'INDEX'];
+    if (up[at] !== 'INDEX') return unique ? ['INDEX'] : [];
+    if (up.length === at + 1) return ['ON'];
+    if (up[at + 1] !== 'ON') return [];
+    if (up.length === at + 2) return tables;
+    const table = words[at + 2];
+    if (!db.tables[table] || up.length > at + 3) return [];
+    const cols = Object.keys(db.tables[table].cols).filter((c) => c !== 'id');
+    const prefix = words.join(' ');
+    const sets = [...cols.map((c) => [c]), ...cols.flatMap((a) => cols.filter((b) => b !== a).map((b) => [a, b]))];
+    return sets.map((set) => ({ text: `${prefix} (${set.join(', ')});`, label: `(${set.join(', ')})`, full: true }));
+  }
+  if (up[0] === 'DROP') {
+    if (up.length === 1) return ['INDEX'];
+    if (up[1] !== 'INDEX' || up.length > 2) return [];
+    return db.indexes.filter((ix) => !ix.constraint && !/pkey$/.test(ix.name)).map((ix) => `${ix.name};`);
+  }
+  return [];
+}

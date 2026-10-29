@@ -3,6 +3,7 @@
 // and repo panels, the terminal and the registerGame wiring. The game is turn-based: only a command
 // that changes something (or Wait) advances time, which is when teammates push and reviews arrive.
 import { registerGame } from '../shared/engine.js';
+import { createPrompt } from '../shared/prompt.js';
 import { el } from '../shared/ui.js';
 import {
   branchInfo,
@@ -17,6 +18,7 @@ import {
   listFiles,
   mainBuild,
   nextHint,
+  nextWords,
   ownersLines,
   prCards,
   repoBadges,
@@ -24,7 +26,6 @@ import {
   workStatus,
 } from './sim.js';
 
-const QUICK = ['git status', 'git log --oneline --graph --all', 'git diff', 'git branch -a', 'git fetch', 'gh pr view'];
 const SVG = 'http://www.w3.org/2000/svg';
 const LANE = 14;
 const laneX = (k) => 9 + k * LANE;
@@ -230,8 +231,6 @@ function termLines(w) {
 function submit(state, ctx, text) {
   const line = text.trim();
   if (!line) return;
-  if (state.history[state.history.length - 1] !== line) state.history.push(line);
-  state.historyAt = state.history.length;
   state.stick = true;
   ctx.act('terminal', line);
 }
@@ -250,9 +249,7 @@ function render(state, ctx) {
   if (atBottom || state.stick) d.term.scrollTop = d.term.scrollHeight;
   state.stick = false;
   const over = ctx.over;
-  d.input.disabled = over;
-  d.run.disabled = over;
-  for (const b of d.quick) b.disabled = over;
+  d.prompt.setDisabled(over);
   const ed = d.editor;
   for (const c of [ed.select, ed.area, ed.save, ed.top, ed.bottom, ed.both]) c.disabled = over;
 }
@@ -265,8 +262,6 @@ registerGame({
 
   init(state, ctx) {
     Object.assign(state, createWorld(ctx.scenario));
-    state.history = [];
-    state.historyAt = 0;
     state.stick = true;
     state.editorSig = null;
     state.seen = new Set();
@@ -274,34 +269,12 @@ registerGame({
 
     const goals = el('div', { class: 'gh-goals', role: 'list', 'aria-label': 'Goals' });
     const term = el('pre', { class: 'gh-term', tabindex: 0, role: 'log', 'aria-label': 'Terminal output' });
-    const input = el('input', { class: 'gh-input gh-cmd', type: 'text', 'aria-label': 'Terminal command', placeholder: 'git status', autocomplete: 'off', autocapitalize: 'off', spellcheck: 'false' });
-    const run = el('button', { class: 'gh-btn', type: 'submit', text: 'Run' });
-    const form = el('form', { class: 'gh-prompt' }, el('span', { class: 'gh-ps1', 'aria-hidden': 'true', text: '$' }), input, run);
-    form.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const text = input.value;
-      input.value = '';
-      submit(state, ctx, text);
-      input.focus();
-    });
-    input.addEventListener('keydown', (e) => {
-      if (e.key === 'ArrowUp' && state.historyAt > 0) {
-        e.preventDefault();
-        state.historyAt -= 1;
-        input.value = state.history[state.historyAt];
-      } else if (e.key === 'ArrowDown') {
-        e.preventDefault();
-        state.historyAt = Math.min(state.history.length, state.historyAt + 1);
-        input.value = state.history[state.historyAt] || '';
-      }
-    });
-    const quick = QUICK.map((cmd) => {
-      const b = el('button', { class: 'gh-btn gh-quick', type: 'button', 'data-cmd': cmd, text: cmd });
-      b.addEventListener('click', () => {
-        submit(state, ctx, cmd);
-        input.focus();
-      });
-      return b;
+    const prompt = createPrompt({
+      label: 'Terminal command',
+      placeholder: 'git status',
+      cls: { form: 'gh-prompt', ps1: 'gh-ps1', input: 'gh-input gh-cmd', run: 'gh-btn', chips: 'gh-quicks', chip: 'gh-btn gh-quick' },
+      next: (words) => nextWords(state, words),
+      onSubmit: (line) => submit(state, ctx, line),
     });
 
     const graph = el('div', { class: 'gh-graph', role: 'list', 'aria-label': 'Commit graph, newest first', tabindex: 0 });
@@ -323,13 +296,13 @@ registerGame({
       'div',
       { class: 'gh' },
       panel('p-goals', 'Goals', goals),
-      panel('p-term', 'Terminal', term, form, el('div', { class: 'gh-quicks' }, ...quick)),
+      panel('p-term', 'Terminal', term, prompt.form, prompt.tray),
       panel('p-graph', 'Commit graph (your clone, newest first)', graph),
       panel('p-tree', 'Working tree', tree),
       panel('p-edit', 'File editor', el('div', { class: 'gh-editrow' }, select, save), area, markers, status),
       panel('p-repo', 'GitHub: settings and pull requests', repo),
     );
-    state.dom = { root, goals, term, input, run, quick, graph, tree, repo, editor };
+    state.dom = { root, goals, term, prompt, graph, tree, repo, editor };
     wireEditor(state, ctx);
     ctx.ui.board.append(root);
     ctx.log('Reading (status, log, diff) is free; each change takes a step. Hint (h) names the next goal. Wait (w) lets time pass for a review or a teammate.');

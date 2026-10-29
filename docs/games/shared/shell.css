@@ -585,3 +585,47 @@ body:has(#game[data-game]) .md-typeset h1 {
     display: block;
   }
 }
+
+/* ---- command prompt (shared/prompt.js) -------------------------------------------------- */
+
+.cg-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.4rem;
+}
+
+.cg-chip-list {
+  display: contents;
+}
+
+.cg-chip {
+  font-family: var(--font-mono);
+}
+
+.cg-chip-cmd {
+  font-weight: 600;
+}
+
+/* History buttons only matter without arrow keys. */
+.cg-hist {
+  display: none;
+}
+
+/* iOS Safari zooms the page when a text field under 16px gets focus. */
+@media (pointer: coarse) {
+  .cg-hist {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .cg input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  .cg textarea,
+  .cg textarea[class],
+  .cg select,
+  .cg select[class] {
+    font-size: 16px;
+  }
+}

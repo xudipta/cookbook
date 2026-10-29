@@ -1209,3 +1209,45 @@ export function samView(w) {
   const req = w.queue[w.cursor];
   return req && req.as === 'teammate' ? w.teammate.name : null;
 }
+
+// ---------------------------------------------------------------- tap-to-compose
+
+// What the prompt offers next, given the words already on the line (see shared/prompt.js). The
+// names come from the level (catalogue, configured servers, shell variables) so the player still
+// chooses the scope and the credential; only the typing goes away.
+export function nextWords(w, words) {
+  const read = (text) => ({ text, full: true, run: true });
+  if (!words.length) return [read('help'), read('claude mcp list'), read('/mcp'), { text: '/mcp auth ', label: '/mcp auth', full: true }, read('cat .mcp.json'), 'claude'];
+  const [first, second, third] = words;
+  if (first === '/mcp') return words.length === 1 ? ['auth'] : words[1] === 'auth' && words.length === 2 ? configured(w) : [];
+  if (first !== 'claude') return [];
+  if (!second) return ['mcp'];
+  if (second !== 'mcp') return [];
+  if (!third) return ['add', 'list', 'get', 'remove'];
+  if (third === 'get') return words.length === 3 ? configured(w) : [];
+  if (third === 'remove') return words.length === 3 ? configured(w) : ['--scope local', '--scope project', '--scope user'];
+  if (third !== 'add') return [];
+  const rest = words.slice(3);
+  const name = rest.find((t) => w.servers[t]);
+  if (!name) return [...w.catalog, '--transport http', '--scope project', '--scope local', '--scope user'];
+  const s = w.servers[name];
+  if (!s) return [];
+  const used = (flag) => rest.includes(flag);
+  const out = [];
+  if (!used('--scope')) out.push('--scope project', '--scope local', '--scope user');
+  if (s.transport === 'http') {
+    if (!used('--transport')) out.push('--transport http');
+    if (!rest.some((t) => /^https?:\/\//.test(t))) out.push(s.url || `https://${name}.example.com/mcp`);
+    if (!used('--header')) for (const n of w.envNames) out.push(`--header 'Authorization: Bearer \${${n}}'`);
+  } else if (s.launch && !rest.includes('--')) {
+    // The command comes last, so it is offered once every variable the server needs is bound.
+    const unbound = (s.launch.env || []).filter((key) => !rest.some((t) => t.startsWith(`${key}=`)));
+    for (const key of unbound) for (const n of w.envNames) out.push(`-e ${key}='\${${n}}'`);
+    if (!unbound.length) out.push(`-- ${s.launch.command} ${s.launch.prefix.join(' ')}${s.launch.minExtra ? ' ./' : ''}`);
+  }
+  return out;
+}
+
+function configured(w) {
+  return [...new Set(['project', 'local', 'user'].flatMap((scope) => Object.keys(w.files[scope] || {})))];
+}

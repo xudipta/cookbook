@@ -447,6 +447,50 @@ export function complete(w, line) {
   return completeLine(w, line);
 }
 
+// ---------------------------------------------------------------- tap-to-compose
+
+const VERBS = ['ls', 'cat', 'tail', 'grep', 'systemctl', 'journalctl', 'ps', 'df', 'du', 'kill', 'chmod', 'truncate', 'rm'];
+const PIPES = ['head -5', 'head -n 20', 'grep', 'sort', 'uniq -c', 'wc -l', 'tail -5'];
+const FLAGS = {
+  ls: ['-l', '-la', '-lh'],
+  ps: ['aux', '--sort=-%cpu', '--sort=-%mem'],
+  df: ['-h', '-i'],
+  du: ['-sh'],
+  tail: ['-n 50', '-f'],
+  grep: ['-i', '-r', '-n'],
+  journalctl: ['-u', '-n 50', '--since "10 minutes ago"'],
+  kill: ['-9', '-15'],
+  rm: ['-r'],
+  truncate: ['-s 0'],
+  chmod: ['644', '755', '+x'],
+  ss: ['-tlnp'],
+};
+
+// What the prompt offers next, given the words already on the line (see shared/prompt.js). File,
+// directory, unit and process names come from the live machine; tab completion supplies the rest.
+export function nextWords(w, words, line) {
+  const read = (text) => ({ text, full: true, run: true });
+  if (!words.length && !line.trim()) return [read('ls -l'), read('ps aux'), read('df -h'), read('uptime'), read('ss -tlnp'), read('help'), ...VERBS];
+  if (words[words.length - 1] === '|') return PIPES;
+  const cmd = words[0];
+  const out = [];
+  if (cmd === 'kill') {
+    if (!words.slice(1).some((t) => /^\d+$/.test(t))) for (const p of w.procs) out.push({ text: String(p.pid), label: `${p.pid} ${String(p.cmd).split(' ')[0].split('/').pop()}` });
+    if (words.length === 1) out.unshift(...FLAGS.kill);
+    return out;
+  }
+  if (cmd && FLAGS[cmd] && !words.includes('|')) out.push(...FLAGS[cmd].filter((f) => !words.includes(f)));
+  const m = /(\S*)$/.exec(line);
+  const before = line.slice(0, m.index);
+  const r = completeLine(w, line);
+  const cands = r.options.length ? r.options : r.line !== line ? [r.line.slice(before.length).trim()] : [];
+  for (const c of cands) out.push({ text: c, raw: c.endsWith('/') });
+  if (m[1].endsWith('/') && m[1] !== '~/' && !/^(systemctl|journalctl)$/.test(cmd)) out.push(`${m[1]}*`);
+  if (words.length && !m[1] && !words.includes('|') && cmd !== 'systemctl' && cmd !== 'journalctl') out.push({ text: '/', raw: true }, { text: '~/', raw: true });
+  if (words.length && !m[1] && !words.includes('|') && !/\|$/.test(line)) out.push(...PIPES.slice(0, 3).map((p) => `| ${p}`));
+  return out;
+}
+
 // ---------------------------------------------------------------- the clock
 
 export function tick(w, ctx) {
