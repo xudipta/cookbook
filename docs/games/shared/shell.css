@@ -378,8 +378,20 @@ body:has(#game[data-game]) .md-typeset h1 {
 }
 
 @media (max-width: 700px) {
+  /* Edge to edge: the game card bleeds past the page gutters and drops its side borders, and the board
+     inside it drops its own box, so the content is nearly the full screen width (#83). */
   .cg {
-    padding: 0.6rem;
+    margin-inline: calc(50% - 50vw);
+    padding: 0.6rem 0.5rem;
+    border-inline: 0;
+    border-radius: 0;
+  }
+
+  .cg-board {
+    padding: 0.25rem 0;
+    border-inline: 0;
+    border-radius: 0;
+    background: transparent;
   }
 
   .cg-hud {
