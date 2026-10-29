@@ -6,6 +6,7 @@
     "actions": "Wait lets time pass for a review. Everything else you do in the terminal or the file editor; reading is free, changing costs a step.",
     "firstMove": "Run git status and git log --oneline --graph --all (both are free), then read the goals."
   },
+  "lossRule": "Team trust fell below the floor: shared history was rewritten, main was broken, or work was left half-finished.",
   "healthLabel": "Team trust",
   "tickLabel": "Step",
   "manual": true,
@@ -213,6 +214,24 @@
         "git switch -c docs/contributing, edit README.md in the editor, git add, git commit -m, git push -u origin HEAD, gh pr create --fill, gh pr merge --squash --delete-branch."
       ],
       "par": 6,
+      "path": [
+        "git switch -c docs/contributing",
+        "Edit README.md in the file editor",
+        "git add README.md",
+        "git commit -m \"Link CONTRIBUTING from the README\"",
+        "git push -u origin HEAD",
+        "gh pr create --fill",
+        "gh pr merge --squash --delete-branch"
+      ],
+      "lessons": [
+        "Never commit to main directly: branch, commit, push, open a pull request and merge it.",
+        "Keep the change small with a clear title, and delete the branch when it merges."
+      ],
+      "tryItForReal": {
+        "needs": "a Git repository on GitHub and the gh CLI",
+        "example": "topics/github/examples/scripts",
+        "commands": "git switch -c docs/contributing\n# edit README.md\ngit add README.md\ngit commit -m \"Link CONTRIBUTING from the README\"\ngit push -u origin HEAD\ngh pr create --fill\ngh pr merge --squash --delete-branch"
+      },
       "seed": 1,
       "winTicks": 12,
       "minHealth": 50,
@@ -365,6 +384,24 @@
         "git fetch, git rebase origin/main, fix config.yml in the editor, git add it, git rebase --continue, git push --force-with-lease, then gh pr merge."
       ],
       "par": 6,
+      "path": [
+        "git fetch",
+        "git rebase origin/main",
+        "Edit config.yml in the file editor",
+        "git add config.yml",
+        "git rebase --continue",
+        "git push --force-with-lease",
+        "gh pr merge --squash --delete-branch"
+      ],
+      "lessons": [
+        "Bring your branch up to date with main before it merges, and resolve a conflict by keeping what both sides meant.",
+        "After a rebase, push with --force-with-lease: it refuses to overwrite work you have not seen."
+      ],
+      "tryItForReal": {
+        "needs": "a Git repository on GitHub and the gh CLI",
+        "example": "topics/github/examples/scripts",
+        "commands": "git fetch\ngit rebase origin/main\n# fix the conflict in the file, then\ngit add <file>\ngit rebase --continue\ngit push --force-with-lease\ngh pr merge --squash --delete-branch"
+      },
       "seed": 2,
       "winTicks": 14,
       "minHealth": 50,
@@ -574,6 +611,33 @@
         "Stash the edits, branch the typo fix, reset main to origin/main, revert on a new branch and open a PR, then rebase and merge the typo PR."
       ],
       "par": 16,
+      "path": [
+        "git stash push -m wip",
+        "git branch fix/runbook-typo",
+        "git reset --hard origin/main",
+        "git switch -c revert/speed-up-deploy",
+        "git revert --no-edit HEAD",
+        "git push -u origin HEAD",
+        "gh pr create --fill",
+        "git switch fix/runbook-typo",
+        "gh pr merge 12 --squash --delete-branch",
+        "git fetch",
+        "git rebase origin/main",
+        "git push -u origin HEAD",
+        "gh pr create --fill",
+        "git switch main",
+        "gh pr merge 13 --squash --delete-branch",
+        "git pull"
+      ],
+      "lessons": [
+        "On a protected branch you undo a commit with git revert in a pull request, not with a reset and a force-push.",
+        "Stash or branch your unfinished work before you move anything, so nothing is lost."
+      ],
+      "tryItForReal": {
+        "needs": "a Git repository on GitHub and the gh CLI",
+        "example": "topics/github/examples/scripts",
+        "commands": "git stash push -m wip\ngit branch fix/runbook-typo               # keep the typo fix\ngit reset --hard origin/main\ngit switch -c revert/speed-up-deploy\ngit revert --no-edit <bad-commit>\ngit push -u origin HEAD\ngh pr create --fill"
+      },
       "seed": 3,
       "winTicks": 30,
       "minHealth": 50,

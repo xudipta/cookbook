@@ -262,6 +262,14 @@ registerGame({
     ctx.log('Run commands in the terminal. Reading a plan is free; every change costs a move. Next day (d) ends the day: anything still out of sync overnight costs trust.');
   },
 
+  // How a move reads in the debrief and in the efficient path.
+  describeMove(name, args) {
+    if (name === 'setAttr') return `Edit main.tf: ${args[0]}.${args[1]} = "${args[2]}"`;
+    if (name === 'addMoved') return `moved { from = ${args[0]}  to = ${args[1]} }`;
+    if (name === 'extractModule') return 'Extract the repeated stacks into a module';
+    return undefined;
+  },
+
   tick: (state, ctx) => simTick(state, ctx),
 
   actions: {

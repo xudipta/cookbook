@@ -6,6 +6,7 @@
     "actions": "The buttons scale, roll back or edit the web deployment, and the prompt runs kubectl. Reading is free; changing the cluster costs a move.",
     "firstMove": "Run kubectl get pods, click any pod that is not Running to describe it, then fix what it tells you."
   },
+  "lossRule": "The error budget ran out: too many requests failed before the Service was healthy again.",
   "healthLabel": "Error budget",
   "seed": 11,
   "tickMs": 3000,
@@ -117,6 +118,19 @@
         "Run kubectl rollout undo deploy/web, then use Edit to add the missing environment key (mode)."
       ],
       "par": 2,
+      "path": [
+        "kubectl rollout undo deploy/web",
+        "Edit the deployment: envKey = mode"
+      ],
+      "lessons": [
+        "kubectl get and describe are free and tell you where to look: the Events at the bottom of describe name the failure.",
+        "A bad rollout is undone with kubectl rollout undo; a missing ConfigMap key is a configuration fix, not a pod fix."
+      ],
+      "tryItForReal": {
+        "needs": "a local cluster (kind or minikube) and kubectl",
+        "example": "topics/kubernetes/examples/deployment",
+        "commands": "kubectl apply -f topics/kubernetes/examples/deployment/sample-deployment.yaml\nkubectl get pods\nkubectl describe pod <pod>              # read the Events\nkubectl rollout history deploy/<name>\nkubectl rollout undo deploy/<name>\nkubectl rollout status deploy/<name>"
+      },
       "seed": 11,
       "tickMs": 5000,
       "winTicks": 30,
@@ -170,6 +184,21 @@
         "Scale web to 3, roll back the bad release, raise the memory limit with set resources, and add a readiness probe in Edit."
       ],
       "par": 4,
+      "path": [
+        "kubectl scale deploy/web --replicas=3",
+        "kubectl rollout undo deploy/web",
+        "kubectl set resources deploy/web --limits=memory=500Mi",
+        "Edit the deployment: readiness = true"
+      ],
+      "lessons": [
+        "A bare Pod is not replaced when it dies: run workloads under a Deployment.",
+        "Set memory limits that fit the app (an OOMKilled pod needs a higher one) and add a readiness probe so traffic only reaches ready pods."
+      ],
+      "tryItForReal": {
+        "needs": "a local cluster (kind or minikube) and kubectl",
+        "example": "topics/kubernetes/examples/deployment/deployment-with-resources-and-probes.yaml",
+        "commands": "kubectl scale deploy/web --replicas=3\nkubectl rollout undo deploy/web\nkubectl set resources deploy/web --limits=memory=500Mi\nkubectl edit deploy/web                 # add a readinessProbe\nkubectl get endpoints web-svc           # only ready pods are listed"
+      },
       "variants": true,
       "seed": 23,
       "tickMs": 4000,
@@ -247,6 +276,21 @@
         "Scale batch to 0, undo the web rollout, switch the image to web:1.0-nonroot in Edit, and raise the memory limit."
       ],
       "par": 4,
+      "path": [
+        "kubectl scale deploy/batch --replicas=0",
+        "kubectl rollout undo deploy/web",
+        "Edit the deployment: image = web:1.0-nonroot",
+        "kubectl set resources deploy/web --limits=memory=500Mi"
+      ],
+      "lessons": [
+        "One workload can starve the others: scale the noisy one down or give it requests and limits.",
+        "Roll back first, then fix the cause: a runAsNonRoot change needs an image that really runs as a non-root user."
+      ],
+      "tryItForReal": {
+        "needs": "a local cluster (kind or minikube) and kubectl",
+        "example": "topics/kubernetes/examples/deployment/deployment-with-security-context.yaml",
+        "commands": "kubectl scale deploy/batch --replicas=0\nkubectl rollout undo deploy/web\nkubectl set image deploy/web web=web:1.0-nonroot\nkubectl set resources deploy/web --limits=memory=500Mi\nkubectl top nodes"
+      },
       "variants": true,
       "seed": 41,
       "tickMs": 3500,

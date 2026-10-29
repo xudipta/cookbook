@@ -671,6 +671,17 @@ registerGame({
     ctx.log(state.quiz.items.length ? 'Finish the warm-up, fix the rules, then press Next hour. Rules cost a move to change; time is free.' : 'Fix the rules, then press Next hour. Rules can change all night, but pages already sent cannot be taken back.', { kind: 'hint' });
   },
 
+  // How a move reads in the debrief and in the efficient path.
+  describeMove(name, args) {
+    if (name === 'classify') return `Classify signal ${Number(args[0]) + 1}: a ${args[1]}, alert with ${args[2]}`;
+    if (name === 'setRoute') return `Alertmanager group_by: ${args[0]}`;
+    if (name === 'saveRule') {
+      const r = args[0];
+      return r.kind === 'record' ? `Record ${r.name}: ${r.fn}(${r.metric}[${r.window}])` : `Rule ${r.name}: ${r.fn} ${r.metric} ${r.op} ${r.threshold} for ${r.for} (${r.severity})`;
+    }
+    return undefined;
+  },
+
   tick: (state, ctx) => tick(state, ctx),
 
   actions: {

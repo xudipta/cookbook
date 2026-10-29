@@ -361,6 +361,15 @@ registerGame({
     );
   },
 
+  // How a move reads in the debrief and in the efficient path.
+  describeMove(name, args) {
+    if (name === 'place') return `Move ${args[0]} to ${args[1]}`;
+    if (name === 'save') return 'Save SKILL.md';
+    if (name === 'setDir') return `Name the folder ${args[0]}`;
+    if (name === 'setLocation') return `Put it in ${args[0]}`;
+    return undefined;
+  },
+
   tick: (state, ctx) => simTick(state, ctx),
 
   actions: {

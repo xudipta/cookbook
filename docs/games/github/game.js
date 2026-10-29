@@ -307,6 +307,12 @@ registerGame({
     ctx.log('Reading (status, log, diff) is free; each change takes a step. Wait (w) lets time pass for a review or a teammate.');
   },
 
+  // How a move reads in the debrief and in the efficient path.
+  describeMove(name, args) {
+    if (name === 'edit') return `Edit ${args[0]} in the file editor`;
+    return undefined;
+  },
+
   tick: (state, ctx) => simTick(state, ctx),
 
   actions: {

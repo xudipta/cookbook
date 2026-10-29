@@ -6,6 +6,7 @@
     "actions": "Add replica starts another pod.",
     "firstMove": "Add a few replicas before the chaos starts."
   },
+  "lossRule": "The error budget ran out: too few healthy pods for too long.",
   "healthLabel": "Error budget",
   "seed": 7,
   "tickMs": 1000,
@@ -52,5 +53,17 @@
     "The chaos monkey kills a pod now and then, and a node goes down at tick 8.",
     "Add replicas early so losing a node still leaves enough pods serving."
   ],
-  "par": 3
+  "par": 3,
+  "path": [
+    "Add replica ×3"
+  ],
+  "lessons": [
+    "Run spare replicas: a Deployment replaces a lost pod, but not instantly, so spare capacity covers the gap.",
+    "Losing a whole node takes several pods at once, so replicas should not all sit on one node."
+  ],
+  "tryItForReal": {
+    "needs": "a local cluster (kind or minikube) and kubectl",
+    "example": "topics/kubernetes/examples/deployment",
+    "commands": "kubectl scale deploy/<name> --replicas=5\nkubectl get pods -o wide                # which node is each pod on?"
+  }
 }

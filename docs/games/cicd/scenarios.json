@@ -6,6 +6,7 @@
     "actions": "Place, remove or promote to change the pipeline. Run next event or Wait lets time pass and shows the result.",
     "firstMove": "Read the next event on the board, then place or promote the one thing that answers it before you run it."
   },
+  "lossRule": "Delivery health fell below the floor: too many slow, unsafe or failed releases got through.",
   "healthLabel": "Delivery health",
   "tickLabel": "Event",
   "manual": true,
@@ -292,6 +293,23 @@
         "Place paths-ignore, cache-setup, needs-lint, concurrency and matrix, then run the next event."
       ],
       "par": 6,
+      "path": [
+        "Place the card paths-ignore",
+        "Place the card cache-setup",
+        "Place the card needs-lint",
+        "Place the card concurrency",
+        "Place the card matrix",
+        "Run next event ×6"
+      ],
+      "lessons": [
+        "Skip work that cannot change the result: paths-ignore for docs-only changes, a dependency cache, and concurrency to cancel runs a newer push has replaced.",
+        "Run independent jobs in parallel, use needs only where order matters, and fan tests out with a matrix."
+      ],
+      "tryItForReal": {
+        "needs": "a GitHub repository with Actions enabled",
+        "example": "topics/cicd/examples/workflows",
+        "commands": "# .github/workflows/ci.yml\non:\n  pull_request:\n    paths-ignore: ['**.md', 'docs/**']\nconcurrency:\n  group: ci-${{ github.ref }}\n  cancel-in-progress: true\njobs:\n  test:\n    runs-on: ubuntu-latest\n    strategy:\n      matrix:\n        node: [18, 20, 22]\n    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/setup-node@v4\n        with:\n          node-version: ${{ matrix.node }}\n          cache: npm\n      - run: npm ci && npm test"
+      },
       "mode": "pipeline",
       "tickLabel": "Event",
       "seed": 1,
@@ -470,6 +488,25 @@
         "Remove on-prt and checkout-head, place on-pr, perms-read and ref-sha, then the reusable-lint and composite-setup cards."
       ],
       "par": 6,
+      "path": [
+        "Remove the card on-prt",
+        "Remove the card checkout-head",
+        "Place the card on-pr",
+        "Place the card perms-read",
+        "Place the card ref-sha",
+        "Place the card reusable-lint",
+        "Place the card composite-setup",
+        "Run next event ×6"
+      ],
+      "lessons": [
+        "pull_request_target runs with the base repository's secrets, so never check out and run a fork's code in it: use pull_request for untrusted code.",
+        "Give the token the least it needs (permissions: contents: read), pin third-party actions to a full commit SHA, and move repeated steps into a reusable workflow or composite action."
+      ],
+      "tryItForReal": {
+        "needs": "a GitHub repository with Actions enabled",
+        "example": "topics/cicd/examples/workflows",
+        "commands": "# .github/workflows/ci.yml\non: pull_request            # not pull_request_target\npermissions:\n  contents: read\njobs:\n  lint:\n    uses: ./.github/workflows/reusable-lint.yml\n  test:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@<full-commit-sha>   # pin, do not use a moving tag\n      - uses: ./.github/actions/setup              # a composite action for the shared steps\n      - run: npm test"
+      },
       "mode": "pipeline",
       "tickLabel": "Event",
       "seed": 2,
@@ -659,6 +696,31 @@
         "Promote to staging and wait, then pick a strategy; the riskier the release, the smaller the first step. Roll back as soon as errors climb."
       ],
       "par": 8,
+      "path": [
+        "Promote to the next environment",
+        "Wait a minute",
+        "Deploy to prod: rolling",
+        "Wait a minute ×6",
+        "Promote to the next environment",
+        "Wait a minute",
+        "Deploy to prod: canary",
+        "Wait a minute",
+        "Roll back",
+        "Promote to the next environment",
+        "Wait a minute",
+        "Deploy to prod: bluegreen",
+        "Wait a minute",
+        "Roll back"
+      ],
+      "lessons": [
+        "Rolling swaps pods gradually, a canary shows a bad build to a few users first, and blue-green keeps the old version running for an instant switch back.",
+        "Watch the error rate while a release bakes, and roll back first: diagnose after the users are safe."
+      ],
+      "tryItForReal": {
+        "needs": "a local cluster (kind or minikube) and kubectl",
+        "example": "topics/kubernetes/examples/deployment",
+        "commands": "kubectl apply -f topics/kubernetes/examples/deployment/sample-deployment.yaml\nkubectl set image deploy/<name> <container>=<image>:<new-tag>\nkubectl rollout status deploy/<name>        # watch it bake\nkubectl rollout undo deploy/<name>          # roll back first, diagnose later"
+      },
       "variants": true,
       "mode": "deploy",
       "tickLabel": "Minute",
@@ -808,6 +870,27 @@
         "Reject the bad build, expand the schema before removing anything, commit the hand-fix to git, deploy with a canary and roll back if it fails."
       ],
       "par": 7,
+      "path": [
+        "Promote to the next environment",
+        "Wait a minute",
+        "Reject the release",
+        "Expand the schema first (add before you remove)",
+        "Promote to the next environment",
+        "Wait a minute",
+        "Commit the hand-fix to git",
+        "Deploy to prod: canary",
+        "Wait a minute",
+        "Roll back"
+      ],
+      "lessons": [
+        "A gate only helps if a bad release stops at it: reject before prod, and keep prod matching git by committing any hand-fix.",
+        "Make a column change in steps: expand (add), migrate and deploy, then contract (drop), so you can always undo the last step."
+      ],
+      "tryItForReal": {
+        "needs": "a Postgres database and a deployment pipeline",
+        "example": "topics/database/examples/migrations",
+        "commands": "-- release 1 (expand): add the new column, keep the old one\nALTER TABLE orders ADD COLUMN status_v2 text;\n-- release 2: write both columns, backfill, then read the new one\nUPDATE orders SET status_v2 = status WHERE status_v2 IS NULL;\n-- release 3 (contract): only after nothing reads the old column\nALTER TABLE orders DROP COLUMN status;"
+      },
       "mode": "deploy",
       "tickLabel": "Minute",
       "seed": 4,

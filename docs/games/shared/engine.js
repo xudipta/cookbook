@@ -35,6 +35,29 @@ export function computeScore({ health, actionsUsed, won, hintsUsed = 0 }) {
   return Math.max(0, Math.round(health * 10) - actionsUsed * 10 - hintsUsed * HINT_COST + (won ? 500 : 0));
 }
 
+// One line for a move in the debrief and the efficient path: the command a terminal action ran, or the button's
+// label with its arguments. A game can shape its own with `describeMove(name, args)` on its definition.
+function describeMove(def, name, args) {
+  const custom = def.describeMove && def.describeMove(name, args);
+  if (custom) return custom;
+  const action = def.actions[name];
+  const hidden = typeof action === 'object' && action.hidden;
+  const label = (typeof action === 'object' && action.label) || name;
+  const text = args.map((a) => (typeof a === 'string' ? a : JSON.stringify(a))).join(' ');
+  return hidden ? text || label : text ? `${label}: ${text}` : label;
+}
+
+// Consecutive repeats of a move become one line: ["Build", "Build"] -> ["Build ×2"].
+export function collapseMoves(texts) {
+  const out = [];
+  for (const text of texts) {
+    const last = out[out.length - 1];
+    if (last && last.text === text) last.count += 1;
+    else out.push({ text, count: 1 });
+  }
+  return out.map((m) => (m.count > 1 ? `${m.text} ×${m.count}` : m.text));
+}
+
 // Stars for a won level, from the moves used against the level's par (the scripted solution's move count):
 // three at par or better, two within half as many moves again, one for any win.
 export function starsFor({ won, actionsUsed, par }) {
@@ -103,6 +126,7 @@ export async function mountGame(container, { id }) {
     status: 'playing',
     paused: false,
     stars: 0,
+    moves: [], // what the player did, in order: { tick, text, counted }
   };
   let rng;
   let fired;
@@ -130,6 +154,10 @@ export async function mountGame(container, { id }) {
     ui.setHints({ used: rt.hintsUsed, total: hintList().length, playing: rt.status === 'playing' });
   }
 
+  // Which rule a lost run broke: the level's own wording, or the health meter falling under its floor.
+  const lossRule = () =>
+    scenario.lossRule || `${scenario.healthLabel || 'Health'} fell to ${Math.round(rt.state.health)}%, below the ${scenario.minHealth ?? 0}% this level allows.`;
+
   // A level's hints are a ladder in scenarios.json (`hints: [where to look, what is wrong, what to do]`).
   const hintList = () => scenario.hints || [];
 
@@ -151,6 +179,10 @@ export async function mountGame(container, { id }) {
       eventList.push(f.event);
     }
     refresh();
+    const timeline = [
+      ...rt.moves.map((m, i) => ({ at: m.tick, order: i, kind: 'move', counted: m.counted, text: m.text })),
+      ...fired.map((f, i) => ({ at: f.firedAt, order: -1 + i / 1000, kind: 'event', text: f.event.title, fixedAt: f.resolvedAt })),
+    ].sort((a, b) => a.at - b.at || a.order - b.order);
     const at = levels ? levels.findIndex((l) => l.id === level.id) : -1;
     const nextLevel = at >= 0 && at < levels.length - 1 ? levels[at + 1] : null;
     ui.showResult({
@@ -162,6 +194,15 @@ export async function mountGame(container, { id }) {
       hintsUsed: rt.hintsUsed,
       stars: rt.stars,
       par: scenario.par,
+      debrief: {
+        timeline,
+        timed: !base.manual,
+        tickLabel: scenario.tickLabel || 'Tick',
+        path: scenario.path || [],
+        lessons: scenario.lessons || [],
+        tryIt: scenario.tryItForReal || null,
+        lossRule: status === 'lost' ? lossRule() : null,
+      },
       version: scenario.variants ? { seed: rt.seed, standard: rt.seed === scenario.seed } : null,
       avgResolve,
       events: eventList,
@@ -246,6 +287,7 @@ export async function mountGame(container, { id }) {
     if (result === false) return false; // rejected, or a read-only command: not counted, not valid
     // 'free' means valid but not scored (e.g. rearranging cards).
     if (result !== 'free') rt.actionsUsed += 1;
+    rt.moves.push({ tick: rt.ticks, text: describeMove(def, name, args), counted: result !== 'free' });
     if (rt.status !== 'playing') return true; // the action itself ended the game (via ctx.step)
     if (def.isLost(rt.state)) finish('lost');
     else if (def.isWon(rt.state)) finish('won');
@@ -286,6 +328,12 @@ export async function mountGame(container, { id }) {
     rt.restart();
   };
 
+  // After a loss: start again with the first hint already open (it costs its usual points).
+  rt.retryWithHint = () => {
+    rt.restart();
+    rt.hint();
+  };
+
   rt.togglePause = () => {
     if (rt.status !== 'playing') return;
     rt.paused = !rt.paused;
@@ -311,6 +359,7 @@ export async function mountGame(container, { id }) {
     rt.actionsUsed = 0;
     rt.hintsUsed = 0;
     rt.stars = 0;
+    rt.moves = [];
     rt.status = 'playing';
     rt.paused = false;
     rt.state = { health: 100 };
@@ -338,6 +387,7 @@ export async function mountGame(container, { id }) {
       togglePause: () => rt.togglePause(),
       restart: () => rt.restart(),
       hint: () => rt.hint(),
+      retryWithHint: () => rt.retryWithHint(),
       nextVersion: () => rt.nextVersion(),
       standardVersion: () => rt.useSeed(scenario.seed),
     },

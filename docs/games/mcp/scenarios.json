@@ -6,6 +6,7 @@
     "actions": "Call tool, Attach resource and Run prompt serve the request in front of you. Wiring a server is done in the terminal.",
     "firstMove": "Tap claude, mcp, add to wire the server a request needs, then serve it."
   },
+  "lossRule": "Trust fell below the floor: a server was approved unread, a secret leaked into git, or requests went unserved.",
   "healthLabel": "Trust",
   "tickLabel": "Request",
   "manual": true,
@@ -623,6 +624,20 @@
         "claude mcp add filesystem with --scope project and its npx command, then Grafana with --transport http and the token as ${GRAFANA_TOKEN}, never its value."
       ],
       "par": 6,
+      "path": [
+        "claude mcp add filesystem --scope project -- npx -y @modelcontextprotocol/server-filesystem ./",
+        "claude mcp add --transport http grafana https://grafana.example.com/mcp --scope project --header 'Authorization: Bearer ${GRAFANA_TOKEN}'",
+        "Call tool ×4"
+      ],
+      "lessons": [
+        "A local server runs a command (stdio) and a hosted one is a URL (HTTP); project scope writes .mcp.json, which goes into git.",
+        "Never put a token in .mcp.json: reference an environment variable such as ${GRAFANA_TOKEN}."
+      ],
+      "tryItForReal": {
+        "needs": "Claude Code",
+        "example": "topics/mcp/examples/config",
+        "commands": "claude mcp add filesystem --scope project -- npx -y @modelcontextprotocol/server-filesystem ./\nclaude mcp add --transport http grafana https://grafana.example.com/mcp --scope project \\\n  --header 'Authorization: Bearer ${GRAFANA_TOKEN}'\nclaude mcp list"
+      },
       "winTicks": 4,
       "catalog": [
         "filesystem",
@@ -739,6 +754,25 @@
         "Remove the local tickets entry, add it at project scope and sign in, add github with -e bound to ${GITHUB_TOKEN}, then serve each request with its own primitive."
       ],
       "par": 10,
+      "path": [
+        "claude mcp remove tickets --scope local",
+        "claude mcp add --transport http tickets https://tickets.example.com/mcp --scope project",
+        "/mcp auth tickets",
+        "claude mcp add github --scope project -e GITHUB_PERSONAL_ACCESS_TOKEN='${GITHUB_TOKEN}' -- npx -y @modelcontextprotocol/server-github",
+        "Call tool",
+        "Attach resource",
+        "Run prompt",
+        "Call tool ×3"
+      ],
+      "lessons": [
+        "A local-scope entry shadows the project one: remove the stale entry before you add the shared one.",
+        "Bind the narrowest credential a server needs, not the admin token its README suggests, and match each request to a tool, a resource or a prompt."
+      ],
+      "tryItForReal": {
+        "needs": "Claude Code",
+        "example": "topics/mcp/examples/config",
+        "commands": "claude mcp remove tickets --scope local\nclaude mcp add --transport http tickets https://tickets.example.com/mcp --scope project\n/mcp auth tickets\nclaude mcp add github --scope project -e GITHUB_PERSONAL_ACCESS_TOKEN='${GITHUB_TOKEN}' \\\n  -- npx -y @modelcontextprotocol/server-github"
+      },
       "winTicks": 6,
       "catalog": [
         "filesystem",
@@ -929,6 +963,27 @@
         "Reject free-utils, then in the builder choose the name count_words, a full description, a described input and a content result over stdio, save it and claude mcp add wordcount."
       ],
       "par": 7,
+      "path": [
+        "Call tool",
+        "Reject the server free-utils",
+        "Builder: name = count_words",
+        "Builder: description = full",
+        "Builder: input = described",
+        "Builder: result = content",
+        "Builder: transport = stdio",
+        "Save the server you built",
+        "claude mcp add wordcount --scope project -- node ./wordcount.js",
+        "Call tool ×3"
+      ],
+      "lessons": [
+        "Read every tool description before you approve a server: a description can hide instructions aimed at the model.",
+        "Your own server is small: a clear name, a full description, a described input schema and a content result."
+      ],
+      "tryItForReal": {
+        "needs": "Node.js and Claude Code",
+        "example": "topics/mcp/examples/config",
+        "commands": "npx @modelcontextprotocol/inspector --cli node ./wordcount.js --method tools/list\nclaude mcp add wordcount --scope project -- node ./wordcount.js\nclaude mcp get wordcount"
+      },
       "winTicks": 4,
       "catalog": [
         "filesystem",

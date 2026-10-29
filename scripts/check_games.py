@@ -12,6 +12,9 @@ For every game directory (anything in docs/games/ except `shared/`) check that:
     (`coach`: board, actions, firstMove), so a first-time player is never left guessing;
   * every level has a `par` (an integer move count: the scripted solution's counted moves; the smoke test
     checks they agree), which the stars are measured against;
+  * every level has the debrief data: `path` (the scripted run's moves as text; the smoke test checks it),
+    `lessons` (1-2 strings) and `tryItForReal` ({needs, commands, example}, where `example` is a file or
+    directory that exists in the repo); the game has a `lossRule` for the result panel after a loss;
   * every action named in the scripted solution (one per level, if the scenario has `levels`) is
     defined in game.js, and every level's `schedule` only names declared events.
 
@@ -120,9 +123,30 @@ def check_game(game_dir: Path) -> list[str]:
             if not isinstance(coach.get(key), str) or not coach[key].strip():
                 err(f"coach.{key} must be a non-empty string")
 
+    if not isinstance(scenario.get("lossRule"), str) or not scenario["lossRule"].strip():
+        err("lossRule must be a non-empty string (which rule a lost run broke, shown on the result)")
+
     def check_par(label: str, par: object) -> None:
         if not isinstance(par, int) or isinstance(par, bool) or par < 0:
             err(f"{label}: par must be a non-negative integer (the scripted solution's move count)")
+
+    def check_debrief(label: str, item: dict) -> None:
+        path = item.get("path")
+        if not isinstance(path, list) or not path or not all(isinstance(p, str) and p.strip() for p in path):
+            err(f"{label}: path must be a non-empty list of strings (the efficient path shown in the debrief)")
+        lessons = item.get("lessons")
+        if not isinstance(lessons, list) or not 1 <= len(lessons) <= 2 or not all(isinstance(x, str) and x.strip() for x in lessons):
+            err(f"{label}: lessons must be a list of one or two non-empty strings")
+        real = item.get("tryItForReal")
+        if not isinstance(real, dict):
+            err(f"{label}: tryItForReal must be an object with needs, commands and example")
+            return
+        for key in ("needs", "commands", "example"):
+            if not isinstance(real.get(key), str) or not real[key].strip():
+                err(f"{label}: tryItForReal.{key} must be a non-empty string")
+        example = real.get("example")
+        if isinstance(example, str) and example.strip() and not (REPO_ROOT / example).exists():
+            err(f"{label}: tryItForReal.example {example!r} does not exist in the repo")
 
     def check_hints(label: str, hints: object) -> None:
         if not isinstance(hints, list) or not 1 <= len(hints) <= 4:
@@ -149,6 +173,7 @@ def check_game(game_dir: Path) -> list[str]:
             runs.append((f"level {lid!r}", level.get("solution")))
             check_hints(f"level {lid!r}", level.get("hints"))
             check_par(f"level {lid!r}", level.get("par"))
+            check_debrief(f"level {lid!r}", level)
             for j, item in enumerate(level.get("schedule", [])):
                 if not isinstance(item, dict) or item.get("event") not in seen:
                     err(f"level {lid!r} schedule[{j}] must name an event declared in events (got {item!r})")
@@ -158,6 +183,7 @@ def check_game(game_dir: Path) -> list[str]:
         runs.append(("scenario", scenario.get("solution")))
         check_hints("scenario", scenario.get("hints"))
         check_par("scenario", scenario.get("par"))
+        check_debrief("scenario", scenario)
 
     for label, solution in runs:
         if not isinstance(solution, list) or not solution:

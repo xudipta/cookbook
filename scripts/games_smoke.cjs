@@ -115,7 +115,7 @@ async function playRun(browser, id, run) {
         }
       }
       if (!manual) game.step(maxTicks - game.ticks);
-      return { status: game.status, ticks: game.ticks, actions: game.actionsUsed, health: Math.round(game.state.health) };
+      return { status: game.status, ticks: game.ticks, actions: game.actionsUsed, moves: game.moves.map((m) => m.text), health: Math.round(game.state.health) };
     },
     { gid: id, solution: run.solution, maxTicks: MAX_TICKS, manual: Boolean(run.manual) },
   );
@@ -124,6 +124,17 @@ async function playRun(browser, id, run) {
     // Par is the scripted solution's counted moves, so playing it earns three stars.
     const par = run.par;
     if (typeof par === 'number' && outcome.actions !== par) problems.push(`par is ${par} but the scripted solution used ${outcome.actions} counted moves: set par to ${outcome.actions}`);
+    // The efficient path shown in the debrief is the scripted run's own moves.
+    if (run.path) {
+      const played = collapseMoves(outcome.moves);
+      if (JSON.stringify(played) !== JSON.stringify(run.path)) problems.push(`path in scenarios.json differs from what the scripted solution did: expected ${JSON.stringify(played).slice(0, 200)}`);
+    }
+    const parts = await page.locator('.cg-result-won .cg-debrief-part > summary').allInnerTexts();
+    for (const want of ['What you did', 'The efficient path', 'Try it for real']) {
+      if (!parts.some((t) => t.startsWith(want))) problems.push(`the debrief has no "${want}" section`);
+    }
+    if (!(await page.locator('.cg-result-won .cg-lessons li').count())) problems.push('the debrief shows no lessons');
+    if (!(await page.locator('.cg-result-won .cg-timeline li').count())) problems.push('the debrief timeline is empty');
     const stars = await page.locator('.cg-result-won .cg-stars').innerText().catch(() => '');
     if (stars !== '★★★') problems.push(`the scripted solution should earn three stars, the result shows "${stars}"`);
   }
@@ -204,6 +215,77 @@ async function checkGuidance(browser, id, scenario) {
   return problems;
 }
 
+// The debrief on the first level: copy works, still works with the clipboard blocked (the text is selected), the
+// example link points into the repo, and a lost run says which rule it broke and offers a retry with a hint.
+async function checkDebrief(browser, id, scenario) {
+  const problems = [];
+  const first = scenario.levels ? scenario.levels[0] : scenario;
+  const level = scenario.levels ? `&level=${encodeURIComponent(first.id)}` : '';
+  const url = `${SITE_URL}docs/games/${id}/?seed=${first.seed ?? scenario.seed}&autoplay=0&coach=0${level}`;
+  const play = (page, solution) =>
+    page.evaluate(
+      ({ gid, solution: sol, manual }) => {
+        const game = window.cookbookGames[gid];
+        for (const step of [...sol].sort((a, b) => a.tick - b.tick)) {
+          if (!manual && step.tick > game.ticks) game.step(step.tick - game.ticks);
+          game.act(step.action, ...(step.args || []));
+        }
+        if (!manual) game.step(1000 - game.ticks);
+      },
+      { gid: id, solution, manual: Boolean(scenario.manual) },
+    );
+
+  // Won, clipboard blocked.
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+  const page = await ctx.newPage();
+  page.on('pageerror', (e) => problems.push(`page error: ${e.message}`));
+  await page.goto(url, { waitUntil: 'load' });
+  await page.waitForFunction((g) => window.cookbookGames && window.cookbookGames[g], id);
+  await page.evaluate(() => Object.defineProperty(navigator, 'clipboard', { value: undefined, configurable: true }));
+  await play(page, first.solution);
+  await page.locator('.cg-debrief-part', { hasText: 'Try it for real' }).locator('summary').click();
+  const box = await page.locator('.cg-commands').innerText();
+  if (box.trim() !== first.tryItForReal.commands.trim()) problems.push('the copyable block does not show the level\'s commands');
+  const copyBox = await page.locator('[data-cg="copy"]').boundingBox();
+  if (!copyBox || copyBox.height < 44) problems.push(`the Copy button is ${copyBox ? Math.round(copyBox.height) : 0}px tall on a phone, expected at least 44`);
+  await page.click('[data-cg="copy"]');
+  const selected = await page.evaluate(() => String(window.getSelection()));
+  if (selected.trim() !== first.tryItForReal.commands.trim()) problems.push('with the clipboard blocked, Copy did not select the commands');
+  if (!(await page.locator('.cg-copy-note').innerText()).length) problems.push('Copy showed no message');
+  const href = await page.getAttribute('[data-cg="example"]', 'href');
+  if (!href || !href.endsWith(first.tryItForReal.example)) problems.push(`the example link is ${href}, expected it to end with ${first.tryItForReal.example}`);
+  if (await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)) problems.push('the debrief makes the phone page scroll sideways');
+  await ctx.close();
+
+  // Lost: the rule, and Retry with a hint.
+  const lost = await browser.newPage();
+  lost.on('pageerror', (e) => problems.push(`page error: ${e.message}`));
+  await lost.goto(url, { waitUntil: 'load' });
+  await lost.waitForFunction((g) => window.cookbookGames && window.cookbookGames[g], id);
+  await lost.evaluate((gid) => {
+    const game = window.cookbookGames[gid];
+    // Do nothing and let time run out; a turn-based game is lost by running the health down through its own rules.
+    try {
+      for (let i = 0; i < 400 && game.status === 'playing'; i++) game.step(1);
+    } catch {
+      // A turn-based game that has not started its first turn cannot tick: it is not lost this way.
+    }
+  }, id);
+  const status = await lost.evaluate((g) => window.cookbookGames[g].status, id);
+  if (process.env.SMOKE_VERBOSE) console.log(`  ${id}: idle run ends "${status}"`);
+  if (status === 'lost') {
+    if (!(await lost.locator('.cg-rule-broken').count())) problems.push('a lost run does not say which rule was broken');
+    if (!(await lost.locator('.cg-result-lost [data-cg="retry-hint"]').count())) problems.push('a lost run has no "Retry with a hint" button');
+    else {
+      await lost.click('[data-cg="retry-hint"]');
+      const state = await lost.evaluate((g) => ({ status: window.cookbookGames[g].status, hints: window.cookbookGames[g].hintsUsed }), id);
+      if (state.status !== 'playing' || state.hints !== 1) problems.push(`"Retry with a hint" should restart with one hint open, got ${JSON.stringify(state)}`);
+    }
+  }
+  await lost.close();
+  return problems;
+}
+
 // A level that offers "Try a different version" must stay winnable on every version, and the versions must
 // actually differ. Each version is played with the scripted solution; the board of each is fingerprinted.
 async function checkVariants(browser, id, scenario, VARIANT_SEEDS) {
@@ -264,12 +346,14 @@ async function checkVariants(browser, id, scenario, VARIANT_SEEDS) {
   return problems;
 }
 
+let collapseMoves = (x) => x; // set in main() from the engine, so the path check uses the engine's own rule
+
 async function playGame(browser, id) {
   const scenario = JSON.parse(fs.readFileSync(path.join(GAMES_DIR, id, 'scenarios.json'), 'utf8'));
   const onBoard = JSON.parse(fs.readFileSync(path.join(GAMES_DIR, 'games.json'), 'utf8')).games.some((g) => g.id === id);
   const runs = scenario.levels
-    ? scenario.levels.map((l, i) => ({ label: l.id, level: l.id, seed: l.seed ?? scenario.seed, solution: l.solution, par: l.par, manual: scenario.manual, isLast: i === scenario.levels.length - 1, onBoard }))
-    : [{ label: null, level: null, seed: scenario.seed, solution: scenario.solution, par: scenario.par, manual: scenario.manual, isLast: true, onBoard }];
+    ? scenario.levels.map((l, i) => ({ label: l.id, level: l.id, seed: l.seed ?? scenario.seed, solution: l.solution, par: l.par, path: l.path, manual: scenario.manual, isLast: i === scenario.levels.length - 1, onBoard }))
+    : [{ label: null, level: null, seed: scenario.seed, solution: scenario.solution, par: scenario.par, path: scenario.path, manual: scenario.manual, isLast: true, onBoard }];
 
   const problems = [];
   for (const run of runs) {
@@ -278,6 +362,7 @@ async function playGame(browser, id) {
   }
 
   problems.push(...(await checkGuidance(browser, id, scenario)).map((p) => `[guidance] ${p}`));
+  problems.push(...(await checkDebrief(browser, id, scenario)).map((p) => `[debrief] ${p}`));
   const { VARIANT_SEEDS } = await import(pathToFileURL(path.join(GAMES_DIR, 'shared', 'engine.js')).href);
   problems.push(...(await checkVariants(browser, id, scenario, VARIANT_SEEDS)).map((p) => `[versions] ${p}`));
 
@@ -287,6 +372,7 @@ async function playGame(browser, id) {
 }
 
 (async () => {
+  ({ collapseMoves } = await import(pathToFileURL(path.join(GAMES_DIR, 'shared', 'engine.js')).href));
   const ids = fs
     .readdirSync(GAMES_DIR, { withFileTypes: true })
     .filter((d) => d.isDirectory() && d.name !== 'shared' && fs.existsSync(path.join(GAMES_DIR, d.name, 'scenarios.json')))
