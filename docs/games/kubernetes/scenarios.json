@@ -116,6 +116,7 @@
         "A bad rollout leaves the new pods failing while the old ones are fine, and a pod restarts because of a missing setting.",
         "Run kubectl rollout undo deploy/web, then use Edit to add the missing environment key (mode)."
       ],
+      "par": 2,
       "seed": 11,
       "tickMs": 5000,
       "winTicks": 30,
@@ -168,6 +169,8 @@
         "legacy-web is a bare pod, so nothing replaces it; the memory limit is too tight, and a release is bad.",
         "Scale web to 3, roll back the bad release, raise the memory limit with set resources, and add a readiness probe in Edit."
       ],
+      "par": 4,
+      "variants": true,
       "seed": 23,
       "tickMs": 4000,
       "winTicks": 45,
@@ -243,6 +246,8 @@
         "Three things overlap: the batch deployment crowds out web, a web rollout is bad, and a security change now needs a non-root image.",
         "Scale batch to 0, undo the web rollout, switch the image to web:1.0-nonroot in Edit, and raise the memory limit."
       ],
+      "par": 4,
+      "variants": true,
       "seed": 41,
       "tickMs": 3500,
       "winTicks": 50,

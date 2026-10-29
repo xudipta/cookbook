@@ -145,6 +145,7 @@
         "A plan shows what will change before you apply it. After the first apply, changes arrive from outside.",
         "terraform init, terraform apply -auto-approve; then press Next day and apply again whenever the plan shows a difference."
       ],
+      "par": 3,
       "winTicks": 4,
       "minHealth": 50,
       "workspace": "default",
@@ -244,6 +245,7 @@
         "A bucket was made outside Terraform and needs importing, and a rename that looks harmless would destroy and recreate the database.",
         "Apply what the plan shows, import aws_s3_bucket.assets acme-assets, and set the identifier back to orders-db so the plan stays empty."
       ],
+      "par": 4,
       "winTicks": 5,
       "minHealth": 50,
       "workspace": "default",
@@ -381,6 +383,7 @@
         "The new backend block needs a state migration, and a stale lock blocks you until it is released.",
         "terraform init -migrate-state, select dev before applying, then prod; for a stale lock, force-unlock with the ID the error prints."
       ],
+      "par": 4,
       "winTicks": 6,
       "minHealth": 50,
       "workspace": "prod",
@@ -569,6 +572,7 @@
         "Moving code into a module changes the resource addresses, so Terraform would destroy and recreate; a moved block says the old address is the new one.",
         "Extract the module, add a moved entry for each of the four resources, then apply and check the plan touches nothing real."
       ],
+      "par": 6,
       "winTicks": 3,
       "minHealth": 50,
       "nagCost": 3,

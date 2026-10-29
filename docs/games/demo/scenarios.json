@@ -51,5 +51,6 @@
     "Look at the pod count and the error budget.",
     "The chaos monkey kills a pod now and then, and a node goes down at tick 8.",
     "Add replicas early so losing a node still leaves enough pods serving."
-  ]
+  ],
+  "par": 3
 }

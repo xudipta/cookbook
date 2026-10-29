@@ -27,8 +27,12 @@ const PHASE_FAILURES = new Set(['ImagePullBackOff', 'CreateContainerConfigError'
 
 // ---------------------------------------------------------------- world
 
-export function createWorld(sc) {
+// `variant` is { seed } for a non-standard version of the level: the pods get different names, so a player who
+// remembers the standard run cannot paste its commands, and the chaos monkey (its rolls come from the seed) strikes
+// at other times and at other pods.
+export function createWorld(sc, variant = null) {
   const w = {
+    nameShift: variant ? variant.seed : 0,
     nodes: Array.from({ length: sc.nodes }, (_, i) => ({ name: `node-${i + 1}`, capacity: sc.nodeCapacity })),
     needed: sc.needed,
     configKeys: ['mode'],
@@ -81,14 +85,14 @@ function startSettled(w, pod) {
   pod.age = WARMUP;
 }
 
-const hashFor = (rev) => HASHES[rev % HASHES.length];
+const hashFor = (w, rev) => HASHES[(rev + w.nameShift) % HASHES.length];
 
 function spawn(w, deploy, tick, template, fixedName) {
   const n = w.podSeq++;
   const tpl = template || deploy.template;
   const pod = {
     id: n + 1,
-    name: fixedName || `${deploy.name}-${hashFor(tpl.rev)}-${SUFFIXES[n % SUFFIXES.length]}`,
+    name: fixedName || `${deploy.name}-${hashFor(w, tpl.rev)}-${SUFFIXES[(n + w.nameShift) % SUFFIXES.length]}`,
     deploy: deploy ? deploy.name : null,
     template: tpl,
     node: null,
@@ -265,7 +269,7 @@ export function setTemplate(w, d, changes, tick) {
   d.history.push(d.template);
   if (d.history.length > 6) d.history.shift();
   d.template = next;
-  note(w, tick, 'Normal', 'ScalingReplicaSet', `deployment/${d.name}`, `Scaled up replica set ${d.name}-${hashFor(next.rev)} to ${Math.min(1, d.replicas)}`);
+  note(w, tick, 'Normal', 'ScalingReplicaSet', `deployment/${d.name}`, `Scaled up replica set ${d.name}-${hashFor(w, next.rev)} to ${Math.min(1, d.replicas)}`);
   return next;
 }
 
@@ -429,7 +433,7 @@ export const isLost = (w) => w.health < w.minHealth;
 export function scaleDeploy(w, d, n, tick) {
   if (n === d.replicas) return false;
   d.replicas = n;
-  note(w, tick, 'Normal', 'ScalingReplicaSet', `deployment/${d.name}`, `Scaled replica set ${d.name}-${hashFor(d.template.rev)} to ${n}`);
+  note(w, tick, 'Normal', 'ScalingReplicaSet', `deployment/${d.name}`, `Scaled replica set ${d.name}-${hashFor(w, d.template.rev)} to ${n}`);
   return true;
 }
 
@@ -439,7 +443,7 @@ export function undoRollout(w, d, tick) {
   if (!prev) return false;
   d.history.push(d.template);
   d.template = prev;
-  note(w, tick, 'Normal', 'DeploymentRollback', `deployment/${d.name}`, `Rolled back deployment "${d.name}" to revision of replica set ${d.name}-${hashFor(prev.rev)}`);
+  note(w, tick, 'Normal', 'DeploymentRollback', `deployment/${d.name}`, `Rolled back deployment "${d.name}" to revision of replica set ${d.name}-${hashFor(w, prev.rev)}`);
   return true;
 }
 

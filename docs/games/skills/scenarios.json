@@ -159,6 +159,7 @@
         "Frontmatter is always loaded, the body loads when the skill is picked, and bundled files load only when a request needs them.",
         "Move the script, the labels and the example into bundled files, then send the requests."
       ],
+      "par": 3,
       "mode": "layers",
       "skillName": "release-notes",
       "winTicks": 7,
@@ -351,6 +352,7 @@
         "Say what the skill does and when to use it, in the words people actually ask with, and keep out what the rival skill covers.",
         "Write a description that names release notes and changelogs and what they are built from, with clear use-when triggers, then save and send the queue."
       ],
+      "par": 1,
       "mode": "file",
       "skillName": "release-notes",
       "winTicks": 7,
@@ -464,6 +466,7 @@
         "Fix the frontmatter, name the folder to match the skill, put it under .claude/skills, and allow only the tools it needs.",
         "Save SKILL.md with a matching name and a good description, allow only running the script and reading files, folder release-notes, location .claude/skills."
       ],
+      "par": 3,
       "mode": "file",
       "skillName": "release-notes",
       "winTicks": 6,

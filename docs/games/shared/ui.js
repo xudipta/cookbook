@@ -15,6 +15,18 @@ export function el(tag, props = {}, ...kids) {
 }
 
 const HINT_LABELS = ['Where to look', 'What is wrong', 'What to do'];
+const starText = (n) => '★'.repeat(n) + '☆'.repeat(3 - n);
+
+// "★★☆  Par 4 moves, you used 5. Three stars need 4 moves, two need 6." The text carries the meaning; the stars decorate it.
+function starLine(stars, par, used) {
+  const move = (n) => `${n} move${n === 1 ? '' : 's'}`;
+  return el(
+    'p',
+    { class: 'cg-stars-line' },
+    el('span', { class: 'cg-stars', 'aria-hidden': 'true', text: starText(stars) }),
+    el('span', { class: 'cg-stars-text', text: `${stars} of 3 stars. Par is ${move(par)} and you used ${used}. Three stars need ${move(par)} or fewer, two need ${move(Math.ceil(par * 1.5))}.` }),
+  );
+}
 const COACH_KEY = 'cookbook-game-coach';
 
 // Storage can be blocked (private windows, site data off): the guided start then just shows each visit.
@@ -54,6 +66,7 @@ export function createUI(container, { def, scenario, levels, siteRoot, handlers,
 
   const tickEl = el('span', { class: 'cg-stat', 'data-stat': 'tick' });
   const scoreEl = el('span', { class: 'cg-stat', 'data-stat': 'score' });
+  const movesEl = el('span', { class: 'cg-stat', 'data-stat': 'moves' });
   const bestEl = el('span', { class: 'cg-stat', 'data-stat': 'best' });
   const statusEl = el('span', { class: 'cg-stat cg-status', 'data-stat': 'status', role: 'status' });
   const barFill = el('div', { class: 'cg-meter-fill' });
@@ -83,6 +96,7 @@ export function createUI(container, { def, scenario, levels, siteRoot, handlers,
     { class: 'cg-hud' },
     el('div', { class: 'cg-meter-wrap' }, el('span', { class: 'cg-label', text: scenario.healthLabel || 'Health' }), meter, meterValue),
     tickEl,
+    movesEl,
     scoreEl,
     bestEl,
     statusEl,
@@ -236,9 +250,11 @@ export function createUI(container, { def, scenario, levels, siteRoot, handlers,
       if (learn) li.append(learnLink(learn, siteRoot));
     },
 
-    setHud({ ticks, winTicks, tickLabel = 'Tick', health, score, best = 0, status, paused }) {
+    setHud({ ticks, winTicks, tickLabel = 'Tick', health, score, best = 0, status, paused, moves = 0, par }) {
       tickEl.textContent = winTicks ? `${tickLabel} ${ticks} / ${winTicks}` : `${tickLabel} ${ticks}`;
       scoreEl.textContent = `Score ${score}`;
+      movesEl.textContent = par === undefined ? `Moves ${moves}` : `Moves ${moves} / par ${par}`;
+      movesEl.dataset.over = String(par !== undefined && moves > par);
       bestEl.textContent = best ? `Best ${best}` : '';
       bestEl.hidden = !best;
       const pct = Math.max(0, Math.min(100, Math.round(health)));
@@ -248,8 +264,8 @@ export function createUI(container, { def, scenario, levels, siteRoot, handlers,
       meterValue.textContent = `${pct}%`;
       dockFill.style.width = `${pct}%`;
       dockFill.dataset.level = barFill.dataset.level;
-      dockStatus.textContent = `${pct}% · ${tickEl.textContent} · ${score}${status === 'playing' ? '' : ` · ${statusEl.textContent}`}`;
       statusEl.textContent = status === 'playing' ? (paused ? 'Paused' : 'Playing') : status === 'won' ? 'You won' : 'You lost';
+      dockStatus.textContent = `${pct}% · ${tickEl.textContent} · ${score}${status === 'playing' ? '' : ` · ${statusEl.textContent}`}`;
       statusEl.dataset.status = status;
       pauseBtn.textContent = paused ? 'Resume' : 'Pause';
       pauseBtn.disabled = status !== 'playing';
@@ -264,14 +280,15 @@ export function createUI(container, { def, scenario, levels, siteRoot, handlers,
       showGoal(matchMedia('(min-width: 700px)').matches);
     },
 
-    // Mark the levels already won in this browser (a check mark, not colour alone).
-    setProgress(doneIds) {
-      const done = new Set(doneIds);
+    // Mark the levels already won in this browser, with their stars (text, not colour alone).
+    setProgress(stars) {
       for (const [id, btn] of levelButtons) {
         const title = levels.find((l) => l.id === id).title;
-        btn.dataset.done = String(done.has(id));
-        btn.textContent = done.has(id) ? `${title} ✓` : title;
-        btn.setAttribute('aria-label', done.has(id) ? `${title}, completed` : title);
+        const n = stars[id] || 0;
+        btn.dataset.done = String(n > 0);
+        btn.dataset.stars = String(n);
+        btn.textContent = n ? `${title} ${starText(n)}` : title;
+        btn.setAttribute('aria-label', n ? `${title}, completed, ${n} of 3 stars` : title);
       }
     },
 
@@ -308,7 +325,7 @@ export function createUI(container, { def, scenario, levels, siteRoot, handlers,
       delete latest.dataset.kind;
     },
 
-    showResult({ status, score, best, ticks, actionsUsed, hintsUsed = 0, avgResolve, events, nextLevel }) {
+    showResult({ status, score, best, ticks, actionsUsed, hintsUsed = 0, stars = 0, par, version, avgResolve, events, nextLevel }) {
       const won = status === 'won';
       const list = el('ul', { class: 'cg-result-events cg-list' });
       for (const e of events) {
@@ -321,8 +338,14 @@ export function createUI(container, { def, scenario, levels, siteRoot, handlers,
       if (next) next.addEventListener('click', () => handlers.setLevel(nextLevel.id));
       const again = el('button', { class: `cg-btn${next ? '' : ' cg-btn-primary'}`, type: 'button', 'data-cg': 'again', text: 'Play again' });
       again.addEventListener('click', () => handlers.restart());
+      // A level with a seeded variant offers the next version (and the way back to the standard one).
+      const other = version ? el('button', { class: 'cg-btn', type: 'button', 'data-cg': 'version', text: 'Try a different version' }) : null;
+      if (other) other.addEventListener('click', () => handlers.nextVersion());
+      const standard = version && !version.standard ? el('button', { class: 'cg-btn', type: 'button', 'data-cg': 'standard', text: 'Standard version' }) : null;
+      if (standard) standard.addEventListener('click', () => handlers.standardVersion());
       const notes = meta ? el('a', { class: 'cg-btn', 'data-cg': 'notes', href: new URL(meta.notes, siteRoot).href, text: 'Read the notes' }) : null;
       const facts = [`Score ${score}`, `Best ${best}`, `${ticks} ticks`, `${actionsUsed} actions`];
+      if (version && !version.standard) facts.push(`version ${version.seed}`);
       if (hintsUsed) facts.push(`${hintsUsed} hint${hintsUsed === 1 ? '' : 's'} (−${hintsUsed * hintCost})`);
       if (avgResolve !== null) facts.push(`avg ${avgResolve.toFixed(1)} ticks to resolve an event`);
       resultSlot.replaceChildren(
@@ -330,10 +353,11 @@ export function createUI(container, { def, scenario, levels, siteRoot, handlers,
           'section',
           { class: `cg-result cg-result-${status}`, 'aria-label': 'Result' },
           el('h3', { class: 'cg-h', text: won ? 'You kept it running' : 'It fell over' }),
+          won && par !== undefined ? starLine(stars, par, actionsUsed) : null,
           el('p', { class: 'cg-result-facts', text: facts.join(' · ') }),
           events.length ? el('p', { text: 'What happened, and where to read more:' }) : null,
           list,
-          el('div', { class: 'cg-result-actions' }, next, again, notes),
+          el('div', { class: 'cg-result-actions' }, next, again, other, standard, notes),
         ),
       );
       (next || again).focus({ preventScroll: true });

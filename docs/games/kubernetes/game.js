@@ -216,7 +216,7 @@ registerGame({
   styles: 'game.css',
 
   init(state, ctx) {
-    Object.assign(state, createWorld(ctx.scenario));
+    Object.assign(state, createWorld(ctx.scenario, ctx.variant ? { seed: ctx.seed } : null));
     buildBoard(state, ctx);
     const web = state.deploys.web;
     ctx.log(`Cluster ready: ${state.nodes.length} nodes, deployment web x${web.replicas}, Service web-svc (needs ${state.needed} pods' worth of capacity).`);

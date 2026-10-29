@@ -212,6 +212,7 @@
         "The everyday flow is branch, edit, add, commit, push, open the PR, merge it.",
         "git switch -c docs/contributing, edit README.md in the editor, git add, git commit -m, git push -u origin HEAD, gh pr create --fill, gh pr merge --squash --delete-branch."
       ],
+      "par": 6,
       "seed": 1,
       "winTicks": 12,
       "minHealth": 50,
@@ -363,6 +364,7 @@
         "Bring the branch up to date (merge or rebase). The conflict in config.yml has two sides to keep: timeout 60 and retries 3.",
         "git fetch, git rebase origin/main, fix config.yml in the editor, git add it, git rebase --continue, git push --force-with-lease, then gh pr merge."
       ],
+      "par": 6,
       "seed": 2,
       "winTicks": 14,
       "minHealth": 50,
@@ -571,6 +573,7 @@
         "You cannot rewrite main or push to it. You undo a commit with a new one (revert) on a branch, through a pull request, and you protect your own work first.",
         "Stash the edits, branch the typo fix, reset main to origin/main, revert on a new branch and open a PR, then rebase and merge the typo PR."
       ],
+      "par": 16,
       "seed": 3,
       "winTicks": 30,
       "minHealth": 50,

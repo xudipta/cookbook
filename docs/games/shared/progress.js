@@ -1,7 +1,7 @@
 // Per-level progress for the games, kept in this browser only (localStorage). Every access is wrapped:
 // storage can be blocked or full, and a game must work without it.
 //
-//   cookbook-game-progress:<game>  JSON { levels: { <levelId>: { best, won, plays, last } } }
+//   cookbook-game-progress:<game>  JSON { levels: { <levelId>: { best, won, stars, plays, last } } }
 //   cookbook-game-best:<game>      the older single best score, still written (as the best over all levels)
 //                                  and still read, so scores saved before per-level progress are kept.
 
@@ -52,13 +52,31 @@ export function completedLevels(game) {
   return Object.keys(levels).filter((id) => levels[id].won);
 }
 
+// Stars (1-3) for a level: 0 until it is won. A win saved before stars existed counts as one star.
+const starsOf = (entry) => (entry && entry.won ? Math.max(1, Math.min(3, entry.stars || 1)) : 0);
+
+export function levelStars(game, levelId) {
+  return starsOf(readProgress(game).levels[levelId || NO_LEVEL]);
+}
+
+// { levelId: stars } for every level won so far (the level picker shows these).
+export function starsByLevel(game) {
+  const { levels } = readProgress(game);
+  return Object.fromEntries(Object.keys(levels).filter((id) => levels[id].won).map((id) => [id, starsOf(levels[id])]));
+}
+
+export function starsEarned(game) {
+  return Object.values(starsByLevel(game)).reduce((sum, n) => sum + n, 0);
+}
+
 // Records a finished run. Returns the best score for that level after this run.
-export function recordRun(game, levelId, { score, won }) {
+export function recordRun(game, levelId, { score, won, stars = 0 }) {
   const progress = readProgress(game);
   const id = levelId || NO_LEVEL;
   const entry = progress.levels[id] || { best: 0, won: false, plays: 0, last: 0 };
   entry.best = Math.max(entry.best || 0, score);
   entry.won = entry.won || Boolean(won);
+  if (won) entry.stars = Math.max(entry.stars || 0, stars);
   entry.plays = (entry.plays || 0) + 1;
   entry.last = Date.now();
   progress.levels[id] = entry;
