@@ -322,6 +322,7 @@
 }
 
 .cg .oh-badge {
+  background: var(--surface);
   padding: 0 0.4rem;
   border: 1px solid currentcolor;
   border-radius: 0.2rem;
@@ -432,7 +433,7 @@
 }
 
 .cg .oh-type {
-  font-size: 0.68rem;
+  font-size: 0.72rem;
   color: var(--muted);
   text-transform: uppercase;
 }
@@ -456,7 +457,7 @@
 
 .cg .oh-axis {
   fill: var(--muted);
-  font: 8px var(--font-mono);
+  font: 11px var(--font-mono);
 }
 
 .cg .oh-line {
@@ -523,7 +524,7 @@
 
 .cg .oh-letter {
   fill: var(--ink);
-  font: 700 8px var(--font-mono);
+  font: 700 11px var(--font-mono);
   paint-order: stroke;
   stroke: var(--surface);
   stroke-width: 2px;
@@ -589,4 +590,182 @@
   .cg .oh-report .oh-row {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   }
+}
+
+/* ---- readable charts, one at a time ---- */
+
+.cg .oh-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.5rem;
+}
+
+.cg .oh-tab,
+.cg .oh-chip {
+  padding: 0.3rem 0.7rem;
+  border: 1px solid var(--cg-accent);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--cg-accent);
+  font: 600 0.8rem/1.2 var(--font-body);
+  cursor: pointer;
+}
+
+.cg .oh-tab[aria-pressed="true"],
+.cg .oh-chip[aria-pressed="true"] {
+  background: var(--cg-accent);
+  color: var(--accent-ink);
+}
+
+.cg .oh-chip:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.cg .oh-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.cg .oh-scrub {
+  width: 100%;
+  margin: 0.2rem 0 0;
+  accent-color: var(--cg-accent);
+}
+
+.cg .oh-readout {
+  margin: 0;
+  font: 700 0.85rem/1.3 var(--font-mono);
+}
+
+.cg .oh-summary {
+  margin: 0;
+  font: 500 0.85rem/1.4 var(--font-body);
+  color: var(--muted);
+}
+
+.cg .oh-dot {
+  stroke: var(--surface);
+  stroke-width: 1.5;
+}
+
+.cg .oh-quiz-top {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+.cg .oh-quiz-top > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.cg .oh-sparkline {
+  flex: none;
+  width: 9.5rem;
+  height: auto;
+  border: 1px solid var(--line);
+  border-radius: 0.3rem;
+  background: var(--surface);
+}
+
+.cg .oh-spark {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+}
+
+.cg .oh-spark-bar {
+  fill: var(--accent);
+}
+
+.cg .oh-ok[data-ok="false"] {
+  color: var(--bad);
+}
+
+.cg .oh-ok:empty {
+  display: none;
+}
+
+.cg .oh-quiz[data-compact="true"] > :not(.oh-ok) {
+  display: none;
+}
+
+.cg .oh-quiz[data-compact="true"] {
+  padding-block: 0.3rem;
+}
+
+/* Material draws an icon and big margins on every details; these sections are compact cards. */
+.md-typeset details.oh-sec {
+  margin: 0.5rem 0;
+  padding: 0.5rem 0.65rem;
+}
+
+.md-typeset details.oh-sec > summary {
+  padding: 0.35rem 0;
+}
+
+.md-typeset details.oh-sec > summary::before,
+.md-typeset details.oh-sec > summary::after {
+  display: none;
+}
+
+.cg .oh-quiz-top {
+  flex-wrap: wrap;
+}
+
+.cg .oh-sparkline {
+  width: 7rem;
+}
+
+.cg .oh-quiz-top .oh-hint {
+  flex-basis: 100%;
+}
+
+.cg .oh-rule-btns {
+  display: inline-flex;
+  gap: 0.4rem;
+  margin-left: auto;
+}
+
+.cg .oh-rule .oh-expr {
+  padding: 0.3rem 0.5rem;
+}
+
+/* A rule is a two-line summary that opens to its PromQL and buttons. */
+.md-typeset details.oh-rule {
+  margin: 0;
+  padding: 0.3rem 0.6rem;
+}
+
+.md-typeset details.oh-rule > summary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.2rem 0;
+  cursor: pointer;
+}
+
+.md-typeset details.oh-rule > summary::before,
+.md-typeset details.oh-rule > summary::after {
+  display: none;
+}
+
+.cg .oh-rule[open] > :not(summary) {
+  margin-top: 0.4rem;
+}
+
+/* Drawn at about their real size (the axis text is 11px): never stretched across a wide screen. */
+.cg .oh-chart,
+.cg .oh-timeline {
+  max-width: 42rem;
+}
+
+.cg .oh-panel {
+  max-width: 44rem;
 }

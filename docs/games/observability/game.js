@@ -74,10 +74,57 @@ const GROUP_HELP = {
 };
 const TYPES = ['counter', 'gauge', 'histogram', 'summary'];
 const QUIZ_FNS = [
-  ['rate', 'rate() first'],
-  ['histogram_quantile', 'histogram_quantile() first'],
-  ['nothing', 'nothing: use it as it is'],
+  ['rate', 'rate()'],
+  ['histogram_quantile', 'histogram_quantile()'],
+  ['predict_linear', 'predict_linear()'],
+  ['nothing', 'as it is'],
 ];
+
+// What the graph of each kind of signal looks like, and what an alert on it does when it is read wrongly.
+const SHAPE_NOTES = {
+  counter: 'Look at the graph: it only climbs and drops to zero on a restart, which is what a counter does.',
+  gauge: 'Look at the graph: it wanders up and down around a level, which is what a gauge does.',
+  histogram: 'Look at the bars: counts per latency bucket, which is a histogram.',
+  summary: 'Look at the lines: percentiles already worked out, one line each, which is a summary.',
+  decline: 'Look at the graph: a steady slide down, a gauge that is running out.',
+};
+const FN_CONSEQUENCE = {
+  rate: 'rate() of something that is not a counter stays near zero: the alert stays quiet while users suffer.',
+  histogram_quantile: 'histogram_quantile() needs _bucket series; on this signal it returns nothing, so the alert stays quiet.',
+  predict_linear: 'predict_linear() projects a trend; on a signal without one it fires on noise, or never.',
+  nothing: 'Alerting on the raw value: for a counter it only ever rises, so the alert fires once and never clears.',
+};
+
+// A tiny deterministic picture of each kind of signal, so the warm-up is about reading a graph.
+function sparkFor(shape) {
+  const W = 150;
+  const H = 54;
+  const n = 30;
+  const pts = [];
+  const noise = (k) => Math.sin(k * 2.3) * 0.5 + Math.sin(k * 0.9 + 1) * 0.5;
+  const line = (f) => {
+    for (let k = 0; k < n; k++) pts.push(`${((k / (n - 1)) * (W - 4) + 2).toFixed(1)},${(H - 4 - f(k) * (H - 10)).toFixed(1)}`);
+    return pts.splice(0).join(' ');
+  };
+  const parts = [];
+  if (shape === 'counter') parts.push(svg('polyline', { points: line((k) => ((k % 15) / 15) * 0.9 + 0.05), class: 'oh-spark' }));
+  else if (shape === 'gauge') parts.push(svg('polyline', { points: line((k) => 0.5 + noise(k) * 0.3), class: 'oh-spark' }));
+  else if (shape === 'decline') parts.push(svg('polyline', { points: line((k) => 0.9 - (k / n) * 0.8 + noise(k) * 0.03), class: 'oh-spark' }));
+  else if (shape === 'summary') {
+    for (const [base, amp] of [[0.25, 0.05], [0.5, 0.08], [0.8, 0.1]]) parts.push(svg('polyline', { points: line((k) => base + noise(k + base * 10) * amp), class: 'oh-spark' }));
+  } else {
+    [0.15, 0.4, 0.8, 0.55, 0.3, 0.1].forEach((v, k) => parts.push(svg('rect', { x: 8 + k * 23, y: H - 4 - v * (H - 10), width: 16, height: v * (H - 10), class: 'oh-spark-bar' })));
+  }
+  return svg('svg', { viewBox: `0 0 ${W} ${H}`, class: 'oh-sparkline', role: 'img', 'aria-label': SHAPE_NOTES[shape].replace('Look at the graph: ', '').replace('Look at the bars: ', '').replace('Look at the lines: ', '') }, parts);
+}
+
+function consequence(item, choice) {
+  const bits = [];
+  const kind = item.shape || item.type;
+  if (item.type !== choice.type) bits.push(SHAPE_NOTES[kind]);
+  if (item.fn !== choice.fn) bits.push(FN_CONSEQUENCE[choice.fn]);
+  return bits.join(' ');
+}
 
 const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
 
@@ -112,12 +159,14 @@ function thresholdFor(w, id) {
   return null;
 }
 
+// A chart drawn at about its real size (so the 11px axis text stays 11px), plus the text a screen reader or a
+// thumb can use instead: a summary and a slider that reads one point.
 function chartFor(w, panel) {
   const data = panelSeries(w, panel.id).filter((p) => Number.isFinite(p.v));
   const thr = thresholdFor(w, panel.id);
-  const W = 240;
-  const H = 96;
-  const pad = { l: 34, r: 6, t: 6, b: 16 };
+  const W = 330;
+  const H = 150;
+  const pad = { l: 44, r: 8, t: 8, b: 22 };
   const top = niceMax(Math.max(...data.map((p) => p.v), thr ?? 0, 0));
   const i0 = data[0].i;
   const i1 = data[data.length - 1].i;
@@ -125,46 +174,66 @@ function chartFor(w, panel) {
   const y = (v) => pad.t + (1 - Math.min(v, top) / top) * (H - pad.t - pad.b);
   const peak = data.reduce((a, p) => (p.v > a.v ? p : a), data[0]);
   const now = data[data.length - 1];
-  const label = `${panel.title}, last 6 hours. Now ${fmtVal(now.v, panel.id)}; highest ${fmtVal(peak.v, panel.id)} at ${clockOf(w, peak.i)}.${thr !== null ? ` Your alert fires above ${axisVal(thr, panel.id)}.` : ''}`;
+  const crossed = thr !== null ? data.find((p) => p.v > thr) : null;
+  const summary = `${panel.title}: now ${fmtVal(now.v, panel.id)}; highest ${fmtVal(peak.v, panel.id)} at ${clockOf(w, peak.i)}.${
+    thr === null ? '' : crossed ? ` It crossed your alert level (${axisVal(thr, panel.id)}) at ${clockOf(w, crossed.i)}.` : ` It never crossed your alert level (${axisVal(thr, panel.id)}).`
+  }`;
   const grid = [0, 0.5, 1].map((f) => {
     const gy = y(top * f);
     return [
       svg('line', { x1: pad.l, x2: W - pad.r, y1: gy, y2: gy, class: 'oh-grid' }),
-      svg('text', { x: pad.l - 3, y: gy + 3, class: 'oh-axis', 'text-anchor': 'end' }, axisVal(top * f, panel.id)),
+      svg('text', { x: pad.l - 4, y: gy + 4, class: 'oh-axis', 'text-anchor': 'end' }, axisVal(top * f, panel.id)),
     ];
   });
-  return svg(
+  const cursor = svg('circle', { cx: x(now.i), cy: y(now.v), r: 4, class: 'oh-dot' });
+  const chart = svg(
     'svg',
-    { viewBox: `0 0 ${W} ${H}`, class: 'oh-chart', role: 'img', 'aria-label': label },
+    { viewBox: `0 0 ${W} ${H}`, class: 'oh-chart', role: 'img', 'aria-label': summary },
     grid,
-    svg('text', { x: pad.l, y: H - 3, class: 'oh-axis' }, clockOf(w, i0)),
-    svg('text', { x: W - pad.r, y: H - 3, class: 'oh-axis', 'text-anchor': 'end' }, clockOf(w, i1)),
-    thr !== null && thr <= top ? [svg('line', { x1: pad.l, x2: W - pad.r, y1: y(thr), y2: y(thr), class: 'oh-thr' }), svg('text', { x: W - pad.r, y: y(thr) - 2, class: 'oh-axis oh-thr-label', 'text-anchor': 'end' }, 'alert level')] : null,
+    svg('text', { x: pad.l, y: H - 4, class: 'oh-axis' }, clockOf(w, i0)),
+    svg('text', { x: W - pad.r, y: H - 4, class: 'oh-axis', 'text-anchor': 'end' }, clockOf(w, i1)),
+    thr !== null && thr <= top ? [svg('line', { x1: pad.l, x2: W - pad.r, y1: y(thr), y2: y(thr), class: 'oh-thr' }), svg('text', { x: W - pad.r, y: y(thr) - 3, class: 'oh-axis oh-thr-label', 'text-anchor': 'end' }, 'alert level')] : null,
     svg('polyline', { points: data.map((p) => `${x(p.i).toFixed(1)},${y(p.v).toFixed(1)}`).join(' '), class: 'oh-line', fill: 'none' }),
-    svg('circle', { cx: x(now.i), cy: y(now.v), r: 2.5, class: 'oh-dot' }),
+    cursor,
   );
+  // Slide to read one point as text: the time and the value.
+  const readout = el('p', { class: 'oh-readout', role: 'status', 'aria-live': 'polite', text: `Now (${clockOf(w, now.i)}): ${fmtVal(now.v, panel.id)}` });
+  const slider = el('input', { class: 'oh-scrub', type: 'range', min: 0, max: data.length - 1, value: data.length - 1, 'aria-label': `Read ${panel.title} at a point in time` });
+  slider.addEventListener('input', () => {
+    const p = data[Number(slider.value)];
+    cursor.setAttribute('cx', String(x(p.i)));
+    cursor.setAttribute('cy', String(y(p.v)));
+    readout.textContent = `${clockOf(w, p.i)}: ${fmtVal(p.v, panel.id)}`;
+  });
+  return { chart, summary, slider, readout };
 }
 
-function panelNode(w, panel) {
+// One panel at a time: tabs choose which, so the page stays short.
+function panelNode(state, panel) {
+  const w = state;
   const slow = panel.id === 1 && dashSlow(w);
   const data = panelSeries(w, panel.id);
   const now = data[data.length - 1];
-  const body = slow
-    ? el('p', { class: 'oh-slow', text: 'Loading... this query takes about 10 s and times out. Precompute it with a recording rule.' })
-    : chartFor(w, panel);
   const expr = panelExpr(w, panel.id);
-  const gauge =
-    panel.type === 'gauge'
-      ? el('div', { class: 'oh-gauge', 'aria-hidden': 'true' }, el('div', { class: 'oh-gauge-fill', style: `width:${Math.min(100, (now.v / 150) * 100)}%` }))
-      : null;
-  return el(
-    'div',
-    { class: 'oh-panel', role: 'listitem', 'data-panel': panel.id },
-    el('div', { class: 'oh-panel-head' }, el('strong', { text: panel.title }), el('span', { class: 'oh-type', text: panel.type }), el('span', { class: 'oh-now', text: slow ? 'timeout' : fmtVal(now.v, panel.id) })),
-    body,
-    gauge,
-    el('code', { class: 'oh-expr', text: expr }),
+  const head = el('div', { class: 'oh-panel-head' }, el('strong', { text: panel.title }), el('span', { class: 'oh-type', text: panel.type }), el('span', { class: 'oh-now', text: slow ? 'timeout' : fmtVal(now.v, panel.id) }));
+  if (slow) return el('div', { class: 'oh-panel', role: 'listitem', 'data-panel': panel.id }, head, el('p', { class: 'oh-slow', text: 'Loading... this query takes about 10 s and times out. Precompute it with a recording rule.' }), el('code', { class: 'oh-expr', text: expr }));
+  const c = chartFor(w, panel);
+  return el('div', { class: 'oh-panel', role: 'listitem', 'data-panel': panel.id }, head, c.chart, c.slider, c.readout, el('p', { class: 'oh-summary', text: c.summary }), el('code', { class: 'oh-expr', text: expr }));
+}
+
+function renderDashboard(state, d) {
+  const shown = PANELS.find((p) => p.id === state.panelId) || PANELS[0];
+  d.tabs.replaceChildren(
+    ...PANELS.map((p) => {
+      const tab = el('button', { class: 'oh-tab', type: 'button', 'aria-pressed': String(p.id === shown.id), text: p.title });
+      tab.addEventListener('click', () => {
+        state.panelId = p.id;
+        renderDashboard(state, d);
+      });
+      return tab;
+    }),
   );
+  d.panels.replaceChildren(panelNode(state, shown));
 }
 
 // ---------------------------------------------------------------- the night timeline
@@ -176,13 +245,13 @@ function timelineNode(w) {
   const x = (i) => left + (i - w.H) * scale;
   const incs = w.incidents.filter((i) => i.night && i.started);
   const letters = incs.map((_, k) => String.fromCharCode(65 + k));
-  const parts = [svg('rect', { x: x(w.H + 60), y: 4, width: 420 * scale, height: 72, class: 'oh-asleep' })];
+  const parts = [svg('rect', { x: x(w.H + 60), y: 4, width: 420 * scale, height: 86, class: 'oh-asleep' })];
   for (let h = 0; h <= 9; h += 1) {
     const hx = x(w.H + h * 60);
-    parts.push(svg('line', { x1: hx, x2: hx, y1: 76, y2: 80, class: 'oh-grid' }));
-    if (h % 2 === 0) parts.push(svg('text', { x: hx, y: 90, class: 'oh-axis', 'text-anchor': 'middle' }, clockText(22 * 60 + h * 60)));
+    parts.push(svg('line', { x1: hx, x2: hx, y1: 90, y2: 94, class: 'oh-grid' }));
+    if (h % 2 === 0) parts.push(svg('text', { x: hx, y: 107, class: 'oh-axis', 'text-anchor': 'middle' }, clockText(22 * 60 + h * 60)));
   }
-  parts.push(svg('text', { x: x(w.H + 270), y: 100, class: 'oh-axis', 'text-anchor': 'middle' }, 'asleep (23:00 to 06:00)'));
+  parts.push(svg('text', { x: x(w.H + 270), y: 122, class: 'oh-axis', 'text-anchor': 'middle' }, 'asleep (23:00 to 06:00)'));
   // Overlapping incidents go on separate rows.
   const rowEnd = [];
   incs.forEach((inc, k) => {
@@ -190,24 +259,24 @@ function timelineNode(w) {
     let row = rowEnd.findIndex((e) => e <= inc.start);
     if (row < 0) row = rowEnd.length;
     rowEnd[row] = last + 25;
-    const by = 8 + Math.min(row, 2) * 13;
+    const by = 8 + Math.min(row, 2) * 17;
     const bx = x(inc.start);
     const bw = Math.max(3, (last - inc.start) * scale);
-    parts.push(svg('rect', { x: bx, y: by, width: bw, height: 11, class: inc.urgent ? 'oh-bar oh-bar-urgent' : 'oh-bar' }), svg('text', { x: bx + bw / 2, y: by + 9, class: 'oh-letter', 'text-anchor': 'middle' }, letters[k]));
+    parts.push(svg('rect', { x: bx, y: by, width: bw, height: 14, class: inc.urgent ? 'oh-bar oh-bar-urgent' : 'oh-bar' }), svg('text', { x: bx + bw / 2, y: by + 12, class: 'oh-letter', 'text-anchor': 'middle' }, letters[k]));
   });
   for (const n of w.night) {
     const nx = x(n.t);
     if (n.severity === 'critical') {
       const real = n.verdict === 'actionable';
-      parts.push(svg('polygon', { points: `${nx},48 ${nx - 4},58 ${nx + 4},58`, class: real ? 'oh-page' : 'oh-page oh-page-false' }));
+      parts.push(svg('polygon', { points: `${nx},58 ${nx - 5},70 ${nx + 5},70`, class: real ? 'oh-page' : 'oh-page oh-page-false' }));
     } else {
-      parts.push(svg('rect', { x: nx - 3, y: 62, width: 6, height: 6, class: 'oh-ticket' }));
+      parts.push(svg('rect', { x: nx - 3, y: 76, width: 7, height: 7, class: 'oh-ticket' }));
     }
   }
-  if (w.now < w.H + NIGHT_MIN) parts.push(svg('line', { x1: x(w.now), x2: x(w.now), y1: 4, y2: 76, class: 'oh-now-line' }));
+  if (w.now < w.H + NIGHT_MIN) parts.push(svg('line', { x1: x(w.now), x2: x(w.now), y1: 4, y2: 90, class: 'oh-now-line' }));
   const label = `Night timeline from 22:00 to 07:00. ${plural(incs.length, 'incident')} so far, ${plural(w.stats.pages, 'page')} (${w.stats.falsePages} false), ${plural(w.stats.tickets, 'ticket')}.`;
   return {
-    chart: svg('svg', { viewBox: `0 0 ${W} 104`, class: 'oh-timeline', role: 'img', 'aria-label': label }, parts),
+    chart: svg('svg', { viewBox: `0 0 ${W} 130`, class: 'oh-timeline', role: 'img', 'aria-label': label }, parts),
     legend: incs.map((inc, k) => el('span', { class: 'oh-key', role: 'listitem' }, el('b', { text: letters[k] }), ` ${clockOf(w, inc.start)} ${inc.title}${inc.urgent ? ' (needs a page)' : ' (no page needed)'}`)),
   };
 }
@@ -262,24 +331,30 @@ function render(state, ctx) {
   d.note.textContent = state.message || '';
   d.note.hidden = !state.message;
 
-  // Warm-up
+  // Warm-up: read each graph, pick its type and what to do with it, and see what the alert would do
   d.warm.hidden = state.quiz.items.length === 0;
   if (state.quiz.items.length) {
-    d.warmHead.textContent = quizDone(state) ? 'Warm-up complete' : `Warm-up: classify the signals (${state.quiz.done.filter(Boolean).length} of ${state.quiz.items.length})`;
+    d.warmHead.textContent = quizDone(state) ? 'Warm-up complete' : `Warm-up: read the graphs (${state.quiz.done.filter(Boolean).length} of ${state.quiz.items.length})`;
+    // One signal at a time: the one to read now, with the finished ones folded to a line.
+    const current = state.quiz.done.indexOf(false);
     state.quiz.items.forEach((item, k) => {
       const row = d.quiz[k];
       const ok = state.quiz.done[k];
       row.root.dataset.done = String(ok);
-      row.status.textContent = ok ? `Correct: a ${item.type}; ${item.fn === 'nothing' ? 'use it as it is' : `${item.fn}() first`}.` : '';
-      row.type.disabled = ok || over;
-      row.fn.disabled = ok || over;
-      row.btn.disabled = ok || over;
+      row.root.dataset.compact = String(ok);
+      row.root.hidden = current !== -1 && k > current;
+      row.status.textContent = ok ? `Correct: a ${item.type}; ${item.fn === 'nothing' ? 'use it as it is' : `${item.fn}() first`}. ${item.why}` : row.feedback;
+      row.status.dataset.ok = String(ok);
+      for (const [value, chip] of row.typeChips) chip.setAttribute('aria-pressed', String(row.choice.type === value));
+      for (const [value, chip] of row.fnChips) chip.setAttribute('aria-pressed', String(row.choice.fn === value));
+      for (const chip of [...row.typeChips.values(), ...row.fnChips.values()]) chip.disabled = ok || over;
+      row.btn.disabled = ok || over || !row.choice.type || !row.choice.fn;
       row.btn.hidden = ok;
     });
   }
 
   // Dashboard and timeline
-  d.panels.replaceChildren(...PANELS.map((p) => panelNode(state, p)));
+  renderDashboard(state, d);
   const tl = timelineNode(state);
   d.timeline.replaceChildren(tl.chart);
   d.legend.replaceChildren(...(tl.legend.length ? tl.legend : [el('span', { class: 'oh-key', role: 'listitem', text: 'Nothing has happened yet.' })]));
@@ -304,14 +379,17 @@ function render(state, ctx) {
       if (state.draft && state.draft.id === r.id) closeEditor(state);
       ctx.act('removeRule', r.id);
     });
-    return el(
-      'div',
+    // A rule is a line (name, severity, how it did over the last week); tap it for the PromQL and the buttons.
+    const card = el(
+      'details',
       { class: 'oh-rule', role: 'listitem', 'data-rule': r.id },
-      el('div', { class: 'oh-rule-head' }, el('strong', { class: 'oh-name', text: r.name }), el('span', { class: `oh-badge oh-sev-${r.kind === 'record' ? 'rec' : r.severity}`, text: sev })),
+      el('summary', { class: 'oh-rule-sum' }, el('span', { class: 'oh-rule-head' }, el('strong', { class: 'oh-name', text: r.name }), el('span', { class: `oh-badge oh-sev-${r.kind === 'record' ? 'rec' : r.severity}`, text: sev })), el('span', { class: 'oh-bt', text: ruleBacktestLine(state, r, bt || {}) })),
       el('code', { class: 'oh-expr', text: `${exprOf(r)}${forText}` }),
-      el('p', { class: 'oh-bt', text: ruleBacktestLine(state, r, bt || {}) }),
       el('div', { class: 'oh-rule-actions' }, edit, del),
     );
+    card.open = state.openRules.has(r.id);
+    card.addEventListener('toggle', () => (card.open ? state.openRules.add(r.id) : state.openRules.delete(r.id)));
+    return card;
   });
   d.rules.replaceChildren(...(items.length ? items : [el('p', { class: 'oh-empty', role: 'listitem', text: 'No rules. Nothing will page you, and nothing will tell you the service is down.' })]));
   d.addAlert.disabled = over;
@@ -580,6 +658,7 @@ registerGame({
     state.replayKey = null;
     state.draft = null;
     state.nextKind = 'alert';
+    state.openRules = new Set();
 
     const meter = (label) => {
       const fill = el('div', { class: 'oh-meter-fill' });
@@ -597,23 +676,55 @@ registerGame({
     const strip = el('div', { class: 'oh-strip' }, el('div', { class: 'oh-clockbox' }, el('span', { class: 'oh-sub', text: 'Clock' }), clock, clockSub), phone, el('div', { class: 'oh-meters' }, sleep.root, slo.root));
     const note = el('p', { class: 'oh-msg', role: 'status', hidden: true });
 
-    // Warm-up quiz
+    // Warm-up: a graph per signal, chips for its type and for what to do with it, then Check
     const warmHead = el('h4', { class: 'oh-h' });
     const quiz = state.quiz.items.map((item, k) => {
-      const type = el('select', { class: 'oh-input', 'aria-label': `Type of ${item.signal}` });
-      type.append(el('option', { value: '', text: 'What type is it?' }), ...TYPES.map((t) => el('option', { value: t, text: t })));
-      const fn = el('select', { class: 'oh-input', 'aria-label': `What to do with ${item.signal} before graphing` });
-      fn.append(el('option', { value: '', text: 'What do you do with it?' }), ...QUIZ_FNS.map(([v, l]) => el('option', { value: v, text: l })));
+      const choice = { type: '', fn: '' };
+      const row = { choice, feedback: '', typeChips: new Map(), fnChips: new Map() };
+      const chip = (map, key, value, label, group) => {
+        const b = el('button', { class: 'oh-chip', type: 'button', 'aria-pressed': 'false', text: label });
+        b.addEventListener('click', () => {
+          choice[key] = value;
+          row.feedback = '';
+          render(state, ctx);
+        });
+        map.set(value, b);
+        return b;
+      };
+      const typeRow = el('div', { class: 'oh-chips', role: 'group', 'aria-label': `Type of ${item.signal}` }, ...TYPES.map((t) => chip(row.typeChips, 'type', t, t)));
+      const fnRow = el('div', { class: 'oh-chips', role: 'group', 'aria-label': `What to do with ${item.signal} before graphing` }, ...QUIZ_FNS.map(([v, l]) => chip(row.fnChips, 'fn', v, l)));
       const btn = el('button', { class: 'oh-btn', type: 'button', text: 'Check', 'aria-label': `Check the answer for ${item.signal}` });
-      const status = el('span', { class: 'oh-ok' });
-      btn.addEventListener('click', () => ctx.act('classify', k, type.value, fn.value));
-      const root = el('div', { class: 'oh-quiz', role: 'listitem' }, el('code', { class: 'oh-expr', text: item.signal }), el('span', { class: 'oh-hint', text: item.hint }), el('div', { class: 'oh-quiz-row' }, type, fn, btn), status);
-      return { root, type, fn, btn, status };
+      const status = el('p', { class: 'oh-ok', role: 'status', 'aria-live': 'polite' });
+      btn.addEventListener('click', () => {
+        ctx.act('classify', k, choice.type, choice.fn);
+        if (!state.quiz.done[k]) {
+          // The card says what the wrong choice would have done; the reason comes when it is right.
+          row.feedback = consequence(item, choice);
+          state.message = '';
+          choice.fn = '';
+          render(state, ctx);
+        }
+      });
+      row.root = el(
+        'div',
+        { class: 'oh-quiz', role: 'listitem' },
+        el('div', { class: 'oh-quiz-top' }, sparkFor(item.shape || item.type), el('code', { class: 'oh-expr', text: item.signal }), el('span', { class: 'oh-hint', text: item.hint })),
+        el('span', { class: 'oh-label', text: 'What type is it?' }),
+        typeRow,
+        el('span', { class: 'oh-label', text: 'What do you do with it first?' }),
+        fnRow,
+        btn,
+        status,
+      );
+      Object.assign(row, { btn, status });
+      return row;
     });
-    const warm = el('section', { class: 'oh-sec', 'aria-label': 'Warm-up' }, warmHead, el('div', { role: 'list', 'aria-label': 'Signals to classify' }, ...quiz.map((x) => x.root)));
+    const warm = el('section', { class: 'oh-sec', 'aria-label': 'Warm-up' }, warmHead, el('div', { role: 'list', 'aria-label': 'Signals to read' }, ...quiz.map((x) => x.root)));
 
     // Dashboard, timeline
-    const panels = el('div', { class: 'oh-panels', role: 'list', 'aria-label': 'Dashboard panels' });
+    const tabs = el('div', { class: 'oh-tabs', role: 'group', 'aria-label': 'Dashboard panels' });
+    const panels = el('div', { class: 'oh-panels', role: 'list', 'aria-label': 'Dashboard panel' });
+    state.panelId = PANELS[0].id;
     const timeline = el('div', { class: 'oh-timeline-wrap' });
     const legend = el('div', { class: 'oh-legend', role: 'list', 'aria-label': 'Incidents so far' });
     const key = el('p', { class: 'oh-keytext', text: 'Bars are incidents (solid: needs a page; dashed: no page needed). Triangles are pages (solid: real; hollow: false). Squares are tickets.' });
@@ -648,23 +759,51 @@ registerGame({
     const reportNotes = el('div');
     const report = el('section', { class: 'oh-sec oh-report', 'aria-label': 'Morning report', hidden: true }, el('h4', { class: 'oh-h', text: 'Morning report' }), reportRows, reportNotes);
 
-    const section = (title, ...kids) => el('details', { class: 'oh-sec', open: true }, el('summary', { class: 'oh-sum', text: title }), ...kids);
-    const root = el(
-      'div',
-      { class: 'oh' },
-      strip,
-      note,
-      report,
-      warm,
-      section('Rules in effect', rules, el('div', { class: 'oh-rule-actions' }, addAlert, addRecord), editor.root),
-      section('Alertmanager route', el('p', { class: 'oh-hint', text: 'critical alerts page you (PagerDuty); warning alerts open a ticket in Slack. group_by decides how many pages one incident makes.' }), el('div', { class: 'oh-quiz-row' }, group, saveRoute), groupHelp, el('details', { class: 'oh-details' }, el('summary', { text: 'alertmanager.yml' }), routeYamlEl)),
-      section('Dashboard (Sample App Overview, last 6 hours)', panels),
-      section('Night timeline', timeline, key, legend),
-      section('Replay of the last week', replaySummary, replayRows),
-      section('rules.yml (what promtool checks)', rulesYamlEl),
-    );
+    // The parts of the night. On a wide screen they stack as folds; on a phone a tab bar shows one at a time,
+    // so the page is one screen of the thing you are working on, not a scroll through all of it.
+    const wide = matchMedia('(min-width: 700px)').matches;
+    const parts = [
+      { id: 'rules', tab: 'Rules', title: 'Rules in effect', kids: [rules, el('div', { class: 'oh-rule-actions' }, addAlert, addRecord), editor.root] },
+      { id: 'charts', tab: 'Charts', title: 'Dashboard (Sample App Overview, last 6 hours)', kids: [tabs, panels] },
+      { id: 'tonight', tab: 'Tonight', title: 'Night timeline', kids: [timeline, key, legend] },
+      {
+        id: 'route',
+        tab: 'Route',
+        title: 'Alertmanager route',
+        kids: [
+          el('p', { class: 'oh-hint', text: 'critical alerts page you (PagerDuty); warning alerts open a ticket in Slack. group_by decides how many pages one incident makes.' }),
+          el('div', { class: 'oh-quiz-row' }, group, saveRoute),
+          groupHelp,
+          el('details', { class: 'oh-details' }, el('summary', { text: 'alertmanager.yml' }), routeYamlEl),
+        ],
+      },
+      { id: 'replay', tab: 'Replay', title: 'Replay of the last week', kids: [replaySummary, replayRows] },
+      { id: 'yaml', tab: 'rules.yml', title: 'rules.yml (what promtool checks)', kids: [rulesYamlEl] },
+    ];
+    const panelsEl = parts.map((part) => {
+      if (wide) {
+        const d = el('details', { class: 'oh-sec', 'data-part': part.id }, el('summary', { class: 'oh-sum', text: part.title }), ...part.kids);
+        d.open = part.id === 'rules' || part.id === 'charts' || part.id === 'tonight';
+        return d;
+      }
+      return el('section', { class: 'oh-sec oh-tabbed', 'data-part': part.id, 'aria-label': part.title }, ...part.kids);
+    });
+    const tabbar = wide ? null : el('div', { class: 'oh-tabbar', role: 'group', 'aria-label': 'Parts of the night' });
+    const showPart = (id) => {
+      for (const node of panelsEl) node.hidden = node.dataset.part !== id;
+      for (const btn of tabbar.children) btn.setAttribute('aria-pressed', String(btn.dataset.part === id));
+    };
+    if (tabbar) {
+      for (const part of parts) {
+        const btn = el('button', { class: 'oh-tab', type: 'button', 'data-part': part.id, 'aria-pressed': 'false', text: part.tab });
+        btn.addEventListener('click', () => showPart(part.id));
+        tabbar.append(btn);
+      }
+    }
+    const root = el('div', { class: 'oh' }, strip, note, report, warm, tabbar, ...panelsEl);
+    if (tabbar) showPart('rules');
     state.dom = {
-      root, clock, clockSub, sleep, slo, phone, phoneCount, phoneText, note, warm, warmHead, quiz, panels, timeline, legend, rules, addAlert, addRecord, editor,
+      root, clock, clockSub, sleep, slo, phone, phoneCount, phoneText, note, warm, warmHead, quiz, tabs, panels, timeline, legend, rules, addAlert, addRecord, editor,
       group, groupHelp, saveRoute, routeYaml: routeYamlEl, rulesYaml: rulesYamlEl, replaySummary, replayRows, report, reportRows, reportNotes,
     };
     ctx.ui.board.append(root);
@@ -690,7 +829,7 @@ registerGame({
       key: 'h',
       run(state, ctx) {
         if (!quizDone(state)) {
-          state.message = 'Finish the warm-up first: classify all four signals.';
+          state.message = 'Finish the warm-up first: read every graph.';
           render(state, ctx);
           return false;
         }
@@ -703,7 +842,7 @@ registerGame({
       label: 'Run to morning',
       run(state, ctx) {
         if (!quizDone(state)) {
-          state.message = 'Finish the warm-up first: classify all four signals.';
+          state.message = 'Finish the warm-up first: read every graph.';
           render(state, ctx);
           return false;
         }
