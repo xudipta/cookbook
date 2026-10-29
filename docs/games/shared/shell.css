@@ -476,3 +476,112 @@ body:has(#game[data-game]) .md-typeset h1 {
     justify-content: flex-end;
   }
 }
+
+/* ---- the dock (#82): actions, status and the latest event stay on screen while you scroll the board ---- */
+
+.cg-dock {
+  display: contents; /* on a wide screen it is invisible: the action bar sits where it always did */
+}
+
+.cg-dock-meter,
+.cg-dock-status,
+.cg-latest {
+  display: none;
+}
+
+@media (max-width: 700px) {
+  .cg {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .cg-result-slot {
+    order: 80;
+  }
+
+  /* Last in the card, so it can stick to the bottom of the screen while the card scrolls past. */
+  .cg-dock {
+    display: block;
+    order: 90;
+    position: sticky;
+    bottom: 0;
+    z-index: 20;
+    margin: 0.5rem -0.5rem 0;
+    padding: 0.4rem 0.5rem calc(0.4rem + env(safe-area-inset-bottom, 0px));
+    border-top: 1px solid var(--line);
+    background: var(--surface);
+    box-shadow: 0 -4px 12px rgb(0 0 0 / 10%);
+  }
+
+  .cg-dock-meter {
+    display: block;
+    height: 0.35rem;
+    margin-bottom: 0.4rem;
+    overflow: hidden;
+    border-radius: 0.2rem;
+    background: var(--cg-surface);
+  }
+
+  .cg-dock-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem 0.75rem;
+  }
+
+  .cg-dock .cg-actions {
+    margin: 0;
+  }
+
+  .cg-dock-status {
+    display: block;
+    flex: 1 1 10rem;
+    min-width: 0;
+    font: 500 0.78rem/1.3 var(--font-mono);
+    color: var(--muted);
+  }
+
+  .cg-latest {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    margin-top: 0.25rem;
+    padding: 0 0.25rem;
+    border: 0;
+    border-radius: 0.2rem;
+    background: transparent;
+    color: var(--ink);
+    font: 500 0.8rem/1.3 var(--font-body);
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .cg-latest-text {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .cg-latest[data-kind="event"] .cg-latest-text,
+  .cg-latest[data-kind="warn"] .cg-latest-text {
+    font-weight: 700;
+  }
+
+  .cg-latest-toggle {
+    flex: none;
+    font: 600 0.75rem/1 var(--font-mono);
+    color: var(--accent);
+  }
+
+  /* The full log is one tap away instead of a block between the status and the board. */
+  .cg-side {
+    display: none;
+  }
+
+  .cg-side[data-open="true"] {
+    display: block;
+  }
+}

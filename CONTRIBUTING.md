@@ -132,6 +132,14 @@ and the home page board reads the same entries. The older `cookbook-game-best:<g
 written and read, so earlier scores survive. Storage can be blocked, so always go through `progress.js`
 (every access is wrapped) and never assume a saved value exists.
 
+## The dock
+
+On a phone (under 700px) the shell pins a "dock" to the bottom of the game card while you scroll the board:
+the action buttons, a one-line status, a thin health meter and the latest event, which opens the full event
+log when tapped. It is built in `docs/games/shared/ui.js` and styled in `shell.css`; a game does nothing for
+it, but its own primary controls should not depend on being above the board. The dock is invisible on wide
+screens.
+
 ## Adding a game
 
 The browser games under `docs/games/` (see the **Play** section of the docs site) share one
