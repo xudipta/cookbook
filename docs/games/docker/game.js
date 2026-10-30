@@ -5,11 +5,15 @@ import { registerGame } from '../shared/engine.js';
 import { el } from '../shared/ui.js';
 import * as compose from './compose.js';
 import { initCompose, renderCompose } from './compose-ui.js';
+import { renderPredict } from './predict-ui.js';
 import {
   createWorld,
   isLost as simIsLost,
   isWon as simIsWon,
+  askQuestion,
   moveCard,
+  needsPrediction,
+  predict,
   removeCard,
   arrange,
   runBuild,
@@ -44,9 +48,15 @@ function cardEl(state, ctx, id, where) {
     });
     return btn;
   };
+  // A grip you can drag with a finger (pointer events, so it works on touch), or move with the arrow keys.
+  const grip = inDeck
+    ? el('button', { class: 'dk-grip', type: 'button', 'aria-label': `Move ${card.text}: drag, or press the Up or Down arrow`, 'data-id': id, disabled: over ? '' : null, text: '⠿' })
+    : null;
+  if (grip) wireGrip(state, ctx, grip, id);
   const node = el(
     'div',
     { class: `dk-card dk-card-${card.kind}${card.kind === 'from' && index > 0 ? ' dk-stage-break' : ''}`, role: 'listitem', draggable: over ? null : 'true', 'data-id': id },
+    grip,
     tag ? el('span', { class: 'dk-tag', text: tag }) : null,
     el('code', { class: 'dk-text', text: card.text }),
     el(
@@ -62,6 +72,51 @@ function cardEl(state, ctx, id, where) {
     e.dataTransfer.effectAllowed = 'move';
   });
   return node;
+}
+
+// Drag by the grip with pointer events: the card follows the finger and lands where it is released.
+function wireGrip(state, ctx, grip, id) {
+  grip.addEventListener('pointerdown', (e) => {
+    if (ctx.over || e.button > 0) return;
+    e.preventDefault();
+    grip.setPointerCapture(e.pointerId);
+    const card = grip.closest('.dk-card');
+    const deck = state.dom.deck;
+    card.classList.add('dk-dragging');
+    const onMove = (ev) => {
+      const at = dropIndex(deck, ev.clientY);
+      deck.dataset.drop = String(at);
+      const cards = [...deck.querySelectorAll('.dk-card')];
+      cards.forEach((c, i) => c.classList.toggle('dk-drop-before', i === at && c !== card));
+      deck.classList.toggle('dk-drop-end', at >= cards.length);
+    };
+    const end = (ev) => {
+      grip.releasePointerCapture?.(e.pointerId);
+      grip.removeEventListener('pointermove', onMove);
+      grip.removeEventListener('pointerup', end);
+      grip.removeEventListener('pointercancel', end);
+      card.classList.remove('dk-dragging');
+      deck.classList.remove('dk-drop-end');
+      deck.querySelectorAll('.dk-drop-before').forEach((c) => c.classList.remove('dk-drop-before'));
+      if (ev.type === 'pointerup') {
+        const at = dropIndex(deck, ev.clientY);
+        const from = state.order.indexOf(id);
+        // dropIndex counts the dragged card itself, so dropping below its own slot means one position less.
+        const to = at > from ? at - 1 : at;
+        if (to !== from) ctx.act('moveCard', id, to);
+      }
+    };
+    grip.addEventListener('pointermove', onMove);
+    grip.addEventListener('pointerup', end);
+    grip.addEventListener('pointercancel', end);
+  });
+  grip.addEventListener('keydown', (e) => {
+    if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
+    e.preventDefault();
+    const from = state.order.indexOf(id);
+    state.focus = { id, op: 'grip' };
+    ctx.act('moveCard', id, from + (e.key === 'ArrowUp' ? -1 : 1));
+  });
 }
 
 // Where in the deck a drop at clientY would land.
@@ -130,18 +185,24 @@ function goalItems(state) {
   if (g.noSecrets) items.push({ ok: Boolean(r && r.ok && !r.flags.leaksEnv), text: 'No secrets (.env) in the image' });
   if (g.nonRoot) items.push({ ok: Boolean(r && r.ok && r.flags.nonRoot), text: 'Runs as a non-root user' });
   items.push({ ok: state.okBuilds >= state.winTicks, text: `Successful builds: ${state.okBuilds} of ${state.winTicks}` });
+  if (state.predictions.total) items.push({ ok: state.predictions.right === state.predictions.total, text: `Predictions right: ${state.predictions.right} of ${state.predictions.total}` });
   return items;
 }
+
+const questionFor = (state, ctx) => (state.mode === 'compose' ? compose.askCompose(state) : askQuestion(state, ctx.scenario));
+const mustPredict = (state, ctx) => (state.mode === 'compose' ? compose.needsPrediction(state) : needsPrediction(state, ctx.scenario));
 
 // ---------------------------------------------------------------- render
 
 function render(state, ctx) {
   if (state.mode === 'compose') return renderCompose(state, ctx);
   const d = state.dom;
+  state.question = questionFor(state, ctx); // plain data, so tests and the solution generator can read what is being asked
   d.deck.replaceChildren(...state.order.map((id) => cardEl(state, ctx, id, 'deck')));
   if (!state.order.length) d.deck.append(el('p', { class: 'dk-empty', role: 'listitem', text: 'Empty. Add cards from the tray below.' }));
   const free = trayIds(state);
   d.tray.replaceChildren(...(free.length ? free.map((id) => cardEl(state, ctx, id, 'tray')) : [el('p', { class: 'dk-empty', role: 'listitem', text: 'Every card is in the Dockerfile.' })]));
+  renderPredict(state, ctx);
   d.layers.replaceChildren(...layerRows(state));
   d.goals.replaceChildren(
     ...goalItems(state).map((g) => el('div', { class: `dk-goal dk-goal-${g.ok ? 'ok' : 'todo'}`, role: 'listitem' }, el('span', { class: 'dk-goal-mark', text: g.ok ? 'done' : 'todo' }), el('span', { text: g.text }))),
@@ -153,7 +214,8 @@ function render(state, ctx) {
   if (state.focus) {
     const { id, op } = state.focus;
     const find = (o) => d.root.querySelector(`button[data-id="${id}"][data-op="${o}"]:not(:disabled)`);
-    (find(op) || find('up') || find('down') || find('remove') || find('add'))?.focus();
+    const grip = op === 'grip' ? d.root.querySelector(`button.dk-grip[data-id="${id}"]:not(:disabled)`) : null;
+    (grip || find(op) || find('up') || find('down') || find('remove') || find('add'))?.focus();
     state.focus = null;
   }
 }
@@ -178,20 +240,23 @@ registerGame({
     const goals = el('div', { class: 'dk-goals', role: 'list', 'aria-label': 'Goals' });
     const stats = el('p', { class: 'dk-stats', role: 'status' });
     const log = el('pre', { class: 'dk-log', tabindex: 0, role: 'log', 'aria-label': 'Build output' });
+    const predictBox = el('section', { class: 'dk-panel dk-predict', 'aria-label': 'Prediction', hidden: true });
     const root = el(
       'div',
       { class: 'dk' },
+      predictBox,
       el(
         'div',
         { class: 'dk-cols' },
-        el('section', { class: 'dk-panel' }, el('h4', { class: 'dk-h', text: 'Dockerfile (top runs first)' }), deck, el('p', { class: 'dk-hint', text: 'Drag cards, or use Up / Down / Remove.' })),
+        el('section', { class: 'dk-panel' }, el('h4', { class: 'dk-h', text: 'Dockerfile (top runs first)' }), deck, el('p', { class: 'dk-hint', text: 'Drag a card by its grip, or use Up / Down / Remove.' })),
         el('section', { class: 'dk-panel' }, el('h4', { class: 'dk-h', text: 'Last build' }), layers, stats),
       ),
       el('section', { class: 'dk-panel' }, el('h4', { class: 'dk-h', text: 'Card tray' }), tray),
       el('section', { class: 'dk-panel' }, el('h4', { class: 'dk-h', text: 'Goals' }), goals),
       el('section', { class: 'dk-panel' }, el('h4', { class: 'dk-h', text: 'Build output' }), log),
     );
-    state.dom = { root, deck, tray, layers, goals, stats, log };
+    state.dom = { root, deck, tray, layers, goals, stats, log, predict: predictBox };
+    state.draft = null;
     wireDropZones(state, ctx);
     ctx.ui.board.append(root);
     ctx.log('Arrange the Dockerfile, then press Build. The first build is free; later ones cost budget in proportion to the layers that rebuild.');
@@ -202,6 +267,7 @@ registerGame({
     if (name === 'arrange') return `Arrange the Dockerfile: ${args[0].join(' → ')}`;
     if (name === 'choose') return `Choose ${args[0]} = ${args[1]}`;
     if (name === 'recreate') return 'Recreate the stack (down, then up)';
+    if (name === 'predict') return `Predict: ${args[0].length ? `layers ${args[0].map((i) => i + 1).join(', ')}` : 'nothing'}`;
     return undefined;
   },
 
@@ -213,14 +279,25 @@ registerGame({
       key: 'b',
       run(state, ctx) {
         // In the Compose level this button is "Up": docker compose up -d.
-        if (state.mode === 'compose') compose.runUp(state, ctx);
-        else state.last = runBuild(state, ctx);
+        if (mustPredict(state, ctx)) {
+          ctx.log('Predict first: tap the layers you expect to rebuild, then lock in your prediction. Build unlocks after that.', { kind: 'warn' });
+          render(state, ctx);
+          return false; // nothing happened, so it is not a move
+        }
+        if (state.mode === 'compose') return compose.runUp(state, ctx);
+        state.last = runBuild(state, ctx);
       },
     },
+    predict: { hidden: true, run: (state, ctx, answer) => ((state.mode === 'compose' ? compose.predictCompose(state, ctx, answer) : predict(state, ctx, answer)) ? 'free' : false) },
     choose: { hidden: true, run: (state, ctx, slot, option) => (compose.choose(state, slot, option) ? 'free' : false) },
     recreate: {
       hidden: true,
       run(state, ctx) {
+        if (compose.needsPrediction(state)) {
+          ctx.log('Predict first: will the data survive down and up? Answer, then recreate.', { kind: 'warn' });
+          renderCompose(state, ctx);
+          return false;
+        }
         if (compose.runRecreate(state, ctx)) return undefined;
         renderCompose(state, ctx); // the engine does not re-render after `false`
         return false;

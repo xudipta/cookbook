@@ -312,3 +312,105 @@
   padding: 0.3rem 0.7rem;
   font-size: 0.78rem;
 }
+
+/* ---- touch drag grip ---- */
+
+.cg .dk-grip {
+  flex: none;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 0.25rem;
+  background: transparent;
+  color: var(--muted);
+  font-size: 1.3rem;
+  line-height: 1;
+  cursor: grab;
+  touch-action: none; /* the finger drags the card, not the page */
+}
+
+.cg .dk-grip:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.cg .dk-card.dk-dragging {
+  opacity: 0.6;
+  box-shadow: 0 2px 10px rgb(0 0 0 / 25%);
+}
+
+.cg .dk-drop-before {
+  box-shadow: 0 -3px 0 var(--cg-accent);
+}
+
+.cg .dk-drop-end {
+  box-shadow: inset 0 -3px 0 var(--cg-accent);
+}
+
+/* ---- predict before you build ---- */
+
+.cg .dk-picks {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.cg .dk-pick {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.35rem 0.6rem;
+  border: 1px solid var(--cg-border);
+  border-radius: 0.3rem;
+  background: var(--surface);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.cg .dk-pick[aria-pressed="true"] {
+  border-color: var(--cg-warn);
+  background: var(--surface-2);
+  font-weight: 700;
+}
+
+.cg .dk-pick code {
+  min-width: 0;
+  background: transparent;
+  font-size: 0.78rem;
+  overflow-wrap: anywhere;
+}
+
+.cg .dk-pick-state {
+  flex: none;
+  color: var(--muted);
+  font: 600 0.78rem/1 var(--font-mono);
+}
+
+.cg .dk-lock {
+  margin-top: 0.5rem;
+}
+
+.cg .dk-verdict {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.2rem 0.5rem;
+  padding: 0.3rem 0.5rem;
+  border-left: 4px solid var(--cg-ok);
+  border-radius: 0.25rem;
+  background: var(--surface);
+  margin-bottom: 0.3rem;
+}
+
+.cg .dk-verdict-wrong {
+  border-left-color: var(--cg-bad);
+}
+
+.cg .dk-why {
+  flex: 1 1 100%;
+  color: var(--muted);
+  font: 500 0.8rem/1.4 var(--font-body);
+}

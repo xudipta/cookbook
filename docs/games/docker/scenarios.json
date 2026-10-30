@@ -2,9 +2,9 @@
   "id": "docker",
   "title": "Layer Cake",
   "coach": {
-    "board": "The cards are the Dockerfile, top line first. The build panel shows each layer, whether it came from cache, and the image size.",
-    "actions": "Build runs your Dockerfile. Builds are limited, so read the output before you build again.",
-    "firstMove": "Move the cards into a sensible order, then press Build and read what each layer did."
+    "board": "The cards are the Dockerfile, top line first. Before a build, a prediction panel asks which layers will rebuild; after it, the layer panel shows each layer, whether it came from cache, and the image size.",
+    "actions": "Build runs your Dockerfile, once you have answered the prediction. Builds are limited, and each wrong prediction costs a little build budget.",
+    "firstMove": "Move the cards into a sensible order (drag the grip, or use Up and Down), then tap the layers you expect to rebuild after a source edit, lock it in, and press Build."
   },
   "lossRule": "The build budget ran out before the image met the goal.",
   "healthLabel": "Build budget",
@@ -215,16 +215,21 @@
     {
       "id": "hello",
       "title": "1. Hello nginx",
-      "blurb": "Arrange the cards into the Dockerfile from topics/docker/examples/hello-nginx so it builds and serves the page. Then a teammate edits index.html: watch what rebuilds.",
+      "blurb": "Arrange the cards into the Dockerfile from topics/docker/examples/hello-nginx so it builds and serves the page. Before each build, predict which layers will rebuild: a teammate edits index.html, then the base image is updated upstream.",
       "hints": [
-        "Look at the card tray: each card is one line of the Dockerfile, and the order is the build order.",
+        "Look at the card tray: each card is one line of the Dockerfile, and the order is the build order. Predict the rebuilds before each build: the base layer is cached unless the base image changed.",
         "A base image comes first, then the file you serve is copied in, then the port and the health check.",
         "Arrange from-nginx, copy-index, expose-80, healthcheck, then Build twice: the second build shows what the cache reused."
       ],
-      "par": 2,
+      "par": 3,
       "path": [
         "Arrange the Dockerfile: from-nginx → copy-index → expose-80 → healthcheck",
-        "Build ×2"
+        "Predict: layers 2, 3, 4",
+        "Build",
+        "Predict: layers 2, 3, 4",
+        "Build",
+        "Predict: layers 1, 2, 3, 4",
+        "Build"
       ],
       "lessons": [
         "Every Dockerfile instruction is a layer, and the order of the instructions is the order of the build.",
@@ -235,7 +240,7 @@
         "example": "topics/docker/examples/hello-nginx",
         "commands": "cd topics/docker/examples/hello-nginx\ndocker build -t hello-nginx .\ndocker run --rm -p 8080:80 hello-nginx      # then: curl localhost:8080\n# edit index.html and build again: the base layers say CACHED"
       },
-      "winTicks": 2,
+      "winTicks": 3,
       "minHealth": 50,
       "drainRate": 0.25,
       "failPenalty": 10,
@@ -302,6 +307,10 @@
           "files": [
             "index.html"
           ]
+        },
+        {
+          "tick": 2,
+          "event": "base-bump"
         }
       ],
       "solution": [
@@ -318,28 +327,76 @@
           ]
         },
         {
-          "tick": 1,
-          "action": "build"
+          "tick": 0,
+          "action": "predict",
+          "args": [
+            [
+              1,
+              2,
+              3
+            ]
+          ]
         },
         {
-          "tick": 2,
-          "action": "build"
+          "tick": 0,
+          "action": "build",
+          "args": []
+        },
+        {
+          "tick": 0,
+          "action": "predict",
+          "args": [
+            [
+              1,
+              2,
+              3
+            ]
+          ]
+        },
+        {
+          "tick": 0,
+          "action": "build",
+          "args": []
+        },
+        {
+          "tick": 0,
+          "action": "predict",
+          "args": [
+            [
+              0,
+              1,
+              2,
+              3
+            ]
+          ]
+        },
+        {
+          "tick": 0,
+          "action": "build",
+          "args": []
         }
       ]
     },
     {
       "id": "cache",
       "title": "2. Cache order",
-      "blurb": "This Dockerfile works but reinstalls every dependency whenever anyone touches the code. Reorder it (and add what's missing) so edits rebuild only what they must, and keep the cache alive on a fresh CI runner. You have five builds.",
+      "blurb": "This Dockerfile works but reinstalls every dependency whenever anyone touches the code. Reorder it (and add what is missing) so edits rebuild only what they must. Predict the rebuilds before each build. You have four builds.",
       "hints": [
-        "Look at which steps rebuild when only the code changes: everything after a changed file runs again.",
+        "Look at which steps rebuild when only the code changes: everything after a changed file runs again, so predict that cut-off before you build.",
         "Copying all the code before installing dependencies invalidates the install layer on every edit.",
         "Copy only the manifest, run npm ci, then copy the rest; add the cache flag so a fresh CI runner can reuse layers."
       ],
-      "par": 5,
+      "par": 4,
       "path": [
-        "Arrange the Dockerfile: from-node → workdir → copy-manifest → npm-ci → copy-all → build → cmd-node → cache-flag",
-        "Build ×5"
+        "Arrange the Dockerfile: from-node → workdir → copy-manifest → npm-ci → copy-all → build → cmd-node",
+        "Predict: layers 5, 6, 7",
+        "Build",
+        "Predict: layers 5, 6, 7",
+        "Build",
+        "Predict: layers 3, 4, 5, 6, 7",
+        "Build",
+        "Predict: layers 5, 6, 7",
+        "Build"
       ],
       "lessons": [
         "Copy the dependency manifest and install before you copy the source, so a code edit does not reinstall everything.",
@@ -350,6 +407,215 @@
         "example": "topics/docker/examples/hello-nginx",
         "commands": "# Dockerfile\nFROM node:20-slim\nWORKDIR /app\nCOPY package.json package-lock.json ./\nRUN npm ci\nCOPY . .\nRUN npm run build\n\n# on a CI runner\ndocker buildx build --cache-from type=gha --cache-to type=gha,mode=max -t app ."
       },
+      "winTicks": 4,
+      "minHealth": 75,
+      "drainRate": 0.25,
+      "failPenalty": 10,
+      "goodBuildSeconds": 12,
+      "images": {
+        "node:20-alpine": {
+          "size": 135,
+          "pull": 6,
+          "paths": [
+            "/usr/local/bin/node",
+            "/usr/local/bin/npm"
+          ],
+          "defaultCmd": false
+        }
+      },
+      "context": {
+        "files": {
+          "package.json": 0.01,
+          "package-lock.json": 0.4,
+          "src": 2
+        }
+      },
+      "cards": [
+        {
+          "id": "from-node",
+          "kind": "from",
+          "text": "FROM node:20-alpine",
+          "image": "node:20-alpine"
+        },
+        {
+          "id": "workdir",
+          "kind": "workdir",
+          "text": "WORKDIR /app",
+          "path": "/app"
+        },
+        {
+          "id": "copy-manifest",
+          "kind": "copy",
+          "text": "COPY package.json package-lock.json ./",
+          "files": [
+            "package.json",
+            "package-lock.json"
+          ],
+          "dest": "./"
+        },
+        {
+          "id": "npm-ci",
+          "kind": "run",
+          "text": "RUN npm ci",
+          "time": 38,
+          "size": 120,
+          "requires": [
+            "/app/package.json"
+          ],
+          "produces": [
+            "/app/node_modules"
+          ],
+          "errors": {
+            "/app/package.json": "npm error code ENOENT\nnpm error path /app/package.json\nnpm error enoent Could not read package.json"
+          }
+        },
+        {
+          "id": "copy-all",
+          "kind": "copy",
+          "text": "COPY . .",
+          "files": "*",
+          "dest": "./"
+        },
+        {
+          "id": "build",
+          "kind": "run",
+          "text": "RUN npm run build",
+          "time": 9,
+          "size": 5,
+          "requires": [
+            "/app/node_modules",
+            "/app/src"
+          ],
+          "produces": [
+            "/app/dist/index.html",
+            "/app/dist/server.js"
+          ],
+          "errors": {
+            "/app/node_modules": "sh: vite: not found",
+            "/app/src": "error: could not resolve entry module \"src/main.js\""
+          }
+        },
+        {
+          "id": "cmd-node",
+          "kind": "cmd",
+          "text": "CMD [\"node\", \"dist/server.js\"]",
+          "requires": [
+            "/app/dist/server.js",
+            "/app/node_modules"
+          ]
+        }
+      ],
+      "dockerfile": [
+        "from-node",
+        "workdir",
+        "copy-all",
+        "npm-ci",
+        "build",
+        "cmd-node"
+      ],
+      "goal": {},
+      "schedule": [
+        {
+          "tick": 1,
+          "event": "dev-edit-src"
+        },
+        {
+          "tick": 2,
+          "event": "dev-add-dep"
+        },
+        {
+          "tick": 3,
+          "event": "dev-edit-src"
+        }
+      ],
+      "solution": [
+        {
+          "tick": 0,
+          "action": "arrange",
+          "args": [
+            [
+              "from-node",
+              "workdir",
+              "copy-manifest",
+              "npm-ci",
+              "copy-all",
+              "build",
+              "cmd-node"
+            ]
+          ]
+        },
+        {
+          "tick": 0,
+          "action": "predict",
+          "args": [
+            [
+              4,
+              5,
+              6
+            ]
+          ]
+        },
+        {
+          "tick": 0,
+          "action": "build",
+          "args": []
+        },
+        {
+          "tick": 0,
+          "action": "predict",
+          "args": [
+            [
+              4,
+              5,
+              6
+            ]
+          ]
+        },
+        {
+          "tick": 0,
+          "action": "build",
+          "args": []
+        },
+        {
+          "tick": 0,
+          "action": "predict",
+          "args": [
+            [
+              2,
+              3,
+              4,
+              5,
+              6
+            ]
+          ]
+        },
+        {
+          "tick": 0,
+          "action": "build",
+          "args": []
+        },
+        {
+          "tick": 0,
+          "action": "predict",
+          "args": [
+            [
+              4,
+              5,
+              6
+            ]
+          ]
+        },
+        {
+          "tick": 0,
+          "action": "build",
+          "args": []
+        }
+      ]
+    },
+    {
+      "id": "slow-ci",
+      "title": "3. Slow CI",
+      "blurb": "CI starts every job on a fresh runner with an empty cache, so a good layer order alone is not enough: the build also needs --cache-from to bring the cache back. Arrange the Dockerfile, add the cache flag, and predict which layers rebuild before each of the five builds.",
       "winTicks": 5,
       "minHealth": 75,
       "drainRate": 0.25,
@@ -469,7 +735,7 @@
         },
         {
           "tick": 2,
-          "event": "dev-add-dep"
+          "event": "cold-runner"
         },
         {
           "tick": 3,
@@ -498,30 +764,110 @@
           ]
         },
         {
-          "tick": 1,
-          "action": "build"
+          "tick": 0,
+          "action": "predict",
+          "args": [
+            [
+              4,
+              5,
+              6
+            ]
+          ]
         },
         {
-          "tick": 2,
-          "action": "build"
+          "tick": 0,
+          "action": "build",
+          "args": []
         },
         {
-          "tick": 3,
-          "action": "build"
+          "tick": 0,
+          "action": "predict",
+          "args": [
+            [
+              4,
+              5,
+              6
+            ]
+          ]
         },
         {
-          "tick": 4,
-          "action": "build"
+          "tick": 0,
+          "action": "build",
+          "args": []
         },
         {
-          "tick": 5,
-          "action": "build"
+          "tick": 0,
+          "action": "predict",
+          "args": [
+            []
+          ]
+        },
+        {
+          "tick": 0,
+          "action": "build",
+          "args": []
+        },
+        {
+          "tick": 0,
+          "action": "predict",
+          "args": [
+            [
+              4,
+              5,
+              6
+            ]
+          ]
+        },
+        {
+          "tick": 0,
+          "action": "build",
+          "args": []
+        },
+        {
+          "tick": 0,
+          "action": "predict",
+          "args": [
+            []
+          ]
+        },
+        {
+          "tick": 0,
+          "action": "build",
+          "args": []
         }
+      ],
+      "hints": [
+        "Look at the build seconds after a cold runner: every layer rebuilt, even the ones nothing changed.",
+        "A fresh runner has no layer cache. The build flag card (--cache-from) imports the cache from where the last run stored it; without it every CI build is a cold one.",
+        "Order the Dockerfile manifest first, install, then the source, and add the cache flag card, then predict and build."
+      ],
+      "lessons": [
+        "A CI runner starts empty, so layer order helps only if the cache comes with the job: --cache-from imports it and --cache-to exports it.",
+        "Predict a build before you run it: a cold runner rebuilds everything unless the cache is imported."
+      ],
+      "tryItForReal": {
+        "needs": "Docker with BuildKit (buildx) and a CI system that can store a cache",
+        "example": "topics/docker/examples/hello-nginx",
+        "commands": "# Dockerfile: manifest, install, then source\nFROM node:20-slim\nWORKDIR /app\nCOPY package.json package-lock.json ./\nRUN npm ci\nCOPY . .\nRUN npm run build\n\n# in CI: import the cache, run the build, export it for the next job\ndocker buildx build \\\n  --cache-from type=registry,ref=registry.example.com/app:buildcache \\\n  --cache-to type=registry,ref=registry.example.com/app:buildcache,mode=max \\\n  -t app ."
+      },
+      "par": 5,
+      "path": [
+        "Arrange the Dockerfile: from-node → workdir → copy-manifest → npm-ci → copy-all → build → cmd-node → cache-flag",
+        "Predict: layers 5, 6, 7",
+        "Build",
+        "Predict: layers 5, 6, 7",
+        "Build",
+        "Predict: nothing",
+        "Build",
+        "Predict: layers 5, 6, 7",
+        "Build",
+        "Predict: nothing",
+        "Build"
       ]
     },
     {
       "id": "bloat",
-      "title": "3. Bloat",
+      "title": "4. Bloat",
       "blurb": "The app is a static site, but this image ships Node, every dependency and the source. Split it into a build stage and a small runtime stage so the final image is under 80 MB.",
       "hints": [
         "Look at the final image size and what it still contains.",
@@ -531,7 +877,12 @@
       "par": 3,
       "path": [
         "Arrange the Dockerfile: from-node-build → workdir → copy-manifest → npm-ci → copy-all → build → from-nginx → copy-dist → expose-80",
-        "Build ×3"
+        "Predict: layers 5, 6, 8, 9",
+        "Build",
+        "Predict: layers 5, 6, 8, 9",
+        "Build",
+        "Predict: layers 1, 2, 3, 4, 5, 6, 7, 8, 9",
+        "Build"
       ],
       "lessons": [
         "A multi-stage build keeps compilers, dependencies and source in a build stage and ships only the result.",
@@ -723,32 +1074,81 @@
           ]
         },
         {
-          "tick": 1,
-          "action": "build"
+          "tick": 0,
+          "action": "predict",
+          "args": [
+            [
+              4,
+              5,
+              7,
+              8
+            ]
+          ]
         },
         {
-          "tick": 2,
-          "action": "build"
+          "tick": 0,
+          "action": "build",
+          "args": []
         },
         {
-          "tick": 3,
-          "action": "build"
+          "tick": 0,
+          "action": "predict",
+          "args": [
+            [
+              4,
+              5,
+              7,
+              8
+            ]
+          ]
+        },
+        {
+          "tick": 0,
+          "action": "build",
+          "args": []
+        },
+        {
+          "tick": 0,
+          "action": "predict",
+          "args": [
+            [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8
+            ]
+          ]
+        },
+        {
+          "tick": 0,
+          "action": "build",
+          "args": []
         }
       ]
     },
     {
       "id": "hygiene",
-      "title": "4. Hygiene",
+      "title": "5. Hygiene",
       "blurb": "A Python service that builds, but the image is huge, leaks a secret, and runs as root. Pick the right variant of each card (and add what's missing) until it is under 200 MB, holds no secrets, and runs as a non-root user.",
       "hints": [
         "Look at the three problems in the goal: size, a leaked secret and running as root.",
         "A .dockerignore keeps secrets out of the build context, a slim base and clean apt and pip steps keep it small, and USER drops root.",
         "Pick the dockerignore, the slim Python base, the apt-good and pip-good variants, then add useradd and user-app."
       ],
-      "par": 2,
+      "par": 3,
       "path": [
         "Arrange the Dockerfile: dockerignore → from-py → workdir → apt-good → copy-req → pip-good → copy-all → useradd → user-app → cmd-py",
-        "Build ×2"
+        "Predict: layers 6, 7, 8, 9",
+        "Build",
+        "Predict: layers 6, 7, 8, 9",
+        "Build",
+        "Predict: layers 4, 5, 6, 7, 8, 9",
+        "Build"
       ],
       "lessons": [
         "A .dockerignore keeps secrets and junk out of the build context; a secret copied into a layer stays in the image.",
@@ -759,7 +1159,7 @@
         "example": "topics/docker/examples/hello-nginx",
         "commands": "# .dockerignore\n.env\n.git\n__pycache__/\n\n# Dockerfile\nFROM python:3.12-slim\nRUN apt-get update && apt-get install -y --no-install-recommends curl \\\n    && rm -rf /var/lib/apt/lists/*\nCOPY requirements.txt .\nRUN pip install --no-cache-dir -r requirements.txt\nCOPY . .\nRUN useradd --create-home app\nUSER app\nCMD [\"python\", \"main.py\"]"
       },
-      "winTicks": 2,
+      "winTicks": 3,
       "minHealth": 50,
       "drainRate": 0.1,
       "failPenalty": 10,
@@ -932,6 +1332,13 @@
           "files": [
             "app.py"
           ]
+        },
+        {
+          "tick": 2,
+          "event": "dev-add-dep",
+          "files": [
+            "requirements.txt"
+          ]
         }
       ],
       "solution": [
@@ -954,27 +1361,75 @@
           ]
         },
         {
-          "tick": 1,
-          "action": "build"
+          "tick": 0,
+          "action": "predict",
+          "args": [
+            [
+              5,
+              6,
+              7,
+              8
+            ]
+          ]
         },
         {
-          "tick": 2,
-          "action": "build"
+          "tick": 0,
+          "action": "build",
+          "args": []
+        },
+        {
+          "tick": 0,
+          "action": "predict",
+          "args": [
+            [
+              5,
+              6,
+              7,
+              8
+            ]
+          ]
+        },
+        {
+          "tick": 0,
+          "action": "build",
+          "args": []
+        },
+        {
+          "tick": 0,
+          "action": "predict",
+          "args": [
+            [
+              3,
+              4,
+              5,
+              6,
+              7,
+              8
+            ]
+          ]
+        },
+        {
+          "tick": 0,
+          "action": "build",
+          "args": []
         }
       ]
     },
     {
       "id": "broken",
-      "title": "5. Broken build",
-      "blurb": "This build fails. Read the log, find the offending step, fix it, and repeat: there is more than one problem. Each failed build costs budget, so read before you rebuild.",
+      "title": "6. Broken build",
+      "blurb": "This build fails. Read the log, find the offending step, fix it, and repeat: there is more than one problem. Each failed build costs budget, so predict which line fails before you rebuild. When it finally builds, a teammate edits the source: predict what rebuilds.",
       "hints": [
-        "Read the failed build log from the bottom: it names the step that broke.",
+        "Predict which line fails before you build, then read the failed build log from the bottom: it names the step that broke.",
         "There is more than one problem: fix one and the next step fails.",
         "Copy the manifest before npm ci, copy the sources before the build step, and end with the CMD."
       ],
-      "par": 1,
+      "par": 2,
       "path": [
         "Arrange the Dockerfile: from-node → workdir → copy-manifest → npm-ci → copy-all → build → cmd-node",
+        "Predict: layers 5, 6, 7",
+        "Build",
+        "Predict: layers 5, 6, 7",
         "Build"
       ],
       "lessons": [
@@ -986,7 +1441,7 @@
         "example": "topics/docker/examples/hello-nginx",
         "commands": "docker build -t app . 2>&1 | tail -20      # read from the bottom\ndocker build --progress=plain -t app .      # full output of every step\ndocker history app                          # what each layer added"
       },
-      "winTicks": 1,
+      "winTicks": 2,
       "minHealth": 50,
       "drainRate": 0.25,
       "failPenalty": 15,
@@ -1099,7 +1554,12 @@
         "cmd-node"
       ],
       "goal": {},
-      "schedule": [],
+      "schedule": [
+        {
+          "tick": 1,
+          "event": "dev-edit-src"
+        }
+      ],
       "solution": [
         {
           "tick": 0,
@@ -1117,14 +1577,42 @@
           ]
         },
         {
-          "tick": 1,
-          "action": "build"
+          "tick": 0,
+          "action": "predict",
+          "args": [
+            [
+              4,
+              5,
+              6
+            ]
+          ]
+        },
+        {
+          "tick": 0,
+          "action": "build",
+          "args": []
+        },
+        {
+          "tick": 0,
+          "action": "predict",
+          "args": [
+            [
+              4,
+              5,
+              6
+            ]
+          ]
+        },
+        {
+          "tick": 0,
+          "action": "build",
+          "args": []
         }
       ]
     },
     {
       "id": "compose",
-      "title": "6. Compose wiring",
+      "title": "7. Compose wiring",
       "blurb": "A web, api and db stack that does not work yet. Pick one line for each slot of compose.yaml so api reaches db by name, waits for it, and the data survives a down and up, without publishing anything that only containers need.",
       "hints": [
         "Look at the three services and what each slot of compose.yaml connects.",
@@ -1140,7 +1628,9 @@
         "Choose db-volumes = named",
         "Choose db-ports = none",
         "Choose vol-decl = decl",
+        "Predict: layers 1",
         "Build",
+        "Predict: layers 1",
         "Recreate the stack (down, then up)"
       ],
       "lessons": [
@@ -1399,7 +1889,25 @@
         },
         {
           "tick": 0,
+          "action": "predict",
+          "args": [
+            [
+              0
+            ]
+          ]
+        },
+        {
+          "tick": 0,
           "action": "build"
+        },
+        {
+          "tick": 0,
+          "action": "predict",
+          "args": [
+            [
+              0
+            ]
+          ]
         },
         {
           "tick": 1,

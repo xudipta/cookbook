@@ -8,14 +8,19 @@ A Dockerfile is a stack of cached layers. Arrange the cards, press **Build**, an
 
 ## Rules
 
-- Cards are Dockerfile lines. Drag them (or use Up / Down / Remove) and add more from the tray.
-  `.dockerignore` and the `--cache-from` flag are cards too.
+- Cards are Dockerfile lines. Drag a card by its grip (works with a finger), or use Up / Down / Remove, and
+  add more from the tray. `.dockerignore` and the `--cache-from` flag are cards too.
+- **Predict before you build.** Before the first build, and whenever a teammate's change is waiting, you tap the
+  layers you expect to rebuild (or, for a Dockerfile that will not build, the line that fails). Build unlocks once
+  you have answered; each wrong layer costs a little build budget, and the result explains every layer.
 - The first build is free. Later builds cost budget in proportion to the seconds of layers that
   rebuild. A failed build costs a flat amount, so read the log before you rebuild.
 - You win by completing the successful builds **and** meeting the level's goals (image size, no
   secrets, non-root, and so on). `b` builds; reading the log is free.
-- Level 6 is Compose: pick one line for each slot of `compose.yaml`, press **Up** (`b`), then
-  **Recreate** to check the data survives `down` and `up`.
+- Level 7 is Compose: pick one line for each slot of `compose.yaml`, predict whether it comes up, press **Up**
+  (`b`), then predict whether the data survives and press **Recreate** to check `down` and `up`.
+- Level 3 is Slow CI: every other job starts on an empty runner, so the Dockerfile order is not enough: the build
+  needs `--cache-from`.
 
 ## Syntax worth remembering
 

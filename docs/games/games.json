@@ -28,7 +28,7 @@
       "code": "DK",
       "hue": "docker",
       "status": "live",
-      "levels": 6,
+      "levels": 7,
       "blurb": "Arrange Dockerfile lines and watch which layers the build cache reuses.",
       "chips": [
         "FROM",
@@ -37,7 +37,7 @@
         ".dockerignore"
       ],
       "facts": [
-        "6 levels",
+        "7 levels",
         "build logs",
         "Compose wiring"
       ],

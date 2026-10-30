@@ -11,7 +11,7 @@ sections, and a scripted winning run must actually win.
 | Game | Topic | Status |
 | --- | --- | --- |
 | [Chaos Monkey Cluster](kubernetes/index.md) | Kubernetes | Playable: 3 levels, 9 failure types, a `kubectl` prompt |
-| [Layer Cake](docker/index.md) | Docker | Playable: 6 levels, a layer-cache simulator, `docker build`-style logs, Compose wiring |
+| [Layer Cake](docker/index.md) | Docker | Playable: 7 levels, a layer-cache simulator, `docker build`-style logs, Compose wiring |
 | [Drift Detective](terraform/index.md) | Terraform | Playable: 4 levels, a plan/apply/state simulator, a `terraform` prompt, modules and `moved` blocks |
 | [Pipeline Panic](cicd/index.md) | CI/CD | Playable: 4 levels, workflow cards with a live YAML preview, then Deploy Day with rolling, blue-green and canary releases |
 | [Skill Issue](skills/index.md) | Agent Skills | Playable: 3 levels, a context-window and trigger simulator, the `check_skill.py` lint gate |
