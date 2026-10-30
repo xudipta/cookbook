@@ -17,15 +17,6 @@
   "action": 0,
   "narrow": 0
  },
- "cicd/locked-down@390x844": {
-  "small44": 0,
-  "small24": 0,
-  "input16": 0,
-  "tiny11": 0,
-  "overflow": 0,
-  "action": 0,
-  "narrow": 0
- },
  "cicd/fast-feedback@390x844": {
   "small44": 0,
   "small24": 0,
@@ -35,16 +26,7 @@
   "action": 0,
   "narrow": 0
  },
- "database/migrations@390x844": {
-  "small44": 0,
-  "small24": 0,
-  "input16": 0,
-  "tiny11": 0,
-  "overflow": 0,
-  "action": 0,
-  "narrow": 0
- },
- "database/plans@390x844": {
+ "cicd/locked-down@390x844": {
   "small44": 0,
   "small24": 0,
   "input16": 0,
@@ -62,43 +44,25 @@
   "action": 0,
   "narrow": 0
  },
+ "database/plans@390x844": {
+  "small44": 0,
+  "small24": 0,
+  "input16": 0,
+  "tiny11": 0,
+  "overflow": 0,
+  "action": 0,
+  "narrow": 0
+ },
+ "database/migrations@390x844": {
+  "small44": 0,
+  "small24": 0,
+  "input16": 0,
+  "tiny11": 0,
+  "overflow": 0,
+  "action": 0,
+  "narrow": 0
+ },
  "demo/_@390x844": {
-  "small44": 0,
-  "small24": 0,
-  "input16": 0,
-  "tiny11": 0,
-  "overflow": 0,
-  "action": 0,
-  "narrow": 0
- },
- "docker/hygiene@390x844": {
-  "small44": 0,
-  "small24": 0,
-  "input16": 0,
-  "tiny11": 0,
-  "overflow": 0,
-  "action": 0,
-  "narrow": 0
- },
- "docker/cache@390x844": {
-  "small44": 0,
-  "small24": 0,
-  "input16": 0,
-  "tiny11": 0,
-  "overflow": 0,
-  "action": 0,
-  "narrow": 0
- },
- "docker/hello@390x844": {
-  "small44": 0,
-  "small24": 0,
-  "input16": 0,
-  "tiny11": 0,
-  "overflow": 0,
-  "action": 0,
-  "narrow": 0
- },
- "docker/compose@390x844": {
   "small44": 0,
   "small24": 0,
   "input16": 0,
@@ -116,6 +80,15 @@
   "action": 0,
   "narrow": 0
  },
+ "docker/compose@390x844": {
+  "small44": 0,
+  "small24": 0,
+  "input16": 0,
+  "tiny11": 0,
+  "overflow": 0,
+  "action": 0,
+  "narrow": 0
+ },
  "docker/bloat@390x844": {
   "small44": 0,
   "small24": 0,
@@ -125,7 +98,43 @@
   "action": 0,
   "narrow": 0
  },
- "github/protected-main@390x844": {
+ "docker/hygiene@390x844": {
+  "small44": 0,
+  "small24": 0,
+  "input16": 0,
+  "tiny11": 0,
+  "overflow": 0,
+  "action": 0,
+  "narrow": 0
+ },
+ "docker/hello@390x844": {
+  "small44": 0,
+  "small24": 0,
+  "input16": 0,
+  "tiny11": 0,
+  "overflow": 0,
+  "action": 0,
+  "narrow": 0
+ },
+ "docker/slow-ci@390x844": {
+  "small44": 0,
+  "small24": 0,
+  "input16": 0,
+  "tiny11": 0,
+  "overflow": 0,
+  "action": 0,
+  "narrow": 0
+ },
+ "docker/cache@390x844": {
+  "small44": 0,
+  "small24": 0,
+  "input16": 0,
+  "tiny11": 0,
+  "overflow": 0,
+  "action": 0,
+  "narrow": 0
+ },
+ "github/first-pr@390x844": {
   "small44": 0,
   "small24": 0,
   "input16": 0,
@@ -143,7 +152,16 @@
   "action": 0,
   "narrow": 0
  },
- "github/first-pr@390x844": {
+ "github/protected-main@390x844": {
+  "small44": 0,
+  "small24": 0,
+  "input16": 0,
+  "tiny11": 0,
+  "overflow": 0,
+  "action": 0,
+  "narrow": 0
+ },
+ "kubernetes/tutorial@390x844": {
   "small44": 0,
   "small24": 0,
   "input16": 0,
@@ -170,16 +188,7 @@
   "action": 0,
   "narrow": 0
  },
- "kubernetes/tutorial@390x844": {
-  "small44": 0,
-  "small24": 0,
-  "input16": 0,
-  "tiny11": 0,
-  "overflow": 0,
-  "action": 0,
-  "narrow": 0
- },
- "linux/web-tier@390x844": {
+ "linux/bad-friday@390x844": {
   "small44": 0,
   "small24": 0,
   "input16": 0,
@@ -197,7 +206,7 @@
   "action": 0,
   "narrow": 0
  },
- "linux/bad-friday@390x844": {
+ "linux/web-tier@390x844": {
   "small44": 0,
   "small24": 0,
   "input16": 0,
@@ -215,15 +224,6 @@
   "action": 0,
   "narrow": 0
  },
- "mcp/scopes-secrets@390x844": {
-  "small44": 0,
-  "small24": 0,
-  "input16": 0,
-  "tiny11": 0,
-  "overflow": 0,
-  "action": 0,
-  "narrow": 0
- },
  "mcp/vet-build@390x844": {
   "small44": 0,
   "small24": 0,
@@ -233,7 +233,7 @@
   "action": 0,
   "narrow": 0
  },
- "observability/first-shift@390x844": {
+ "mcp/scopes-secrets@390x844": {
   "small44": 0,
   "small24": 0,
   "input16": 0,
@@ -251,6 +251,15 @@
   "action": 0,
   "narrow": 0
  },
+ "observability/first-shift@390x844": {
+  "small44": 0,
+  "small24": 0,
+  "input16": 0,
+  "tiny11": 0,
+  "overflow": 0,
+  "action": 0,
+  "narrow": 0
+ },
  "observability/storm-night@390x844": {
   "small44": 0,
   "small24": 0,
@@ -260,7 +269,7 @@
   "action": 0,
   "narrow": 0
  },
- "skills/ship-it@390x844": {
+ "skills/descriptions@390x844": {
   "small44": 0,
   "small24": 0,
   "input16": 0,
@@ -269,7 +278,7 @@
   "action": 0,
   "narrow": 0
  },
- "skills/descriptions@390x844": {
+ "skills/ship-it@390x844": {
   "small44": 0,
   "small24": 0,
   "input16": 0,
@@ -296,7 +305,7 @@
   "action": 0,
   "narrow": 0
  },
- "terraform/first-apply@390x844": {
+ "terraform/team@390x844": {
   "small44": 0,
   "small24": 0,
   "input16": 0,
@@ -305,7 +314,7 @@
   "action": 0,
   "narrow": 0
  },
- "terraform/team@390x844": {
+ "terraform/first-apply@390x844": {
   "small44": 0,
   "small24": 0,
   "input16": 0,
@@ -323,25 +332,16 @@
   "action": 0,
   "narrow": 0
  },
- "cicd/locked-down@360x640": {
-  "small44": 0,
-  "small24": 0,
-  "input16": 0,
-  "tiny11": 0,
-  "overflow": 0,
-  "action": 0,
-  "narrow": 0
- },
- "cicd/fast-feedback@360x640": {
-  "small44": 0,
-  "small24": 0,
-  "input16": 0,
-  "tiny11": 0,
-  "overflow": 0,
-  "action": 0,
-  "narrow": 0
- },
  "cicd/deploy-day@360x640": {
+  "small44": 0,
+  "small24": 0,
+  "input16": 0,
+  "tiny11": 0,
+  "overflow": 0,
+  "action": 0,
+  "narrow": 0
+ },
+ "cicd/locked-down@360x640": {
   "small44": 0,
   "small24": 0,
   "input16": 0,
@@ -359,7 +359,7 @@
   "action": 0,
   "narrow": 0
  },
- "database/migrations@360x640": {
+ "cicd/fast-feedback@360x640": {
   "small44": 0,
   "small24": 0,
   "input16": 0,
@@ -386,6 +386,15 @@
   "action": 0,
   "narrow": 0
  },
+ "database/migrations@360x640": {
+  "small44": 0,
+  "small24": 0,
+  "input16": 0,
+  "tiny11": 0,
+  "overflow": 0,
+  "action": 0,
+  "narrow": 0
+ },
  "demo/_@360x640": {
   "small44": 0,
   "small24": 0,
@@ -395,7 +404,7 @@
   "action": 0,
   "narrow": 0
  },
- "docker/broken@360x640": {
+ "docker/bloat@360x640": {
   "small44": 0,
   "small24": 0,
   "input16": 0,
@@ -405,6 +414,33 @@
   "narrow": 0
  },
  "docker/hello@360x640": {
+  "small44": 0,
+  "small24": 0,
+  "input16": 0,
+  "tiny11": 0,
+  "overflow": 0,
+  "action": 0,
+  "narrow": 0
+ },
+ "docker/compose@360x640": {
+  "small44": 0,
+  "small24": 0,
+  "input16": 0,
+  "tiny11": 0,
+  "overflow": 0,
+  "action": 0,
+  "narrow": 0
+ },
+ "docker/slow-ci@360x640": {
+  "small44": 0,
+  "small24": 0,
+  "input16": 0,
+  "tiny11": 0,
+  "overflow": 0,
+  "action": 0,
+  "narrow": 0
+ },
+ "docker/broken@360x640": {
   "small44": 0,
   "small24": 0,
   "input16": 0,
@@ -431,25 +467,7 @@
   "action": 0,
   "narrow": 0
  },
- "docker/compose@360x640": {
-  "small44": 0,
-  "small24": 0,
-  "input16": 0,
-  "tiny11": 0,
-  "overflow": 0,
-  "action": 0,
-  "narrow": 0
- },
- "docker/bloat@360x640": {
-  "small44": 0,
-  "small24": 0,
-  "input16": 0,
-  "tiny11": 0,
-  "overflow": 0,
-  "action": 0,
-  "narrow": 0
- },
- "github/first-pr@360x640": {
+ "github/behind-main@360x640": {
   "small44": 0,
   "small24": 0,
   "input16": 0,
@@ -467,16 +485,7 @@
   "action": 0,
   "narrow": 0
  },
- "github/behind-main@360x640": {
-  "small44": 0,
-  "small24": 0,
-  "input16": 0,
-  "tiny11": 0,
-  "overflow": 0,
-  "action": 0,
-  "narrow": 0
- },
- "kubernetes/shift@360x640": {
+ "github/first-pr@360x640": {
   "small44": 0,
   "small24": 0,
   "input16": 0,
@@ -503,7 +512,7 @@
   "action": 0,
   "narrow": 0
  },
- "linux/first-night@360x640": {
+ "kubernetes/shift@360x640": {
   "small44": 0,
   "small24": 0,
   "input16": 0,
@@ -521,6 +530,15 @@
   "action": 0,
   "narrow": 0
  },
+ "linux/first-night@360x640": {
+  "small44": 0,
+  "small24": 0,
+  "input16": 0,
+  "tiny11": 0,
+  "overflow": 0,
+  "action": 0,
+  "narrow": 0
+ },
  "linux/bad-friday@360x640": {
   "small44": 0,
   "small24": 0,
@@ -530,7 +548,7 @@
   "action": 0,
   "narrow": 0
  },
- "mcp/first-plugs@360x640": {
+ "mcp/vet-build@360x640": {
   "small44": 0,
   "small24": 0,
   "input16": 0,
@@ -548,7 +566,16 @@
   "action": 0,
   "narrow": 0
  },
- "mcp/vet-build@360x640": {
+ "mcp/first-plugs@360x640": {
+  "small44": 0,
+  "small24": 0,
+  "input16": 0,
+  "tiny11": 0,
+  "overflow": 0,
+  "action": 0,
+  "narrow": 0
+ },
+ "observability/first-shift@360x640": {
   "small44": 0,
   "small24": 0,
   "input16": 0,
@@ -575,25 +602,7 @@
   "action": 0,
   "narrow": 0
  },
- "observability/first-shift@360x640": {
-  "small44": 0,
-  "small24": 0,
-  "input16": 0,
-  "tiny11": 0,
-  "overflow": 0,
-  "action": 0,
-  "narrow": 0
- },
  "skills/descriptions@360x640": {
-  "small44": 0,
-  "small24": 0,
-  "input16": 0,
-  "tiny11": 0,
-  "overflow": 0,
-  "action": 0,
-  "narrow": 0
- },
- "skills/ship-it@360x640": {
   "small44": 0,
   "small24": 0,
   "input16": 0,
@@ -611,7 +620,16 @@
   "action": 0,
   "narrow": 0
  },
- "terraform/first-apply@360x640": {
+ "skills/ship-it@360x640": {
+  "small44": 0,
+  "small24": 0,
+  "input16": 0,
+  "tiny11": 0,
+  "overflow": 0,
+  "action": 0,
+  "narrow": 0
+ },
+ "terraform/module@360x640": {
   "small44": 0,
   "small24": 0,
   "input16": 0,
@@ -638,7 +656,7 @@
   "action": 0,
   "narrow": 0
  },
- "terraform/module@360x640": {
+ "terraform/first-apply@360x640": {
   "small44": 0,
   "small24": 0,
   "input16": 0,

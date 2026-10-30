@@ -35,6 +35,10 @@ export function createWorld(sc) {
     winTicks: sc.winTicks,
     minHealth: sc.minHealth,
     log: [],
+    lastVersions: null, // the file versions at the last successful build: what the next edit is compared against
+    predictedFor: null, // the signature of the question the player has answered
+    verdict: null, // how the last prediction did, with the reasons
+    predictions: { right: 0, total: 0 },
   };
 }
 
@@ -137,6 +141,7 @@ export function simulateBuild(w, sc) {
   const stages = [];
   let cur = null;
   let positionInStage = 0;
+  let missed = false; // once a layer rebuilds, every later layer in the Dockerfile rebuilds too
 
   const label = () => {
     const name = cur.name || (multi ? `stage-${stages.length - 1}` : '');
@@ -169,7 +174,8 @@ export function simulateBuild(w, sc) {
       const time = cached ? 0 : image.pull;
       w.pulled.add(pullKey);
       res.seconds += time;
-      res.layers.push({ stage: stages.length - 1, label: label(), text: c.text, status: cached ? 'CACHED' : 'BUILT', time, size: image.size });
+      if (!cached) missed = true;
+      res.layers.push({ stage: stages.length - 1, label: label(), text: c.text, status: cached ? 'CACHED' : 'BUILT', time, size: image.size, why: cached ? 'same base image, already pulled' : 'the base image is new here, or it changed upstream' });
       res.lines.push(`#${step} ${label()} FROM docker.io/library/${c.image}`, cached ? `#${step} CACHED` : `#${step} ${fmt(time)}s`);
       step += 1;
       continue;
@@ -267,7 +273,16 @@ export function simulateBuild(w, sc) {
     w.cache.add(key);
     cur.key = key;
     cur.size += size;
-    res.layers.push({ stage: stages.length - 1, label: label(), text: c.text, status: cached ? 'CACHED' : 'BUILT', time: cached ? 0 : time, size });
+    const changed = inputs.filter((i) => w.lastVersions && i.includes(':') && Number(i.split(':').pop()) !== w.lastVersions[i.split(':')[0]]).map((i) => i.split(':')[0]);
+    const why = cached
+      ? 'unchanged, and nothing before it changed'
+      : missed
+        ? 'a layer before it was rebuilt, so this one cannot be reused'
+        : c.kind === 'copy' && changed.length
+          ? `the files it copies changed (${changed.join(', ')})`
+          : 'it is new, or its input is not in the cache';
+    if (!cached) missed = true;
+    res.layers.push({ stage: stages.length - 1, label: label(), text: c.text, status: cached ? 'CACHED' : 'BUILT', time: cached ? 0 : time, size, why });
     res.lines.push(`#${step} ${label()} ${c.text}`, cached ? `#${step} CACHED` : `#${step} ${fmt(time)}s`);
     step += 1;
   }
@@ -293,6 +308,88 @@ export function simulateBuild(w, sc) {
   res.runs = !res.runsWhy;
   return res;
 }
+
+
+// ---------------------------------------------------------------- predict before you build
+
+export const PREDICT_COST = 3; // build budget per layer predicted wrongly
+
+const cloneWorld = (w) => ({ ...w, cache: new Set(w.cache), pulled: new Set(w.pulled), versions: { ...w.versions }, digest: { ...w.digest }, order: [...w.order], lastVersions: w.lastVersions ? { ...w.lastVersions } : null });
+
+const signature = (w) => [w.builds, w.order.join(','), JSON.stringify(w.versions), JSON.stringify(w.digest), w.forceCold, w.cache.size].join('|');
+
+// The files a teammate's edit touches in this level (the first dev-edit-src in its schedule, else src).
+const editedFiles = (sc) => (sc.schedule || []).find((e) => e.event === 'dev-edit-src')?.files || ['src'];
+
+// Why the cache is (or is not) going to be reused, from the pending teammate event.
+function eventReason(w) {
+  const ev = w.open.find((e) => e.kind === 'dev');
+  return ev ? { 'dev-edit-src': 'a teammate edited a source file', 'dev-add-dep': 'a teammate changed the dependency manifest', 'base-bump': 'the base image was updated upstream', 'cold-runner': 'CI is on a fresh runner with an empty cache' }[ev.id] : '';
+}
+
+// The question to answer before the next Build, or null when there is nothing to predict:
+//   - before the first build: which layers rebuild when a teammate then edits the source (or, if the Dockerfile
+//     would not build at all, which line fails);
+//   - when a teammate's change is waiting: which layers this build will rebuild.
+export function askQuestion(w, sc) {
+  if (w.mode === 'compose') return null;
+  const first = w.builds === 0;
+  const waiting = w.open.some((e) => e.kind === 'dev');
+  if (!first && !waiting) return null;
+  const sig = signature(w);
+  const probe = cloneWorld(w);
+  const r1 = simulateBuild(probe, sc);
+  if (!r1.ok) {
+    const lines = w.order.map((id) => w.cards.get(id)).filter((c) => !NON_INSTRUCTION.has(c.kind)).map((c) => c.text);
+    const failed = Math.max(0, r1.layers.length - (r1.layers.length && r1.layers[r1.layers.length - 1].status === 'ERROR' ? 1 : 0));
+    return { kind: 'fails', sig, intro: 'This Dockerfile will not build. Which line fails first?', layers: lines.map((text) => ({ text })), truth: lines.map((_, i) => i === failed), why: r1.error.short };
+  }
+  let result = r1;
+  let intro;
+  if (first) {
+    const files = editedFiles(sc);
+    for (const f of files) probe.versions[f] += 1;
+    probe.lastVersions = { ...w.versions };
+    result = simulateBuild(probe, sc);
+    intro = `This build is cold. Then a teammate edits ${files.join(', ')} and you build again. Tap the layers that will rebuild the second time (the rest come from cache).`;
+  } else {
+    intro = `${eventReason(w) ? `${eventReason(w)[0].toUpperCase()}${eventReason(w).slice(1)}.` : 'Something changed.'} Tap the layers that this build will rebuild (the rest come from cache).`;
+  }
+  return {
+    kind: 'rebuild',
+    sig,
+    intro,
+    layers: result.layers.map((l) => ({ text: l.text, label: l.label })),
+    truth: result.layers.map((l) => l.status === 'BUILT'),
+    whys: result.layers.map((l) => l.why),
+  };
+}
+
+export const needsPrediction = (w, sc) => {
+  const q = askQuestion(w, sc);
+  return Boolean(q) && w.predictedFor !== q.sig;
+};
+
+// Scores an answer against a question: for `rebuild` an array of the layer indexes the player expects to rebuild; for
+// `fails` and `choose` the one index picked. Each wrong layer (or a wrong pick) costs build budget.
+export function scorePrediction(w, ctx, q, answer) {
+  if (!q || !Array.isArray(answer)) return false;
+  const picked = new Set(answer);
+  const miss = q.truth.reduce((n, truth, i) => n + (picked.has(i) !== truth ? 1 : 0), 0);
+  const single = q.kind !== 'rebuild';
+  const total = single ? 1 : q.truth.length;
+  const wrong = single ? Math.min(1, miss) : miss;
+  w.predictedFor = q.sig;
+  w.predictions.total += total;
+  w.predictions.right += total - wrong;
+  const cost = Math.min(12, wrong * PREDICT_COST);
+  if (cost) w.health = Math.max(0, w.health - cost);
+  w.verdict = { kind: q.kind, picked: [...picked], truth: q.truth, layers: q.layers, whys: q.whys || [], why: q.why || '', wrong, total, cost };
+  ctx.log(wrong ? `Prediction: ${total - wrong} of ${total} right (-${cost}% build budget).` : `Prediction: ${total} of ${total} right.`, { kind: wrong ? 'warn' : 'good' });
+  return true;
+}
+
+export const predict = (w, ctx, answer) => scorePrediction(w, ctx, askQuestion(w, ctx.scenario), answer);
 
 // ---------------------------------------------------------------- the turn (one successful build)
 
@@ -341,6 +438,7 @@ export function tick(w, ctx) {
   const res = w.pending;
   w.pending = null;
   w.okBuilds += 1;
+  w.lastVersions = { ...w.versions };
   if (ctx.ticks > (sc.freeBuilds ?? 1)) w.health = Math.max(0, w.health - res.seconds * sc.drainRate);
 
   const rebuilt = res.layers.filter((l) => l.status === 'BUILT' && l.time >= 0.05).length;

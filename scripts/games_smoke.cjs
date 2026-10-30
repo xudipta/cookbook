@@ -450,6 +450,80 @@ async function checkKubernetesPlay(browser, scenario) {
   return problems;
 }
 
+// Layer Cake on a phone (#90): a non-drag path with 44px targets and a drag grip that works with pointer events,
+// a prediction that gates Build and explains the difference, and no scripted level shorter than five steps.
+async function checkDockerPlay(browser, scenario) {
+  const problems = [];
+  for (const level of scenario.levels) {
+    if ((level.path || []).length < 5) problems.push(`[${level.id}] has only ${(level.path || []).length} steps, expected at least 5`);
+    if (!(level.path || []).some((p) => p.startsWith('Predict'))) problems.push(`[${level.id}] has no prediction step`);
+  }
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+  const page = await ctx.newPage();
+  page.on('pageerror', (e) => problems.push(`page error: ${e.message}`));
+  const open = async (level) => {
+    await page.goto(`${SITE_URL}docs/games/docker/?autoplay=0&coach=0&level=${level}`, { waitUntil: 'load' });
+    await page.waitForFunction(() => window.cookbookGames && window.cookbookGames.docker);
+  };
+  const g = (fn, arg) => page.evaluate(({ f, a }) => new Function('g', 'a', `return (${f})(g, a)`)(window.cookbookGames.docker, a), { f: fn.toString(), a: arg });
+
+  await open('hello');
+  // Build is locked until the prediction is answered.
+  const refused = await g((game) => game.act('build') === false && game.state.okBuilds === 0);
+  if (!refused) problems.push('Build ran before the prediction was answered');
+  if (!(await page.locator('.dk-predict:not([hidden]) .dk-pick').count())) problems.push('the prediction panel is not shown before the first build');
+  for (const box of await page.locator('.dk-pick').all()) {
+    const h = (await box.boundingBox()).height;
+    if (h < 44) problems.push(`a prediction toggle is ${Math.round(h)}px tall on a phone, expected at least 44`);
+  }
+  // A deliberately wrong answer costs budget and is explained line by line. (Level 1 starts with the cards in the
+  // wrong order, so its first question is which line fails; the right answer is the first line.)
+  const before = await g((game) => game.state.health);
+  await page.locator('.dk-pick').nth(1).click();
+  await page.click('.dk-lock');
+  const after = await g((game) => game.state.health);
+  if (!(after < before)) problems.push('a wrong prediction cost nothing');
+  if (!(await page.locator('.dk-verdict-wrong').count())) problems.push('the verdict does not mark the wrong layers');
+  const whys = await page.locator('.dk-why').allInnerTexts();
+  if (!whys.some((t) => t.length > 12)) problems.push('the verdict does not explain why layers rebuild or stay cached');
+  if (!(await g((game) => game.act('build') !== false))) problems.push('Build stayed locked after the prediction was answered');
+
+  // Touch reordering without dragging: Up and Down are at least 44px, and they move the card.
+  await open('cache');
+  for (const op of ['up', 'down', 'remove']) {
+    const box = await page.locator(`.dk-deck button[data-op="${op}"]:not(:disabled)`).first().boundingBox();
+    if (!box || box.height < 44) problems.push(`the ${op} button is ${box ? Math.round(box.height) : 0}px tall on a phone, expected at least 44`);
+  }
+  const grips = await page.locator('.dk-grip').all();
+  if (!grips.length) problems.push('the deck cards have no drag grip');
+  else {
+    await grips[0].evaluate((node) => node.scrollIntoView({ block: 'center' }));
+    const gb = await grips[0].boundingBox();
+    if (gb.width < 44 || gb.height < 44) problems.push(`the drag grip is ${Math.round(gb.width)}x${Math.round(gb.height)}px, expected at least 44x44`);
+    const first = await g((game) => game.state.order[0]);
+    const third = await page.locator('.dk-deck .dk-card').nth(1).boundingBox();
+    // Pointer events: press the first card's grip, move to just below the second card (still on screen), release.
+    await page.mouse.move(gb.x + gb.width / 2, gb.y + gb.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(gb.x + gb.width / 2, third.y + third.height + 4, { steps: 6 });
+    await page.mouse.up();
+    const now = await g((game) => game.state.order);
+    if (now[1] !== first) problems.push('dragging a card by its grip did not move it');
+  }
+  // Keyboard on the grip.
+  const second = await g((game) => game.state.order[1]);
+  await page.locator('.dk-grip').nth(1).focus();
+  await page.keyboard.press('ArrowUp');
+  if ((await g((game) => game.state.order[0])) !== second) problems.push('ArrowUp on the grip did not move the card up');
+
+  // The Compose level asks before Up, too.
+  await open('compose');
+  if (!(await g((game) => game.act('build') === false))) problems.push('Compose: Up ran before the prediction was answered');
+  if (!(await page.locator('.dk-predict:not([hidden]) .dk-pick').count())) problems.push('Compose: no prediction panel');
+  await ctx.close();
+  return problems;
+}
+
 async function playGame(browser, id) {
   const scenario = JSON.parse(fs.readFileSync(path.join(GAMES_DIR, id, 'scenarios.json'), 'utf8'));
   const onBoard = JSON.parse(fs.readFileSync(path.join(GAMES_DIR, 'games.json'), 'utf8')).games.some((g) => g.id === id);
@@ -465,6 +539,7 @@ async function playGame(browser, id) {
 
   problems.push(...(await checkGuidance(browser, id, scenario)).map((p) => `[guidance] ${p}`));
   problems.push(...(await checkDebrief(browser, id, scenario)).map((p) => `[debrief] ${p}`));
+  if (id === 'docker') problems.push(...(await checkDockerPlay(browser, scenario)).map((p) => `[play] ${p}`));
   if (id === 'kubernetes') problems.push(...(await checkKubernetesPlay(browser, scenario)).map((p) => `[play] ${p}`));
   if (id === 'observability') problems.push(...(await checkObservabilityPhone(browser, scenario)).map((p) => `[phone] ${p}`));
   const { VARIANT_SEEDS } = await import(pathToFileURL(path.join(GAMES_DIR, 'shared', 'engine.js')).href);

@@ -12,6 +12,8 @@
 // The stack is described by one choice per "slot" (a line of compose.yaml that can be written several ways);
 // the slots, their options and what each option sets live in scenarios.json.
 
+import { scorePrediction } from './sim.js';
+
 const fmt = (n) => (n >= 10 ? n.toFixed(0) : n.toFixed(1));
 
 // ---------------------------------------------------------------- world
@@ -35,6 +37,10 @@ export function createComposeWorld(sc) {
     dataKept: false,
     lastAction: null,
     last: null,
+    ups: 0,
+    predictedFor: null,
+    verdict: null,
+    predictions: { right: 0, total: 0 },
     winTicks: sc.winTicks,
     minHealth: sc.minHealth,
   };
@@ -146,6 +152,7 @@ export function simulateUp(w) {
 export function runUp(w, ctx) {
   const sc = ctx.scenario;
   const res = simulateUp(w);
+  w.ups += 1;
   w.last = res;
   if (!res.ok) {
     w.health = Math.max(0, w.health - sc.failPenalty);
@@ -196,6 +203,48 @@ export function runRecreate(w, ctx) {
   ctx.step();
   return w.last;
 }
+
+// ---------------------------------------------------------------- predict before you act
+
+const yesNo = (truth) => [{ text: 'Yes' }, { text: 'No' }].map((l, i) => ({ ...l, truth: i === 0 ? truth : !truth }));
+
+// The question to answer before the next Up or Recreate, or null: will the stack come up with this wiring, and (once
+// it is up) will the database data survive `down` and `up`?
+export function askCompose(w) {
+  const sig = JSON.stringify(w.choices);
+  if (w.ups === 0) {
+    const res = simulateUp(w);
+    const layers = yesNo(res.ok);
+    return {
+      kind: 'choose',
+      sig: `up|${sig}`,
+      intro: 'Read the compose.yaml you wrote. When you press Up, will the stack start and api connect to db?',
+      layers,
+      truth: layers.map((l) => l.truth),
+      why: res.ok ? 'every service starts and api reaches db' : res.error.short,
+    };
+  }
+  if (w.running && !w.recreated) {
+    const kept = settings(w).dbVolume !== 'none';
+    const layers = yesNo(kept);
+    return {
+      kind: 'choose',
+      sig: `down|${sig}`,
+      intro: 'You are about to run docker compose down and then up again. Will the database data survive?',
+      layers,
+      truth: layers.map((l) => l.truth),
+      why: kept ? 'the data is in a volume, and down removes containers, not volumes' : 'the data lives in the container, and down removes the container',
+    };
+  }
+  return null;
+}
+
+export const needsPrediction = (w) => {
+  const q = askCompose(w);
+  return Boolean(q) && w.predictedFor !== q.sig;
+};
+
+export const predictCompose = (w, ctx, answer) => scorePrediction(w, ctx, askCompose(w), answer);
 
 // ---------------------------------------------------------------- events
 
