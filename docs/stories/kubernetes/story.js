@@ -1,38 +1,13 @@
 // Story mode, Kubernetes: "Night Shift at Pizza Palace".
 //
-// A topic is taught as a short story on a phone-sized stage. Each chapter is one idea:
-//   1. the metaphor first (a kitchen), 2. you do something and watch it happen,
-//   3. only then the real Kubernetes word and command ("Now in real Kubernetes").
-//
-// The kitchen is a tiny simulation (createKitchen) and each chapter is a plain async script that
-// awaits the player: say(), choose(), pick(), card(). Nothing here needs a keyboard.
-//
-// ?fast=1 shortens every wait (used by scripts/story_check.cjs).
+// The cluster is a pizza kitchen: a cook is a Pod, the rota is a Deployment, the pass is a Service, the
+// stations are node capacity. The kitchen is a tiny simulation (createKitchen); each chapter is a plain
+// async script over it (see ../shared/story.js for the script API). Nothing here needs a keyboard.
+import { h, createStepper, createSwitch, createCounters, flyTo, mountStory as mount, FAST, siteUrl } from '../shared/story.js';
 
-const FAST = new URLSearchParams(location.search).has('fast');
-const REDUCED = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
-const ROOT = new URL('../../../', import.meta.url);
-const HUB = new URL('docs/games/', ROOT).href;
-const NOTE = (name) => new URL(`topics/kubernetes/notes/${name}/`, ROOT).href;
+const HUB = siteUrl('docs/games/');
+const NOTE = (name) => siteUrl(`topics/kubernetes/notes/${name}/`);
 
-const h = (tag, attrs = {}, ...kids) => {
-  const node = document.createElement(tag);
-  for (const [k, v] of Object.entries(attrs)) {
-    if (v == null || v === false) continue;
-    if (k === 'class') node.className = v;
-    else if (k === 'text') node.textContent = v;
-    else node.setAttribute(k, v === true ? '' : v);
-  }
-  node.append(...kids.flat().filter((x) => x != null));
-  return node;
-};
-// "plain **bold** plain" -> nodes, without ever using innerHTML on story text.
-const rich = (text) => text.split('**').map((part, i) => (i % 2 ? h('strong', { text: part }) : part));
-
-const WHO = {
-  maya: { name: 'Maya', role: 'Owner', color: '#6d28d9' },
-  sam: { name: 'You', role: 'On call', color: '#0f5f2d' },
-};
 const COOK_NAMES = ['Rosa', 'Tony', 'Ben', 'Lia', 'Omar', 'Ana', 'Kai', 'Zoe', 'Raj', 'Mia', 'Eli', 'Noor'];
 const POD_IDS = ['k3x9', 'p2m7', 'z8q1', 'a5d4', 'm7t2', 'r4w8', 'c9j6', 'h1n5', 'x6v3', 'b2y7', 'f8d2', 'q4s9'];
 
@@ -51,147 +26,30 @@ const COOK_SVG = `<svg viewBox="0 0 64 72" aria-hidden="true" focusable="false">
 
 const STATE_LABEL = { ready: 'Ready', starting: 'Starting', sick: 'Sick', pending: 'Pending' };
 
-/* ------------------------------------------------------------------------------------------ */
-/* The stage: header, kitchen board, bottom sheet                                              */
-/* ------------------------------------------------------------------------------------------ */
-
-function buildApp(chapters) {
-  const dots = chapters.map((c, i) => h('li', {}, h('button', { class: 'ks-dot', type: 'button', 'aria-label': `Chapter ${i + 1}: ${c.title}`, 'data-chapter': i }, h('span', { text: String(i + 1) }))));
-  const rotaCount = h('b', { class: 'ks-rota-n', text: '3' });
-  const rotaMinus = h('button', { class: 'ks-step', type: 'button', 'aria-label': 'Send one cook home', text: '−' });
-  const rotaPlus = h('button', { class: 'ks-step', type: 'button', 'aria-label': 'Hire one more cook', text: '+' });
-  const rotaTerm = h('span', { class: 'ks-term', hidden: true });
-  const rota = h('div', { class: 'ks-rota', hidden: true }, h('span', { class: 'ks-rota-label', text: 'Cooks on the rota' }), h('span', { class: 'ks-stepper' }, rotaMinus, rotaCount, rotaPlus), rotaTerm);
-  const probe = h('button', { class: 'ks-switch', type: 'button', role: 'switch', 'aria-checked': 'false', hidden: true }, h('span', { class: 'ks-switch-track' }, h('span', { class: 'ks-switch-knob' })), h('span', { class: 'ks-switch-text', text: 'Ready check: off' }));
+// The stage: the rota stepper, the ready-check switch, the pass, the kitchen stations, the cooks waiting
+// outside and the served/lost counters, added to the shared stage in front of its caption.
+function buildStage(app) {
+  const rota = createStepper({ label: 'Cooks on the rota', minusLabel: 'Send one cook home', plusLabel: 'Hire one more cook' });
+  const probe = createSwitch({ text: 'Ready check: off' });
   const pips = h('span', { class: 'ks-pips', 'aria-hidden': 'true' });
   const waiting = h('span', { class: 'ks-waiting', text: 'No orders waiting' });
   const pass = h('div', { class: 'ks-pass' }, h('span', { class: 'ks-pass-label', text: 'The pass' }), pips, waiting);
   const kitchen = h('div', { class: 'ks-kitchen', role: 'group', 'aria-label': 'The kitchen' });
   const outside = h('div', { class: 'ks-outside', hidden: true }, h('span', { class: 'ks-outside-label', text: 'Waiting outside: no free station' }));
-  const served = h('b', { text: '0' });
-  const lost = h('b', { text: '0' });
-  const hud = h('div', { class: 'ks-hud', hidden: true },
-    h('span', { class: 'ks-hud-ok' }, 'Served ', served),
-    h('span', { class: 'ks-hud-bad' }, 'Lost ', lost));
-  const caption = h('p', { class: 'ks-caption' });
-  const stage = h('div', { class: 'ks-stage', role: 'region', 'aria-label': 'The kitchen', tabindex: '0' }, rota, probe, pass, kitchen, outside, hud, caption);
-  const sheet = h('section', { class: 'ks-sheet', 'aria-live': 'polite' });
-  const toast = h('div', { class: 'ks-toast', role: 'status', hidden: true });
-  const root = h('div', { class: 'ks', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Night Shift at Pizza Palace', 'data-phase': 'title' },
-    h('div', { class: 'ks-top' },
-      h('a', { class: 'ks-exit', href: HUB, 'aria-label': 'Back to the games' }, '‹'),
-      h('div', { class: 'ks-title', text: 'Night Shift at Pizza Palace' }),
-      h('ol', { class: 'ks-dots', 'aria-label': 'Chapters' }, dots)),
-    stage, toast, sheet);
-  return { root, stage, caption, kitchen, outside, pass, pips, waiting, hud, served, lost, rota, rotaCount, rotaMinus, rotaPlus, rotaTerm, probe, sheet, toast, dots: dots.map((d) => d.firstChild) };
-}
-
-function createUI(app, chapters) {
-  const ui = { app, notebook: [], toastTimer: null, gen: 0 };
-  // Resolves only if the story has not been restarted meanwhile.
-  ui.sleep = (ms) => { const g = ui.gen; return new Promise((r) => setTimeout(() => g === ui.gen && r(), FAST ? Math.min(ms, 15) : ms)); };
-
-  ui.phase = (name) => {
-    app.root.dataset.phase = name;
-    app.sheet.setAttribute('aria-live', name === 'rush' ? 'off' : 'polite');
+  const counters = createCounters([{ label: 'Served', cls: 'ks-hud-ok' }, { label: 'Lost', cls: 'ks-hud-bad' }]);
+  app.caption.before(rota.el, probe, pass, kitchen, outside, counters.el);
+  return {
+    ...app, kitchen, outside, pass, pips, waiting, probe,
+    hud: counters.el, served: counters.values[0], lost: counters.values[1],
+    rota: rota.el, rotaCount: rota.count, rotaMinus: rota.minus, rotaPlus: rota.plus, rotaTerm: rota.term,
   };
-  ui.progress = (index, doneUpTo) => {
-    app.dots.forEach((d, i) => {
-      d.classList.toggle('is-now', i === index);
-      d.classList.toggle('is-done', i < doneUpTo);
-      d.toggleAttribute('aria-current', i === index);
-    });
-  };
-  ui.toast = (text, ms = 3600) => {
-    clearTimeout(ui.toastTimer);
-    app.toast.replaceChildren(...rich(text));
-    app.toast.hidden = false;
-    ui.toastTimer = setTimeout(() => { app.toast.hidden = true; }, FAST ? 200 : ms);
-  };
-  const show = (tall, ...nodes) => {
-    app.sheet.classList.toggle('is-tall', Boolean(tall));
-    app.sheet.replaceChildren(...nodes);
-    app.sheet.scrollTop = 0;
-  };
-  const speaker = (who) => {
-    const p = WHO[who];
-    return h('div', { class: 'ks-who' }, h('span', { class: 'ks-avatar', style: `background:${p.color}`, 'aria-hidden': 'true', text: p.name[0] }), h('span', { class: 'ks-who-name', text: p.name }), h('span', { class: 'ks-who-role', text: p.role }));
-  };
-  const wait = (...buttons) => new Promise((resolve) => {
-    const row = h('div', { class: 'ks-actions' });
-    for (const b of buttons) {
-      const btn = h('button', { class: `ks-btn ${b.alt ? 'alt' : ''}`.trim(), type: 'button', 'data-value': b.value ?? '', text: b.label });
-      btn.addEventListener('click', () => resolve(b.value));
-      row.append(btn);
-    }
-    app.sheet.append(row);
-    (row.firstChild || app.sheet).focus?.({ preventScroll: true });
-  });
-
-  // A line of story with one button to go on.
-  ui.say = async (who, text, button = 'Next') => {
-    show(false, speaker(who), h('p', { class: 'ks-say' }, ...rich(text)));
-    await wait({ label: button, value: true });
-  };
-  // A line of story with no button: the player watches (the story script moves on by itself).
-  ui.note = (who, text) => show(false, speaker(who), h('p', { class: 'ks-say' }, ...rich(text)));
-  ui.choose = async (who, text, options) => {
-    show(false, speaker(who), h('p', { class: 'ks-say' }, ...rich(text)));
-    return wait(...options.map((o) => ({ ...o, alt: true })));
-  };
-  ui.title = async (index) => {
-    const c = chapters[index];
-    ui.phase('title');
-    show(true, h('p', { class: 'ks-kicker', text: `Chapter ${index + 1} of ${chapters.length}` }), h('h2', { class: 'ks-h', text: c.title }), h('p', { class: 'ks-say', text: c.hook }), h('p', { class: 'ks-learn' }, h('strong', { text: 'You will learn: ' }), c.learn));
-    await wait({ label: index === 0 ? 'Start the shift' : 'Start the chapter', value: true });
-    ui.phase('story');
-  };
-  // "Now in real Kubernetes": the kitchen word becomes the real word, with the real command.
-  ui.card = async ({ maps, plain, cmd, note }) => {
-    ui.notebook.push({ maps, plain, cmd, note });
-    ui.phase('card');
-    const rows = maps.map(([kitchen, real]) => h('li', { class: 'ks-map' }, h('span', { class: 'ks-map-kitchen', text: kitchen }), h('span', { class: 'ks-map-arrow', 'aria-label': 'is called', text: '→' }), h('code', { class: 'ks-map-real', text: real })));
-    show(true,
-      h('p', { class: 'ks-kicker ks-kicker-k8s', text: 'Now in real Kubernetes' }),
-      h('ul', { class: 'ks-maps' }, rows),
-      h('p', { class: 'ks-say' }, ...rich(plain)),
-      h('details', { class: 'ks-cmd' }, h('summary', { text: 'See the real command' }), h('pre', {}, h('code', { text: cmd }))));
-    await wait({ label: 'Got it', value: true });
-    ui.phase('story');
-  };
-  // Wait for the player to tap one of the cooks.
-  ui.pick = (who, text, kitchen) => new Promise((resolve) => {
-    show(false, speaker(who), h('p', { class: 'ks-say' }, ...rich(text)), h('p', { class: 'ks-hint', text: 'Tap a cook above.' }));
-    ui.phase('pick');
-    kitchen.picking = (cook) => { kitchen.picking = null; kitchen.refresh(); ui.phase('story'); resolve(cook); };
-    kitchen.refresh();
-  });
-  // Show a live status line while the simulation runs.
-  ui.watch = (text) => show(false, h('p', { class: 'ks-say ks-watch' }, ...rich(text)));
-  ui.end = (notebook) => {
-    ui.phase('end');
-    const rows = notebook.map((n) => h('li', { class: 'ks-end-item' },
-      h('div', { class: 'ks-end-maps' }, n.maps.map(([k, r]) => h('span', { class: 'ks-end-map' }, k, ' → ', h('code', { text: r })))),
-      h('p', { class: 'ks-end-plain' }, ...rich(n.plain))));
-    show(true,
-      h('p', { class: 'ks-kicker', text: 'Shift complete' }),
-      h('h2', { class: 'ks-h', text: 'You just ran Kubernetes' }),
-      h('p', { class: 'ks-say', text: 'Every kitchen word you used has a real name. Here is your notebook.' }),
-      h('ul', { class: 'ks-end-list' }, rows),
-      h('div', { class: 'ks-links' },
-        h('a', { class: 'ks-link', href: NOTE('02-pods-and-workloads'), text: 'Read: Pods and workloads' }),
-        h('a', { class: 'ks-link', href: NOTE('07-probes-and-resources'), text: 'Read: Probes and resources' }),
-        h('a', { class: 'ks-link', href: new URL('kubernetes/', HUB).href, text: 'Play the real cluster game' })),
-      h('div', { class: 'ks-actions' }, h('button', { class: 'ks-btn alt', type: 'button', 'data-action': 'replay', text: 'Play the story again' })));
-  };
-  return ui;
 }
 
 /* ------------------------------------------------------------------------------------------ */
 /* The kitchen: a very small cluster                                                           */
 /* ------------------------------------------------------------------------------------------ */
 
-function createKitchen(app, ui) {
+function createKitchen(app) {
   const K = {
     cooks: [], stations: 4, desired: 3, rate: 0, warm: 2, probe: true, version: 'v1',
     queue: 0, served: 0, lost: 0, maxQueue: 6, tickMs: 800, ticks: 0, timer: null, picking: null,
@@ -263,16 +121,8 @@ function createKitchen(app, ui) {
       void c.el.offsetWidth;
       c.el.classList.add(ok ? 'flash-ok' : 'flash-bad');
     };
-    if (FAST || REDUCED || !c.el.animate || !c.el.isConnected) return flash();
-    const sr = app.stage.getBoundingClientRect();
-    const from = app.pass.getBoundingClientRect();
-    const to = c.el.getBoundingClientRect();
-    const t = h('span', { class: `ks-ticket${ok ? '' : ' bad'}`, 'aria-hidden': 'true' });
-    t.style.left = `${from.left + from.width / 2 - sr.left - 9}px`;
-    t.style.top = `${from.bottom - sr.top - 4}px`;
-    app.stage.append(t);
-    const a = t.animate([{ transform: 'translate(0,0)' }, { transform: `translate(${to.left + to.width / 2 - (from.left + from.width / 2)}px,${to.top + 18 - from.bottom}px)` }], { duration: K.tickMs * 0.6, easing: 'ease-in' });
-    a.onfinish = () => { t.remove(); flash(); };
+    if (!c.el.isConnected) return flash();
+    flyTo(app.stage, app.pass, c.el, { ms: K.tickMs * 0.6, bad: !ok, done: flash });
   }
 
   function reconcile() {
@@ -424,13 +274,13 @@ const CHAPTERS = [
     title: 'The cook who went home',
     hook: 'It is your first night on call at Pizza Palace. The dinner rush starts in a minute.',
     learn: 'what a Pod is, and how Kubernetes heals itself.',
-    async play({ ui, K }) {
+    async play({ ui, sim: K }) {
       K.reset({ stations: 6, desired: 3, rate: 2, warm: 2, maxQueue: 2 });
       K.caption('Each box is a station. A cook is one running copy of the app.');
       await ui.say('maya', 'Hi, I am Maya. Think of our website as a **kitchen**. Each cook runs one copy of our app.');
       K.start();
       await ui.say('maya', 'Customers never pick a cook. **The pass** hands each order to a cook who is ready. Watch the tickets go out.');
-      const sick = await ui.pick('maya', 'Oh no. A cook just felt dizzy. **Tap a cook** to send them home.', K);
+      const sick = await ui.pick('maya', 'Oh no. A cook just felt dizzy. **Tap a cook** to send them home.', K, 'Tap a cook above.');
       const left = sick.name;
       K.sendHome(sick);
       ui.watch(`${left} is on the way home. Only two cooks are left. Watch the kitchen.`);
@@ -461,13 +311,13 @@ const CHAPTERS = [
     title: 'The Friday rush',
     hook: 'Seven o\'clock on a Friday. The phones are ringing and the orders are piling up.',
     learn: 'how to scale replicas, and what Pending means.',
-    async play({ ui, K }) {
+    async play({ ui, sim: K }) {
       K.reset({ stations: 5, desired: 3, rate: 0, warm: 2, tickMs: 1000, maxQueue: 8 });
       K.showRota(true, 'Deployment · replicas');
       K.caption('The kitchen has 5 stations. A cook with no station has to wait outside.');
       await ui.say('maya', 'Tonight we get **4 orders every tick**. A cook can finish **1 order per tick**.');
       await ui.say('maya', 'You run the rota now. Tap **+** to hire, **−** to send home. Do not let the orders pile up!', 'Start the rush');
-      ui.phase('rush');
+      ui.phase('rush', true);
       for (let attempt = 1; ; attempt++) {
         K.queue = 0; K.served = 0; K.lost = 0; K.ticks = 0; K.rate = 4;
         K.start();
@@ -490,7 +340,7 @@ const CHAPTERS = [
         K.reset({ stations: 5, desired: 3, rate: 0, warm: 2, tickMs: 1000, maxQueue: 8 });
         K.caption('The kitchen has 5 stations. A cook with no station has to wait outside.');
         K.showRota(true, 'Deployment · replicas');
-        ui.phase('rush');
+        ui.phase('rush', true);
       }
       ui.phase('story');
       K.stop();
@@ -523,7 +373,7 @@ const CHAPTERS = [
     title: 'The new menu',
     hook: 'Tonight we launch a new menu. New cooks in orange aprons will replace the old ones in blue.',
     learn: 'rolling updates, and why a ready check protects your customers.',
-    async play({ ui, K }) {
+    async play({ ui, sim: K }) {
       K.reset({ stations: 4, desired: 3, rate: 3, warm: 3, probe: false, startLabel: 'Learning the menu' });
       K.showProbe(true, true);
       K.caption('Blue aprons: old menu (v1). Orange aprons: new menu (v2). Swapping them one by one is a rolling update.');
@@ -565,42 +415,27 @@ const CHAPTERS = [
 ];
 
 export function mountStory(host) {
-  const app = buildApp(CHAPTERS);
-  const ui = createUI(app, CHAPTERS);
-  const K = createKitchen(app, ui);
-  // Mounted on <body>, outside Material's typography, so no site styles leak into the stage.
-  document.querySelectorAll('body > .ks').forEach((n) => n.remove());
-  document.body.append(app.root);
-  document.documentElement.classList.add('ks-on');
-  if (window.document$) {
-    window.document$.subscribe(() => {
-      if (document.querySelector('#story[data-story]')) return;
-      app.root.remove();
-      document.documentElement.classList.remove('ks-on');
-    });
-  }
-
-  let run = 0;
-  async function play(from = 0) {
-    const mine = ++run;
-    ui.gen = mine;
-    ui.notebook.length = 0;
-    for (let i = from; i < CHAPTERS.length; i++) {
-      if (mine !== run) return;
-      ui.progress(i, i);
-      K.stop();
-      K.reset({ stations: 4, desired: 3 });
-      await ui.title(i);
-      if (mine !== run) return;
-      await CHAPTERS[i].play({ ui, K });
-    }
-    if (mine !== run) return;
-    K.stop();
-    ui.progress(-1, CHAPTERS.length);
-    ui.end(ui.notebook);
-  }
-  app.sheet.addEventListener('click', (e) => { if (e.target.closest('[data-action="replay"]')) play(0); });
-  app.dots.forEach((d) => d.addEventListener('click', () => play(Number(d.dataset.chapter))));
-  window.cookbookStory = { play };
-  play(0);
+  mount(host, {
+    id: 'kubernetes',
+    title: 'Night Shift at Pizza Palace',
+    stageLabel: 'The kitchen',
+    exitHref: HUB,
+    exitLabel: 'Back to the games',
+    characters: {
+      maya: { name: 'Maya', role: 'Owner', color: '#6d28d9' },
+    },
+    chapters: CHAPTERS,
+    createStage: (app) => createKitchen(buildStage(app)),
+    startLabel: 'Start the shift',
+    nextChapterLabel: 'Start the chapter',
+    cardKicker: 'Now in real Kubernetes',
+    endKicker: 'Shift complete',
+    endTitle: 'You just ran Kubernetes',
+    endIntro: 'Every kitchen word you used has a real name. Here is your notebook.',
+    endLinks: [
+      { text: 'Read: Pods and workloads', href: NOTE('02-pods-and-workloads') },
+      { text: 'Read: Probes and resources', href: NOTE('07-probes-and-resources') },
+      { text: 'Play the real cluster game', href: new URL('kubernetes/', HUB).href },
+    ],
+  });
 }

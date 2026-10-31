@@ -4,19 +4,31 @@
 //   - the story reaches its ending (fast mode: ?fast=1 shortens every wait),
 //   - nothing scrolls sideways, and no script errors,
 //   - every button, link and switch in the story is at least 44x44 CSS px,
-//   - the button that moves the story on is on screen without scrolling the page.
+//   - the button that moves the story on is on screen without scrolling the page,
+//   - axe finds no violations in the first screen of each phase the story goes through.
+//
+// How a story is driven is data: docs/stories/<id>/drive.json (the answer to prefer, what to tap in the
+// phases the script waits in). A new story needs no change to this file, and docs/stories/shared/ must stay
+// free of topic words (checked below).
 //
 // Usage: SITE_URL=http://localhost:8000/ NODE_PATH=<dir with playwright> node scripts/story_check.cjs
 const fs = require('fs');
 const path = require('path');
 const { chromium } = require('playwright');
 
+let AXE = null;
+try {
+  AXE = fs.readFileSync(require.resolve('axe-core/axe.min.js'), 'utf8');
+} catch {
+  console.log('note: axe-core is not installed, so the accessibility scan is skipped');
+}
+
 const SITE_URL = (process.env.SITE_URL || 'http://localhost:8000/').replace(/\/?$/, '/');
 const STORIES_DIR = path.join(__dirname, '..', 'docs', 'stories');
 const SCREENS = [{ name: 'phone 390x844', width: 390, height: 844 }, { name: 'small phone 360x640', width: 360, height: 640 }];
 const MIN = 44;
 
-async function play(browser, id, screen) {
+async function play(browser, id, screen, drive) {
   const ctx = await browser.newContext({ viewport: { width: screen.width, height: screen.height }, hasTouch: true, isMobile: true });
   const page = await ctx.newPage();
   const problems = [];
@@ -39,28 +51,36 @@ async function play(browser, id, screen) {
     if (await page.evaluate(() => document.documentElement.scrollWidth > innerWidth || document.body.scrollWidth > innerWidth)) problems.push('scrolls sideways');
   };
   const offscreen = new Set();
+  const scanned = new Set();
+  const prefer = drive.prefer ? new RegExp(drive.prefer) : null;
   const deadline = Date.now() + 90000;
-  let hired = false;
+  const tapped = new Set();
   let steps = 0;
   while (Date.now() < deadline) {
     const phase = await page.getAttribute('.ks', 'data-phase');
     if (phase === 'end') break;
     await audit();
-    if (phase === 'pick') { await page.click('.ks-pick'); continue; }
-    if (phase === 'rush') {
-      // One more cook, once per attempt at the rush.
-      if (!hired) { hired = true; await page.click('.ks-step[aria-label="Hire one more cook"]'); }
-      await page.waitForTimeout(60);
+    if (AXE && !scanned.has(phase)) {
+      scanned.add(phase);
+      if (!(await page.evaluate(() => Boolean(window.axe)))) await page.addScriptTag({ content: AXE });
+      const found = await page.evaluate(() => window.axe.run('.ks', { runOnly: ['wcag2a', 'wcag2aa', 'best-practice'] }).then((r) => r.violations.map((v) => `${v.id} (${v.nodes[0].target.join(' ')})`)));
+      found.forEach((f) => problems.push(`axe in phase "${phase}": ${f}`));
+    }
+    const rule = drive.phases && drive.phases[phase];
+    if (rule) {
+      if (!rule.once || !tapped.has(phase)) {
+        tapped.add(phase);
+        await page.click(rule.click);
+      } else await page.waitForTimeout(60);
       continue;
     }
-    hired = false;
-    if (phase === 'probe') { await page.click('.ks-switch'); continue; }
+    tapped.clear();
     const buttons = page.locator('.ks-sheet .ks-btn');
     if (await buttons.count()) {
       const box = await buttons.first().boundingBox();
       if (box && box.y + box.height > screen.height + 0.5) offscreen.add((await buttons.first().innerText()).slice(0, 30));
       const labels = await buttons.allInnerTexts();
-      const best = labels.findIndex((l) => /hires three|Try 7|Wait until/.test(l));
+      const best = prefer ? labels.findIndex((l) => prefer.test(l)) : -1;
       await buttons.nth(best >= 0 ? best : 0).click();
       steps += 1;
       await page.waitForTimeout(30);
@@ -78,14 +98,33 @@ async function play(browser, id, screen) {
   return { problems, steps };
 }
 
+// The shared shell must stay topic-free, so a new story never needs a change to it.
+function sharedIsTopicFree() {
+  const topic = /\b(cooks?|kitchen|pizza|pods?|kubernetes|kubectl|docker|terraform)\b/i;
+  const dir = path.join(STORIES_DIR, 'shared');
+  const bad = [];
+  for (const f of fs.readdirSync(dir)) {
+    fs.readFileSync(path.join(dir, f), 'utf8').split('\n').forEach((line, i) => {
+      if (topic.test(line)) bad.push(`docs/stories/shared/${f}:${i + 1}: ${line.trim().slice(0, 60)}`);
+    });
+  }
+  return bad;
+}
+
 (async () => {
-  const ids = fs.existsSync(STORIES_DIR) ? fs.readdirSync(STORIES_DIR).filter((d) => fs.existsSync(path.join(STORIES_DIR, d, 'story.js'))) : [];
+  const leaks = fs.existsSync(path.join(STORIES_DIR, 'shared')) ? sharedIsTopicFree() : [];
+  if (leaks.length) {
+    console.error(`topic words in the shared story shell:\n  ${leaks.join('\n  ')}`);
+    process.exit(1);
+  }
+  const ids = fs.existsSync(STORIES_DIR) ? fs.readdirSync(STORIES_DIR).filter((d) => fs.existsSync(path.join(STORIES_DIR, d, 'index.md'))) : [];
   if (!ids.length) { console.log('no stories'); return; }
   const browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {});
   let failed = 0;
   for (const id of ids) {
     for (const screen of SCREENS) {
-      const r = await play(browser, id, screen).catch((e) => ({ problems: [e.message.split('\n')[0]], steps: 0 }));
+      const drive = JSON.parse(fs.readFileSync(path.join(STORIES_DIR, id, 'drive.json'), 'utf8'));
+      const r = await play(browser, id, screen, drive).catch((e) => ({ problems: [e.message.split('\n')[0]], steps: 0 }));
       console.log(`${r.problems.length ? 'FAIL' : 'ok  '} ${id} on ${screen.name}: ${r.steps} taps`);
       r.problems.forEach((p) => console.log(`      ${p}`));
       if (r.problems.length) failed += 1;

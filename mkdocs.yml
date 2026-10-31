@@ -84,6 +84,7 @@ extra_css:
   - docs/site/tokens.css
   - docs/site/material.css
   - docs/games/shared/shell.css
+  - docs/stories/shared/story.css
   - docs/stories/kubernetes/story.css
 
 extra_javascript:
