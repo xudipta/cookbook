@@ -1,5 +1,9 @@
 # Play
 
+!!! tip "New here? Start with a story"
+    [Night Shift at Pizza Palace](../stories/kubernetes/index.md) teaches Kubernetes as a short story with
+    one tap per step, made for a phone. The games below are practice for after.
+
 Short browser games that turn each topic's ideas into things you operate instead of read:
 something breaks, you diagnose it, you fix it. They run entirely in your browser, with no
 server and nothing to install.

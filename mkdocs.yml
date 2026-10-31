@@ -97,7 +97,9 @@ extra:
       name: xudipta/cookbook on GitHub
 
 nav:
-  - Play:
+  - Stories:
+      - Night Shift at Pizza Palace (Kubernetes): docs/stories/kubernetes/index.md
+  - Practice (games):
       - docs/games/index.md
       - Chaos Monkey Cluster (Kubernetes): docs/games/kubernetes/index.md
       - Layer Cake (Docker): docs/games/docker/index.md
@@ -110,8 +112,6 @@ nav:
       - Index Fund (Database / SQL): docs/games/database/index.md
       - Night Shift (Linux / Shell): docs/games/linux/index.md
       - Replica Rescue (demo): docs/games/demo/index.md
-  - Story mode (preview):
-      - Night Shift at Pizza Palace (Kubernetes): docs/stories/kubernetes/index.md
   - Learn:
       - Overview: docs/learn.md
       - Infrastructure:

@@ -135,3 +135,11 @@ footer a { text-underline-offset: 3px; }
 .board-foot button { font: 500 0.78rem/1 var(--font-mono); padding: 0.5rem 0.7rem; border: 1px solid var(--line); border-radius: var(--radius-s); background: transparent; color: var(--ink); cursor: pointer; }
 .board-foot button:hover { border-color: var(--bad); }
 .log { margin: 0; }
+
+/* Story mode entry: sits above the board so a new visitor meets a story before a simulation. */
+.story-band { display: flex; flex-wrap: wrap; align-items: center; gap: 1.25rem 2rem; padding: 1.5rem; border: 2px solid var(--accent); border-radius: 6px; background: var(--surface); }
+.story-copy { flex: 1 1 22rem; min-width: 0; }
+.story-copy h2 { margin: 0.25rem 0 0.6rem; }
+.story-copy p { margin: 0 0 0.6rem; }
+.story-copy .story-more { color: var(--muted); font-size: 0.9rem; }
+@media (max-width: 40rem) { .story-band .btn { width: 100%; justify-content: center; min-height: 3rem; } }
