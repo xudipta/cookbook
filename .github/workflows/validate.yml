@@ -75,6 +75,7 @@ jobs:
               - 'scripts/play_banners.py'
             games:
               - 'docs/games/**'
+              - 'docs/stories/**'
               - 'docs/site/**'
               - 'scripts/check_games.py'
               - 'scripts/check_skills_game.py'
@@ -83,6 +84,7 @@ jobs:
               - 'scripts/site_quality.cjs'
               - 'scripts/mobile_quality.cjs'
               - 'scripts/compose_check.cjs'
+              - 'scripts/story_check.cjs'
               - 'scripts/mobile_baseline.json'
               - 'scripts/build_docs.sh'
               - 'mkdocs.yml'
@@ -517,3 +519,4 @@ jobs:
           node scripts/site_quality.cjs
           node scripts/mobile_quality.cjs
           node scripts/compose_check.cjs
+          node scripts/story_check.cjs

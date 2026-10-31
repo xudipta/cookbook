@@ -161,6 +161,22 @@ log when tapped. It is built in `docs/games/shared/ui.js` and styled in `shell.c
 it, but its own primary controls should not depend on being above the board. The dock is invisible on wide
 screens.
 
+## Story mode (preview)
+
+`docs/stories/<id>/` holds lessons told as a short story on a phone-sized stage, for learners who find the
+games confusing. The first one is `docs/stories/kubernetes/` ("Night Shift at Pizza Palace"). The shape to keep:
+
+- One idea per chapter. Start with a metaphor the learner already knows (a kitchen), let them do
+  something and watch the result, and only then show the real word and command ("Now in real Kubernetes").
+- Every step is a tap: a button to go on, a choice, a tap on the board, a stepper or a switch. No keyboard.
+- A chapter is a plain `async` script (`say`, `choose`, `pick`, `card`) over a tiny simulation, so adding
+  a chapter does not touch the rest.
+- The page mounts through `docs/games/shared/boot.js` (`<div id="story" data-story="<id>">`) and its CSS is
+  listed in `mkdocs.yml`. `?fast=1` shortens every wait.
+
+`scripts/story_check.cjs` plays each story to the end on a 390x844 and a 360x640 touch screen and fails on
+sideways scrolling, controls under 44px, a next-step button below the fold, or a story that cannot finish.
+
 ## Adding a game
 
 The browser games under `docs/games/` (see the **Play** section of the docs site) share one
