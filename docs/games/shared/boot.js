@@ -62,15 +62,28 @@ function focusableScrollWraps() {
   }
 }
 
+// Story mode (docs/stories/<id>/): a full-screen, phone-first story that teaches one topic.
+async function mountStory() {
+  const host = document.querySelector('#story[data-story]');
+  if (!host || host.dataset.mounted) return;
+  host.dataset.mounted = '1';
+  try {
+    const { mountStory: start } = await import(`../../stories/${host.dataset.story}/story.js`);
+    start(host);
+  } catch (err) {
+    host.textContent = `Could not load the "${host.dataset.story}" story: ${err.message}`;
+    console.error(err);
+  }
+}
+
 // Material's instant navigation swaps page content without a reload; document$ fires on each swap.
+const onPage = () => {
+  focusableScrollWraps();
+  mount();
+  mountStory();
+};
 if (window.document$) {
-  window.document$.subscribe(() => {
-    focusableScrollWraps();
-    mount();
-  });
+  window.document$.subscribe(onPage);
 } else {
-  document.addEventListener('DOMContentLoaded', () => {
-    focusableScrollWraps();
-    mount();
-  });
+  document.addEventListener('DOMContentLoaded', onPage);
 }

@@ -1,0 +1,738 @@
+/* Story mode, Kubernetes. A full-screen, phone-first stage: kitchen on top, the story in a bottom sheet.
+   Own warm palette (it reads the same in light and dark); all text pairs are WCAG AA. Sizes are in px on
+   purpose: Material scales rem. */
+
+html.ks-on,
+html.ks-on body {
+  overflow: hidden;
+}
+
+.ks {
+  --ks-ink: #2b1a0e;
+  --ks-muted: #5c4733;
+  --ks-brick: #b3380e;
+  --ks-wood: #6b2d0f;
+  --ks-cream: #fff4e0;
+  --ks-line: #e0bf8d;
+  --ks-k8s: #1d4fa3;
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  background: var(--ks-cream);
+  color: var(--ks-ink);
+  font: 16px/1.45 "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  -webkit-text-size-adjust: 100%;
+}
+
+.ks *,
+.ks *::before,
+.ks *::after {
+  box-sizing: border-box;
+}
+
+.ks button {
+  font: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.ks :focus-visible {
+  outline: 3px solid #1d4fa3;
+  outline-offset: 2px;
+}
+
+/* ---- header ---- */
+.ks-top {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 52px;
+  padding: 0 4px 0 2px;
+  background: var(--ks-wood);
+  color: #fff;
+}
+
+.ks a.ks-exit,
+.ks a.ks-exit:hover {
+  color: #fff;
+}
+
+.ks-exit {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  color: #fff;
+  font-size: 30px;
+  line-height: 1;
+  text-decoration: none;
+}
+
+.ks-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.ks-dots {
+  display: flex;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ks-dots li {
+  margin: 0;
+  padding: 0;
+}
+
+.ks-dot {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #fff;
+}
+
+.ks-dot span {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 2px solid rgba(255, 255, 255, 0.7);
+  border-radius: 50%;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.ks-dot.is-done span {
+  background: #fff;
+  border-color: #fff;
+  color: var(--ks-wood);
+}
+
+.ks-dot.is-now span {
+  background: #ffd9a8;
+  border-color: #ffd9a8;
+  color: var(--ks-wood);
+}
+
+/* ---- stage ---- */
+.ks-stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px 8px;
+  overflow-y: auto;
+  background: linear-gradient(var(--ks-cream), #ffe8c4);
+}
+
+.ks-stage > * {
+  flex: none;
+}
+
+.ks-rota,
+.ks-switch {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 52px;
+  padding: 4px 10px;
+  border: 2px solid var(--ks-line);
+  border-radius: 14px;
+  background: #fff;
+  color: var(--ks-ink);
+}
+
+.ks-rota[hidden],
+.ks-switch[hidden],
+.ks-hud[hidden],
+.ks-outside[hidden],
+.ks-toast[hidden] {
+  display: none;
+}
+
+.ks-rota-label {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.ks-stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ks-rota.no-step .ks-step {
+  display: none;
+}
+
+.ks-rota-n {
+  min-width: 28px;
+  text-align: center;
+  font-size: 22px;
+}
+
+.ks-step {
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--ks-brick);
+  color: #fff;
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.ks-step:disabled {
+  background: #cbb9a6;
+  color: #4a3a2b;
+}
+
+.ks-term {
+  flex-basis: 100%;
+  font: 600 12px/1.3 "IBM Plex Mono", ui-monospace, monospace;
+  color: var(--ks-k8s);
+}
+
+.ks-rota {
+  flex-wrap: wrap;
+}
+
+.ks-switch {
+  justify-content: flex-start;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  font-weight: 700;
+}
+
+.ks-switch:disabled {
+  opacity: 0.75;
+  cursor: default;
+}
+
+.ks-switch-track {
+  position: relative;
+  flex: none;
+  width: 52px;
+  height: 30px;
+  border-radius: 15px;
+  background: #8a7a6a;
+  transition: background 0.2s;
+}
+
+.ks-switch-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.2s;
+}
+
+.ks-switch[aria-checked="true"] .ks-switch-track {
+  background: #137536;
+}
+
+.ks-switch[aria-checked="true"] .ks-switch-knob {
+  transform: translateX(22px);
+}
+
+.ks-pass {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  padding: 6px 12px;
+  border-radius: 12px;
+  background: var(--ks-wood);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.ks-pass-label {
+  flex: none;
+}
+
+.ks-pips {
+  flex: 1;
+  display: flex;
+  gap: 3px;
+  min-width: 0;
+}
+
+.ks-pip {
+  width: 12px;
+  height: 16px;
+  border-radius: 2px;
+  background: #ffd9a8;
+}
+
+.ks-waiting {
+  flex: none;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.ks-kitchen {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-rows: minmax(112px, 150px);
+  align-content: start;
+  gap: 8px;
+}
+
+.ks-slot {
+  display: grid;
+  place-items: stretch;
+  border: 2px dashed var(--ks-line);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.ks-outside {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border: 2px dashed #8a7a6a;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.ks-outside-label {
+  flex-basis: 100%;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ks-muted);
+}
+
+.ks-outside .ks-cook {
+  width: 31%;
+  min-height: 104px;
+}
+
+/* ---- cooks ---- */
+.ks-cook {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  width: 100%;
+  min-height: 104px;
+  padding: 4px 2px;
+  border: 2px solid transparent;
+  border-radius: 14px;
+  background: #fff;
+  color: var(--ks-ink);
+  animation: ks-in 0.35s ease-out;
+}
+
+.ks-cook:disabled {
+  cursor: default;
+  opacity: 1;
+}
+
+.ks-cook-art {
+  display: block;
+  width: 60px;
+  height: 67px;
+}
+
+.ks-cook-art svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.ks-cook-name {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.ks-cook-pod {
+  padding: 0;
+  background: none;
+  color: var(--ks-muted);
+  font: 500 10.5px/1.2 "IBM Plex Mono", ui-monospace, monospace;
+}
+
+.ks-chip {
+  margin-top: 2px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.ks-body { fill: #2b6cb0; }
+.ks-face { fill: #f1c8a0; }
+.v2 .ks-body { fill: #c2570c; }
+.ks-m { display: none; }
+.ks-m-ok { display: inline; }
+
+.is-ready .ks-chip { background: #d4f0dc; color: #0b4d24; }
+.is-starting .ks-chip { background: #ffe7a8; color: #6b4200; }
+.is-sick .ks-chip { background: #f9d0d0; color: #7f1818; }
+.is-pending .ks-chip { background: #e4ddd3; color: #40362c; }
+
+.is-starting .ks-body { fill: #8c8379; }
+.is-starting .ks-m-ok,
+.is-pending .ks-m-ok { display: none; }
+.is-starting .ks-m-wait,
+.is-pending .ks-m-wait { display: inline; }
+.is-pending { background: rgba(255, 255, 255, 0.7); }
+.is-pending .ks-cook-art { opacity: 0.6; }
+
+.is-sick { border-color: #c0302b; animation: ks-shake 0.4s linear infinite; }
+.is-sick .ks-body { fill: #b3261e; }
+.is-sick .ks-face { fill: #cfe3b5; }
+.is-sick .ks-m-ok { display: none; }
+.is-sick .ks-m-bad { display: inline; }
+
+.is-gone { opacity: 0; transform: scale(0.8); transition: opacity 0.4s, transform 0.4s; }
+
+.ks-pick {
+  border-color: var(--ks-brick);
+  animation: ks-pulse 1s ease-in-out infinite;
+  cursor: pointer;
+}
+
+.flash-ok { box-shadow: 0 0 0 3px #137536; transition: box-shadow 0.5s; }
+.flash-bad { box-shadow: 0 0 0 3px #c0302b; transition: box-shadow 0.5s; }
+.flash-ok::after,
+.flash-bad::after {
+  position: absolute;
+  top: 2px;
+  right: 6px;
+  font-size: 16px;
+  font-weight: 800;
+  animation: ks-float 0.8s ease-out forwards;
+}
+.flash-ok::after { content: "✓"; color: #137536; }
+.flash-bad::after { content: "✕"; color: #c0302b; }
+
+.ks-ticket {
+  position: absolute;
+  z-index: 3;
+  width: 18px;
+  height: 22px;
+  border-radius: 2px;
+  background: repeating-linear-gradient(#fff 0 3px, #cfe8d6 3px 5px);
+  border: 2px solid #137536;
+  pointer-events: none;
+}
+.ks-ticket.bad { border-color: #c0302b; background: repeating-linear-gradient(#fff 0 3px, #f3c4c4 3px 5px); }
+
+.ks-caption {
+  margin: auto 0 0;
+  padding: 0 4px;
+  color: var(--ks-muted);
+  font-size: 14px;
+  text-align: center;
+}
+
+.ks-caption:empty {
+  display: none;
+}
+
+.ks-hud {
+  display: flex;
+  justify-content: space-around;
+  padding: 6px 10px;
+  border-radius: 12px;
+  background: #fff;
+  font-size: 15px;
+  font-weight: 600;
+}
+.ks-hud b { font-size: 22px; vertical-align: -1px; }
+.ks-hud-ok b { color: #0b4d24; }
+.ks-hud-bad b { color: #a11a1a; }
+
+/* ---- bottom sheet ---- */
+.ks-sheet {
+  flex: none;
+  max-height: 46%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px calc(14px + env(safe-area-inset-bottom, 0px));
+  overflow-y: auto;
+  border-radius: 22px 22px 0 0;
+  background: #fff;
+  box-shadow: 0 -6px 24px rgba(60, 30, 10, 0.18);
+}
+
+.ks-sheet.is-tall {
+  max-height: 82%;
+}
+
+.ks-who {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ks-avatar {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  color: #fff;
+  font-weight: 800;
+}
+
+.ks-who-name { font-weight: 800; }
+.ks-who-role { color: var(--ks-muted); font-size: 13px; }
+
+.ks p,
+.ks ul,
+.ks ol,
+.ks h2 {
+  margin: 0;
+  padding: 0;
+}
+
+.ks-say {
+  font-size: 18px;
+  line-height: 1.45;
+}
+
+.ks-watch {
+  padding: 6px 0;
+}
+
+.ks-hint {
+  color: var(--ks-muted);
+  font-size: 14px;
+}
+
+.ks-kicker {
+  color: var(--ks-muted);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.ks-kicker-k8s { color: var(--ks-k8s); }
+
+.ks-h {
+  font: 800 26px/1.15 "Archivo", system-ui, sans-serif;
+  color: var(--ks-ink);
+}
+
+.ks-learn {
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: #fff4e0;
+  font-size: 15px;
+}
+
+.ks-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.ks-btn {
+  width: 100%;
+  min-height: 52px;
+  padding: 10px 16px;
+  border: 2px solid var(--ks-brick);
+  border-radius: 14px;
+  background: var(--ks-brick);
+  color: #fff;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.ks-btn.alt {
+  background: #fff;
+  color: #7a2509;
+}
+
+.ks-btn:active {
+  transform: translateY(1px);
+}
+
+/* concept card */
+.ks-maps {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  list-style: none;
+}
+
+.ks-map {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: #eaf1fd;
+  font-weight: 700;
+}
+
+.ks-map-kitchen { flex: 1; }
+.ks-map-arrow { color: var(--ks-k8s); }
+
+.ks .ks-map-real,
+.ks .ks-end-map code {
+  padding: 2px 8px;
+  border-radius: 8px;
+  background: var(--ks-k8s);
+  color: #fff;
+  font: 600 15px/1.4 "IBM Plex Mono", ui-monospace, monospace;
+}
+
+.ks-cmd summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  color: var(--ks-k8s);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ks-cmd summary::before,
+.ks-cmd summary::after {
+  display: none;
+}
+
+.ks-cmd pre {
+  margin: 0;
+  padding: 10px 12px;
+  overflow-x: auto;
+  border-radius: 10px;
+  background: #0f171e;
+  color: #dbe6ee;
+  font: 500 12.5px/1.5 "IBM Plex Mono", ui-monospace, monospace;
+}
+
+.ks-cmd code {
+  padding: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+}
+
+/* ending */
+.ks-end-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  list-style: none;
+}
+
+.ks-end-item {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #fff4e0;
+}
+
+.ks-end-maps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  font-weight: 700;
+}
+
+.ks-end-plain {
+  margin-top: 4px;
+  font-size: 14.5px;
+}
+
+.ks-links {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ks-link {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--ks-k8s);
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+/* hint toast, floats over the top of the sheet */
+.ks-toast {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: calc(46% + 8px);
+  z-index: 5;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: #2b1a0e;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+/* On a phone in landscape, or any short screen, shrink the board a little. */
+@media (max-height: 700px) {
+  .ks-kitchen { grid-auto-rows: minmax(96px, 120px); }
+  .ks-cook { min-height: 90px; }
+  .ks-cook-art { width: 42px; height: 47px; }
+  .ks-stage { gap: 6px; padding-top: 8px; }
+  .ks-say { font-size: 17px; }
+  .ks-sheet { max-height: 50%; }
+}
+
+/* A roomy screen: keep the story a phone-width column in the middle. */
+@media (min-width: 560px) {
+  .ks {
+    left: 50%;
+    right: auto;
+    width: 480px;
+    transform: translateX(-50%);
+    box-shadow: 0 0 0 100vmax rgba(43, 26, 14, 0.55);
+  }
+}
+
+@keyframes ks-in { from { opacity: 0; transform: scale(0.85); } to { opacity: 1; transform: none; } }
+@keyframes ks-shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-2px); } 75% { transform: translateX(2px); } }
+@keyframes ks-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(179, 56, 14, 0.5); } 50% { box-shadow: 0 0 0 6px rgba(179, 56, 14, 0); } }
+@keyframes ks-float { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-10px); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .ks *,
+  .ks *::before,
+  .ks *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
