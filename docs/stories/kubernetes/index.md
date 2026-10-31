@@ -16,6 +16,6 @@ rolling updates). Play it on a phone: every step is a tap.
 </div>
 
 This is a proof of concept for story-mode lessons (see
-[#111](https://github.com/xudipta/cookbook/issues/111)). For the real tool, play
+[#112](https://github.com/xudipta/cookbook/issues/112)). For the real tool, play
 [Chaos Monkey Cluster](../../games/kubernetes/index.md) or read the
 [Kubernetes notes](../../../topics/kubernetes/README.md).
