@@ -1,5 +1,4 @@
 ---
-title: Night Shift at Pizza Palace
 hide:
   - navigation
   - toc
