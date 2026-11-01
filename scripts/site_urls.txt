@@ -18,6 +18,7 @@ docs/games/mcp/
 docs/games/observability/
 docs/games/skills/
 docs/games/terraform/
+docs/stories/docker/
 docs/stories/kubernetes/
 docs/infrastructure/
 docs/learn/

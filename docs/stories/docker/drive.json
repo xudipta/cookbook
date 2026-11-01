@@ -1,0 +1,17 @@
+{
+  "comment": "How scripts/story_check.cjs plays this story with taps. In the stacking phases it taps the pantry in the right order, then presses the sheet's button (then: buttons); in the prediction questions it prefers the right answers.",
+  "prefer": "above it|first two|kitchen stays behind",
+  "phases": {
+    "stack1": {
+      "click": [".dk-card[data-id=\"from-nginx\"]", ".dk-card[data-id=\"copy-index\"]", ".dk-card[data-id=\"expose-80\"]"],
+      "once": true,
+      "then": "buttons"
+    },
+    "stack2": {
+      "click": [".dk-card[data-id=\"from-node\"]", ".dk-card[data-id=\"workdir\"]", ".dk-card[data-id=\"copy-manifest\"]", ".dk-card[data-id=\"npm-ci\"]", ".dk-card[data-id=\"copy-all\"]", ".dk-card[data-id=\"build\"]", ".dk-card[data-id=\"cmd-node\"]"],
+      "once": true,
+      "then": "buttons"
+    },
+    "ship": { "click": ".ks-switch", "once": true }
+  }
+}

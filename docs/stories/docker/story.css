@@ -1,0 +1,141 @@
+/* Story mode, Docker ("The Layer Cake"): the bakery. The palette is berry and cream; layers are slabs of cake,
+   the pantry is a grid of tappable layers. */
+
+.ks[data-story="docker"] {
+  --ks-ink: #3b0d22;
+  --ks-muted: #6b2a47;
+  --ks-accent: #9d174d;
+  --ks-head: #831843;
+  --ks-bg: #fdf2f8;
+  --ks-bg-2: #fbd5e8;
+  --ks-tint: #fdf2f8;
+  --ks-link-tint: #e6f0fc;
+  --ks-line: #efb2cc;
+  --ks-link: #0b5cad;
+}
+
+.dk-cake {
+  display: flex;
+  flex-direction: column-reverse; /* the first Dockerfile line is the bottom layer */
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dk-cake:empty {
+  display: none;
+}
+
+.dk-layer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "kind chip" "text chip";
+  align-items: center;
+  column-gap: 8px;
+  padding: 5px 10px;
+  border: 2px solid var(--ks-line);
+  border-radius: 10px;
+  background: #fff;
+  animation: dk-in 0.25s ease-out;
+}
+
+.dk-kind {
+  grid-area: kind;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ks-muted);
+}
+
+.dk-layer .dk-text {
+  grid-area: text;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  padding: 0;
+  background: none;
+  color: var(--ks-ink);
+  font: 500 12.5px/1.3 "IBM Plex Mono", ui-monospace, monospace;
+}
+
+.dk-chip {
+  grid-area: chip;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.dk-layer.is-new .dk-chip { background: #e7e5e4; color: #44403c; }
+.dk-layer.is-cached { border-color: #7aa7e0; background: #f1f7ff; }
+.dk-layer.is-cached .dk-chip { background: #dbeafe; color: #123c7a; }
+.dk-layer.is-built { border-color: #e6b94c; background: #fffbea; }
+.dk-layer.is-built .dk-chip { background: #fde68a; color: #5c3a00; }
+.dk-layer.is-left { border-style: dashed; border-color: #a8a29e; background: #f5f5f4; }
+.dk-layer.is-left .dk-chip { background: #e7e5e4; color: #44403c; }
+.dk-layer.is-error { border-color: #c0302b; background: #fff1f1; }
+.dk-layer.is-error .dk-chip { background: #fecaca; color: #7a1313; }
+
+.dk-tools {
+  display: flex;
+  gap: 8px;
+}
+
+.dk-tools[hidden],
+.dk-pantry[hidden] {
+  display: none;
+}
+
+.dk-tool {
+  flex: 1;
+  min-height: 44px;
+  border: 2px solid var(--ks-accent);
+  border-radius: 12px;
+  background: #fff;
+  color: #7a0f3a;
+  font-weight: 700;
+}
+
+.dk-tool:disabled {
+  border-color: #d4b8c6;
+  color: #6b5560;
+}
+
+.dk-pantry {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.dk-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 1px;
+  min-height: 52px;
+  padding: 5px 10px;
+  border: 2px dashed var(--ks-accent);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--ks-ink);
+  text-align: left;
+  animation: dk-in 0.25s ease-out;
+}
+
+.dk-card .dk-text {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  padding: 0;
+  background: none;
+  color: var(--ks-ink);
+  font: 500 12.5px/1.3 "IBM Plex Mono", ui-monospace, monospace;
+}
+
+.dk-card:active {
+  background: #fce7f3;
+}
+
+@keyframes dk-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }

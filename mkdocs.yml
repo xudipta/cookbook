@@ -86,6 +86,7 @@ extra_css:
   - docs/games/shared/shell.css
   - docs/stories/shared/story.css
   - docs/stories/kubernetes/story.css
+  - docs/stories/docker/story.css
 
 extra_javascript:
   - path: docs/games/shared/boot.js
@@ -100,6 +101,7 @@ extra:
 nav:
   - Stories:
       - Night Shift at Pizza Palace (Kubernetes): docs/stories/kubernetes/index.md
+      - The Layer Cake (Docker): docs/stories/docker/index.md
   - Notes:
       - Overview: docs/learn.md
       - Kubernetes:

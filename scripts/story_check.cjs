@@ -68,13 +68,18 @@ async function play(browser, id, screen, drive) {
     }
     const rule = drive.phases && drive.phases[phase];
     if (rule) {
-      if (!rule.once || !tapped.has(phase)) {
+      // `click` is one selector or a list (tapped in order). Unless `then` is set, the script is waiting for
+      // that tap and nothing else; with `then: "buttons"` the sheet's button is pressed afterwards.
+      const first = !tapped.has(phase);
+      if (first || !rule.once) {
         tapped.add(phase);
-        await page.click(rule.click);
-      } else await page.waitForTimeout(60);
-      continue;
-    }
-    tapped.clear();
+        for (const sel of [].concat(rule.click)) await page.click(sel);
+        if (!rule.then) continue;
+      } else if (!rule.then) {
+        await page.waitForTimeout(60);
+        continue;
+      }
+    } else tapped.clear();
     const buttons = page.locator('.ks-sheet .ks-btn');
     if (await buttons.count()) {
       const box = await buttons.first().boundingBox();
