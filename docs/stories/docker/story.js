@@ -23,11 +23,11 @@ function createBakery(app, levels) {
     { label: 'Fridge', cls: 'ks-hud-ok' },
     { label: 'Cake size', cls: 'ks-hud-ok' },
   ]);
-  const cake = h('ol', { class: 'dk-cake', 'aria-label': 'The cake, bottom layer first' });
-  const undo = h('button', { class: 'dk-tool', type: 'button', text: 'Undo' });
-  const clear = h('button', { class: 'dk-tool', type: 'button', text: 'Start over' });
-  const tools = h('div', { class: 'dk-tools', hidden: true }, undo, clear);
-  const pantry = h('div', { class: 'dk-pantry', role: 'group', 'aria-label': 'Pantry: tap a layer to add it to the cake', hidden: true });
+  const cake = h('ol', { class: 'lc-cake', 'aria-label': 'The cake, bottom layer first' });
+  const undo = h('button', { class: 'lc-tool', type: 'button', text: 'Undo' });
+  const clear = h('button', { class: 'lc-tool', type: 'button', text: 'Start over' });
+  const tools = h('div', { class: 'lc-tools', hidden: true }, undo, clear);
+  const pantry = h('div', { class: 'lc-pantry', role: 'group', 'aria-label': 'Pantry: tap a layer to add it to the cake', hidden: true });
   app.caption.before(switchEl, counters.el, cake, tools, pantry);
 
   const D = { sc: null, world: null, stack: [], stacking: false, last: null, onSwitch: null };
@@ -35,10 +35,10 @@ function createBakery(app, levels) {
   const card = (id) => D.world.cards.get(id);
   const layerEl = (id, status, note) => {
     const c = card(id);
-    return h('li', { class: `dk-layer is-${status}`, 'data-id': id },
-      h('span', { class: 'dk-kind', text: KIND_WORD[c.kind] || 'Layer' }),
-      h('code', { class: 'dk-text', text: c.text }),
-      h('span', { class: 'dk-chip', text: note }));
+    return h('li', { class: `lc-layer is-${status}`, 'data-id': id },
+      h('span', { class: 'lc-kind', text: KIND_WORD[c.kind] || 'Layer' }),
+      h('code', { class: 'lc-text', text: c.text }),
+      h('span', { class: 'lc-chip', text: note }));
   };
 
   function paintCake() {
@@ -54,7 +54,7 @@ function createBakery(app, levels) {
       return layerEl(id, 'built', layer.time >= 0.5 ? `Baked ${fmtSeconds(layer.time)}` : 'Baked');
     }));
     // An error leaves the layers after it untouched.
-    if (res && !res.ok) for (let i = res.layers.length; i < D.stack.length; i++) cake.children[i].querySelector('.dk-chip').textContent = 'Not reached';
+    if (res && !res.ok) for (let i = res.layers.length; i < D.stack.length; i++) cake.children[i].querySelector('.lc-chip').textContent = 'Not reached';
   }
 
   function paintPantry() {
@@ -62,9 +62,9 @@ function createBakery(app, levels) {
     pantry.hidden = !D.stacking || left.length === 0;
     pantry.replaceChildren(...left.map((id) => {
       const c = card(id);
-      const b = h('button', { class: 'dk-card', type: 'button', 'data-id': id },
-        h('span', { class: 'dk-kind', text: KIND_WORD[c.kind] || 'Layer' }),
-        h('code', { class: 'dk-text', text: c.text }));
+      const b = h('button', { class: 'lc-card', type: 'button', 'data-id': id },
+        h('span', { class: 'lc-kind', text: KIND_WORD[c.kind] || 'Layer' }),
+        h('code', { class: 'lc-text', text: c.text }));
       b.addEventListener('click', () => { if (D.stacking) D.add(id); });
       return b;
     }));
