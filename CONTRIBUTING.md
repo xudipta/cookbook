@@ -164,18 +164,33 @@ screens.
 ## Story mode (preview)
 
 `docs/stories/<id>/` holds lessons told as a short story on a phone-sized stage, for learners who find the
-games confusing. The first one is `docs/stories/kubernetes/` ("Night Shift at Pizza Palace"). The shape to keep:
+games confusing. The first is `docs/stories/kubernetes/` ("Night Shift at Pizza Palace"). The shell
+(`docs/stories/shared/`: header, stage, bottom sheet, concept cards, ending, progress) is shared; a topic adds a
+stage, chapter scripts, a stylesheet and a `drive.json`. The shape to keep:
 
-- One idea per chapter. Start with a metaphor the learner already knows (a kitchen), let them do
-  something and watch the result, and only then show the real word and command ("Now in real Kubernetes").
-- Every step is a tap: a button to go on, a choice, a tap on the board, a stepper or a switch. No keyboard.
-- A chapter is a plain `async` script (`say`, `choose`, `pick`, `card`) over a tiny simulation, so adding
-  a chapter does not touch the rest.
-- The page mounts through `docs/games/shared/boot.js` (`<div id="story" data-story="<id>">`) and its CSS is
-  listed in `mkdocs.yml`. `?fast=1` shortens every wait.
+- One idea per chapter. Start with a metaphor the learner already knows, let them do something and watch the
+  result, and only then show the real word and command ("Now in real X").
+- Every step is a tap: a button to go on, a choice, a tap on the stage, a stepper or a switch. No keyboard.
+- A chapter is a plain `async` script (`say`, `choose`, `pick`, `card`, `watch`) over a small simulation, so adding
+  a chapter touches only that topic's folder.
 
-`scripts/story_check.cjs` plays each story to the end on a 390x844 and a 360x640 touch screen and fails on
-sideways scrolling, controls under 44px, a next-step button below the fold, or a story that cannot finish.
+To add a story `docs/stories/<id>/`:
+
+1. `index.md`: a title, a sentence, and `<div id="story" data-story="<id>"></div>`. Add it to the `nav` in
+   `mkdocs.yml` and its URL to `scripts/site_urls.txt`.
+2. `story.js`: export `mountStory(host)` that calls the shared `mountStory(host, config)` with the story's
+   `id`, `title`, `characters`, `chapters`, `createStage(app)` (build the stage into `app.stage`, return an object
+   with `reset()` and `stop()`), the card and ending texts, and `endLinks` to the notes and the practice game.
+   `boot.js` loads it for any page with `#story[data-story]`.
+3. `story.css`: set the palette with the `--ks-*` tokens under `.ks[data-story="<id>"]` and style the stage. Add it
+   to `extra_css` in `mkdocs.yml`, after `docs/stories/shared/story.css`.
+4. `drive.json`: the answer `scripts/story_check.cjs` prefers when you offer choices, and what to tap in the phases
+   your script waits in (`"rush": { "click": "<selector>", "once": true }`).
+
+`?fast=1` shortens every wait. `scripts/story_check.cjs` plays each story to the end on a 390x844 and a 360x640
+touch screen and fails on sideways scrolling, controls under 44px, a next-step button below the fold, an axe
+violation in any phase, a story that cannot finish, or a topic word in the shared shell. Chapters finished are
+saved in this browser (`cookbook-story-progress:<id>`).
 
 ## Adding a game
 

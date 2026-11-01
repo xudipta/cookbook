@@ -4,9 +4,11 @@
 //   cookbook-game-progress:<game>  JSON { levels: { <levelId>: { best, won, stars, plays, last } } }
 //   cookbook-game-best:<game>      the older single best score, still written (as the best over all levels)
 //                                  and still read, so scores saved before per-level progress are kept.
+//   cookbook-story-progress:<id>   JSON { chapters: { <index>: true } } for the stories (docs/stories/).
 
 const PROGRESS_KEY = 'cookbook-game-progress:';
 const BEST_KEY = 'cookbook-game-best:';
+const STORY_KEY = 'cookbook-story-progress:';
 const NO_LEVEL = '_'; // games without levels record under this id
 
 function read(key) {
@@ -85,12 +87,32 @@ export function recordRun(game, levelId, { score, won, stars = 0 }) {
   return entry.best;
 }
 
+// Chapters of a story finished so far, as { <index>: true }.
+export function readStory(id) {
+  try {
+    const parsed = JSON.parse(read(STORY_KEY + id));
+    if (parsed && typeof parsed.chapters === 'object' && parsed.chapters) return { ...parsed.chapters };
+  } catch {
+    // Missing or corrupt: nothing finished yet.
+  }
+  return {};
+}
+
+export const storyChaptersDone = (id) => Object.keys(readStory(id)).length;
+
+export function recordChapter(id, index) {
+  const chapters = readStory(id);
+  chapters[index] = true;
+  write(STORY_KEY + id, JSON.stringify({ chapters }));
+}
+
 // Forget everything saved for one game, or for all of them when `games` is a list of ids.
 export function resetProgress(games) {
   for (const game of games) {
     try {
       localStorage.removeItem(PROGRESS_KEY + game);
       localStorage.removeItem(BEST_KEY + game);
+      localStorage.removeItem(STORY_KEY + game);
     } catch {
       // Nothing to reset if storage is blocked.
     }
