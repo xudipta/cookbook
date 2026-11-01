@@ -19,7 +19,21 @@
         "3 levels",
         "9 failure types"
       ],
-      "notes": "topics/kubernetes/"
+      "notes": "topics/kubernetes/",
+      "story": {
+        "status": "live",
+        "path": "docs/stories/kubernetes/",
+        "title": "Night Shift at Pizza Palace",
+        "metaphor": "A pizza kitchen",
+        "blurb": "Send a cook home, survive the Friday rush and launch a new menu. Learn Pods, Deployments, replicas and readiness probes by watching them happen.",
+        "chapters": 3,
+        "learns": [
+          "Pod",
+          "Deployment",
+          "replicas",
+          "readinessProbe"
+        ]
+      }
     },
     {
       "id": "docker",
@@ -41,7 +55,13 @@
         "build logs",
         "Compose wiring"
       ],
-      "notes": "topics/docker/"
+      "notes": "topics/docker/",
+      "story": {
+        "status": "planned",
+        "title": "The Layer Cake",
+        "metaphor": "A bakery",
+        "issue": 116
+      }
     },
     {
       "id": "terraform",
@@ -63,7 +83,13 @@
         "plan simulator",
         "modules and moved"
       ],
-      "notes": "topics/terraform/"
+      "notes": "topics/terraform/",
+      "story": {
+        "status": "planned",
+        "title": "The Drift Detective",
+        "metaphor": "Blueprint, ledger and building",
+        "issue": 91
+      }
     },
     {
       "id": "linux",
@@ -84,7 +110,13 @@
         "3 levels",
         "a shell you type into"
       ],
-      "notes": "topics/linux/"
+      "notes": "topics/linux/",
+      "story": {
+        "status": "planned",
+        "title": "The Night Superintendent",
+        "metaphor": "A building at night",
+        "issue": 92
+      }
     },
     {
       "id": "cicd",
@@ -105,7 +137,13 @@
         "4 levels",
         "live YAML preview"
       ],
-      "notes": "topics/cicd/"
+      "notes": "topics/cicd/",
+      "story": {
+        "status": "planned",
+        "title": "The Assembly Line",
+        "metaphor": "A factory line",
+        "issue": 93
+      }
     },
     {
       "id": "github",
@@ -126,7 +164,13 @@
         "3 levels",
         "commit graph"
       ],
-      "notes": "topics/github/"
+      "notes": "topics/github/",
+      "story": {
+        "status": "planned",
+        "title": "The Shared Cookbook",
+        "metaphor": "Many chefs, one book",
+        "issue": 94
+      }
     },
     {
       "id": "observability",
@@ -147,7 +191,13 @@
         "3 levels",
         "PromQL + week replay"
       ],
-      "notes": "topics/observability/"
+      "notes": "topics/observability/",
+      "story": {
+        "status": "planned",
+        "title": "The Night Ward",
+        "metaphor": "A hospital at night",
+        "issue": 117
+      }
     },
     {
       "id": "database",
@@ -168,7 +218,13 @@
         "3 levels",
         "query planner"
       ],
-      "notes": "topics/database/"
+      "notes": "topics/database/",
+      "story": {
+        "status": "planned",
+        "title": "The Library",
+        "metaphor": "A catalogue of books",
+        "issue": 96
+      }
     },
     {
       "id": "skills",
@@ -189,7 +245,13 @@
         "3 levels",
         "trigger simulator"
       ],
-      "notes": "topics/skills/"
+      "notes": "topics/skills/",
+      "story": {
+        "status": "planned",
+        "title": "The New Hire",
+        "metaphor": "An assistant with a binder",
+        "issue": 97
+      }
     },
     {
       "id": "mcp",
@@ -210,7 +272,13 @@
         "3 levels",
         "JSON-RPC wire log"
       ],
-      "notes": "topics/mcp/"
+      "notes": "topics/mcp/",
+      "story": {
+        "status": "planned",
+        "title": "The Switchboard",
+        "metaphor": "An office phone exchange",
+        "issue": 98
+      }
     }
   ]
 }

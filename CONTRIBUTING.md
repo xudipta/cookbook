@@ -177,7 +177,9 @@ stage, chapter scripts, a stylesheet and a `drive.json`. The shape to keep:
 To add a story `docs/stories/<id>/`:
 
 1. `index.md`: a title, a sentence, and `<div id="story" data-story="<id>"></div>`. Add it to the `nav` in
-   `mkdocs.yml` and its URL to `scripts/site_urls.txt`.
+   `mkdocs.yml` and its URL to `scripts/site_urls.txt`, and change the topic's `story` entry in
+   `docs/games/games.json` from `planned` to `live` (`path`, `blurb`, `chapters`, `learns`): that is what the
+   home page's story board, the topic cards and the banners on the notes read (`check_games.py` checks it).
 2. `story.js`: export `mountStory(host)` that calls the shared `mountStory(host, config)` with the story's
    `id`, `title`, `characters`, `chapters`, `createStage(app)` (build the stage into `app.stage`, return an object
    with `reset()` and `stop()`), the card and ending texts, and `endLinks` to the notes and the practice game.
