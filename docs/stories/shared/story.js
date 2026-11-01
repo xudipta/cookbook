@@ -6,9 +6,9 @@
 //   export const start = (host) => mountStory(host, { id, title, characters, chapters, createStage, ... });
 //
 // A chapter is { title, hook, learn, play({ ui, sim }) }. `ui` is the script API:
-//   say(who, text, button?)      a line of story and one button to go on
-//   note(who, text)              a line of story with no button (the script moves on by itself)
-//   choose(who, text, options)   large option buttons, resolves with the chosen value
+//   say(who, text, button?, extra?)  a line of story and one button to go on (extra: a node such as outputBox(text))
+//   note(who, text, extra?)          a line of story with no button (the script moves on by itself)
+//   choose(who, text, options, extra?) large option buttons, resolves with the chosen value
 //   pick(who, text, picker, hint) waits for the player to tap something on the stage (see below)
 //   card({ maps, plain, cmd })   the "Now in real X" card: story word -> real word, one sentence, the command
 //   watch(text)                  a status line while the stage runs; toast(text) a short hint; sleep(ms)
@@ -41,6 +41,9 @@ export const h = (tag, attrs = {}, ...kids) => {
 };
 // "plain **bold** plain" -> nodes, without ever using innerHTML on story text.
 export const rich = (text) => text.split('**').map((part, i) => (i % 2 ? h('strong', { text: part }) : part));
+
+// A read-only box of command output, shown under a line of story (pass it as the `extra` of say/choose/note).
+export const outputBox = (text) => h('pre', { class: 'ks-out', tabindex: '0', 'aria-label': 'Command output' }, h('code', { text }));
 
 /* ------------------------------------------------------------------------------------------ */
 /* Stage components a topic can reuse                                                          */
@@ -130,7 +133,7 @@ function createUI(app, config) {
   };
   const show = (tall, ...nodes) => {
     app.sheet.classList.toggle('is-tall', Boolean(tall));
-    app.sheet.replaceChildren(...nodes);
+    app.sheet.replaceChildren(...nodes.filter(Boolean));
     app.sheet.scrollTop = 0;
   };
   const speaker = (who) => {
@@ -148,13 +151,14 @@ function createUI(app, config) {
     (row.firstChild || app.sheet).focus?.({ preventScroll: true });
   });
 
-  ui.say = async (who, text, button = 'Next') => {
-    show(false, speaker(who), h('p', { class: 'ks-say' }, ...rich(text)));
+  // `extra` is an optional node (see outputBox) shown under the text; a sheet with one is tall.
+  ui.say = async (who, text, button = 'Next', extra = null) => {
+    show(Boolean(extra), speaker(who), h('p', { class: 'ks-say' }, ...rich(text)), extra);
     await wait({ label: button, value: true });
   };
-  ui.note = (who, text) => show(false, speaker(who), h('p', { class: 'ks-say' }, ...rich(text)));
-  ui.choose = async (who, text, options) => {
-    show(false, speaker(who), h('p', { class: 'ks-say' }, ...rich(text)));
+  ui.note = (who, text, extra = null) => show(Boolean(extra), speaker(who), h('p', { class: 'ks-say' }, ...rich(text)), extra);
+  ui.choose = async (who, text, options, extra = null) => {
+    show(Boolean(extra), speaker(who), h('p', { class: 'ks-say' }, ...rich(text)), extra);
     return wait(...options.map((o) => ({ ...o, alt: true })));
   };
   ui.title = async (index) => {

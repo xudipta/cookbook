@@ -1,0 +1,5 @@
+{
+  "comment": "How scripts/story_check.cjs plays this story with taps: it prefers the right answer to each question (and the safe option when a plan shows a replacement or a lock is active).",
+  "prefer": "in place|looks at the building|Import the existing|destroys the old one|Undo the rename|Wait for the robot|then force-unlock|Put the building back",
+  "phases": {}
+}

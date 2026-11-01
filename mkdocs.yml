@@ -87,6 +87,7 @@ extra_css:
   - docs/stories/shared/story.css
   - docs/stories/kubernetes/story.css
   - docs/stories/docker/story.css
+  - docs/stories/terraform/story.css
 
 extra_javascript:
   - path: docs/games/shared/boot.js
@@ -102,6 +103,7 @@ nav:
   - Stories:
       - Night Shift at Pizza Palace (Kubernetes): docs/stories/kubernetes/index.md
       - The Layer Cake (Docker): docs/stories/docker/index.md
+      - The Drift Detective (Terraform): docs/stories/terraform/index.md
   - Notes:
       - Overview: docs/learn.md
       - Kubernetes:

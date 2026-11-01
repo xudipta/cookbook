@@ -1,0 +1,133 @@
+/* Story mode, Terraform ("The Drift Detective"): the case board. Violet and lavender; each resource is a row
+   with its blueprint, ledger and building values side by side. Every rule is scoped to this story. */
+
+.ks[data-story="terraform"] {
+  --ks-ink: #1e1233;
+  --ks-muted: #4c3a6e;
+  --ks-accent: #6d3bb5;
+  --ks-head: #4a2a82;
+  --ks-bg: #f5f0ff;
+  --ks-bg-2: #e3d6fb;
+  --ks-tint: #f5f0ff;
+  --ks-link-tint: #e6f0fc;
+  --ks-line: #cdb8f0;
+  --ks-link: #0b5cad;
+}
+
+.ks[data-story="terraform"] .td-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ks[data-story="terraform"] .td-rows[hidden] {
+  display: none;
+}
+
+.ks[data-story="terraform"] .td-row {
+  padding: 8px 10px;
+  border: 2px solid var(--ks-line);
+  border-radius: 12px;
+  background: #fff;
+  animation: td-in 0.25s ease-out;
+}
+
+.ks[data-story="terraform"] .td-row.is-diff {
+  border-color: #c2410c;
+  background: #fff8f3;
+}
+
+.ks[data-story="terraform"] .td-name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 8px;
+  margin-bottom: 6px;
+}
+
+.ks[data-story="terraform"] .td-name code {
+  padding: 0;
+  background: none;
+  color: var(--ks-ink);
+  font: 600 13px/1.3 "IBM Plex Mono", ui-monospace, monospace;
+  overflow-wrap: anywhere;
+}
+
+.ks[data-story="terraform"] .td-attr {
+  color: var(--ks-muted);
+  font-size: 12px;
+}
+
+.ks[data-story="terraform"] .td-status {
+  margin-left: auto;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.ks[data-story="terraform"] .is-sync .td-status {
+  background: #d4f0dc;
+  color: #0b4d24;
+}
+
+.ks[data-story="terraform"] .is-diff .td-status {
+  background: #fed7aa;
+  color: #7c2d12;
+}
+
+.ks[data-story="terraform"] .td-cells {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.ks[data-story="terraform"] .td-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: 5px 7px;
+  border-radius: 8px;
+  background: var(--ks-tint);
+}
+
+.ks[data-story="terraform"] .td-cell.is-off {
+  background: #ffedd5;
+  outline: 2px solid #c2410c;
+}
+
+.ks[data-story="terraform"] .td-world {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ks-muted);
+}
+
+.ks[data-story="terraform"] .td-value {
+  padding: 0;
+  background: none;
+  color: var(--ks-ink);
+  font: 500 12px/1.3 "IBM Plex Mono", ui-monospace, monospace;
+  overflow-wrap: anywhere;
+}
+
+.ks[data-story="terraform"] .td-ci {
+  margin: 0;
+  padding: 6px 10px;
+  border: 2px dashed var(--ks-accent);
+  border-radius: 10px;
+  background: #fff;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.ks[data-story="terraform"] .td-ci[hidden] {
+  display: none;
+}
+
+@keyframes td-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
