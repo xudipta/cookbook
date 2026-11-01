@@ -20,6 +20,7 @@ docs/games/skills/
 docs/games/terraform/
 docs/stories/docker/
 docs/stories/kubernetes/
+docs/stories/terraform/
 docs/infrastructure/
 docs/learn/
 docs/operations/
