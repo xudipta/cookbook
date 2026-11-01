@@ -77,9 +77,29 @@ async function checkHome(browser) {
   await page.waitForFunction((n) => document.querySelector('a.tile[href="docs/games/docker/"]').innerText.includes(`0 of ${n} levels done`), dockerLevels);
   const cleared = await page.evaluate(() => Object.keys(localStorage).filter((k) => k.startsWith('cookbook-game-')));
   if (cleared.length) problems.push(`reset left saved progress behind: ${cleared.join(', ')}`);
-  const crashed = page.locator('.pod[data-s="crash"]').first();
-  await crashed.click();
-  if (!(await page.locator('#term').innerText()).includes('kubectl delete pod')) problems.push('teaser: deleting a crashed pod did not log the command');
+  // Stories lead: one story tile per board entry, the live story first and startable, the rest planned.
+  const stories = await page.locator('.story-tile').count();
+  if (stories !== manifest.length) problems.push(`story board has ${stories} tiles, games.json has ${manifest.length}`);
+  for (const game of manifest.filter((g) => g.story.status === 'live')) {
+    if (!(await page.locator(`.story-tile a[href="${game.story.path}"]`).count())) problems.push(`no story tile links to ${game.story.path}`);
+  }
+  const firstTile = await page.locator('.story-tile').first().getAttribute('class');
+  if (!firstTile.includes('live')) problems.push('the live story is not the first story tile');
+  // Notes by topic: a card per topic, each linking its notes, with its story and practice game.
+  const topics = await page.locator('.note-topic[data-topic]').count();
+  if (topics !== manifest.length) problems.push(`notes section has ${topics} topic cards, games.json has ${manifest.length}`);
+  if (!(await page.locator('.note-topic[data-topic="kubernetes"] .topic-story').count())) problems.push('the Kubernetes topic card has no story link');
+  if (!(await page.locator('.note-topic[data-topic="docker"] a[href="docs/games/docker/"]').count())) problems.push('the Docker topic card has no practice link');
+  const noGameTeaser = await page.locator('#pods, .pod').count();
+  if (noGameTeaser) problems.push('the old teaser game is still on the home page');
+  // Story progress shows on the tile after a chapter is finished.
+  await page.evaluate(() => localStorage.setItem('cookbook-story-progress:kubernetes', JSON.stringify({ chapters: { 0: true } })));
+  await page.reload({ waitUntil: 'load' });
+  await page.waitForSelector('.story-tile');
+  if (!(await page.locator('.story-tile.live').first().innerText()).includes('1 of 3 chapters')) problems.push('the story tile does not show finished chapters');
+  await page.click('#reset-progress');
+  await page.click('#reset-progress');
+  await page.waitForFunction(() => document.querySelector('.story-tile.live').innerText.includes('0 of 3 chapters'));
   if (await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)) problems.push('home page scrolls horizontally');
   await page.close();
   return problems;

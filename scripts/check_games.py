@@ -208,6 +208,40 @@ def check_game(game_dir: Path) -> list[str]:
 NOT_ON_BOARD = {"demo"}
 
 
+STORIES_DIR = REPO_ROOT / "docs" / "stories"
+
+
+def check_story(g: dict, where: str) -> list[str]:
+    """Every topic on the board has a story entry: live (a directory under docs/stories/) or planned (an issue)."""
+    story = g.get("story")
+    if not isinstance(story, dict):
+        return [f"{where}: needs a story entry (live, or planned with an issue)"]
+    errors = []
+    for key in ("title", "metaphor"):
+        if not isinstance(story.get(key), str) or not story[key]:
+            errors.append(f"{where}: story needs a non-empty {key}")
+    if story.get("status") == "live":
+        for key in ("blurb", "path"):
+            if not isinstance(story.get(key), str) or not story[key]:
+                errors.append(f"{where}: a live story needs a non-empty {key}")
+        if not (isinstance(story.get("learns"), list) and story["learns"]):
+            errors.append(f"{where}: a live story needs a learns list (the real words it teaches)")
+        if not (isinstance(story.get("chapters"), int) and story["chapters"] >= 1):
+            errors.append(f"{where}: a live story needs a chapters count")
+        if story.get("path") != f"docs/stories/{g['id']}/":
+            errors.append(f"{where}: story path should be docs/stories/{g['id']}/")
+        folder = REPO_ROOT / str(story.get("path", ""))
+        for name in ("index.md", "story.js", "story.css", "drive.json"):
+            if not (folder / name).is_file():
+                errors.append(f"{where}: live story is missing {folder.relative_to(REPO_ROOT)}/{name}")
+    elif story.get("status") == "planned":
+        if not isinstance(story.get("issue"), int):
+            errors.append(f"{where}: a planned story needs an integer issue")
+    else:
+        errors.append(f"{where}: story status must be 'live' or 'planned'")
+    return errors
+
+
 def check_manifest(game_dirs: list[Path]) -> list[str]:
     """docs/games/games.json drives the home page's board, so it must agree with the game directories."""
     path = GAMES_DIR / "games.json"
@@ -230,6 +264,7 @@ def check_manifest(game_dirs: list[Path]) -> list[str]:
                 errors.append(f"{where}: needs a non-empty {key}")
         if isinstance(g.get("notes"), str) and not (REPO_ROOT / g["notes"]).is_dir():
             errors.append(f"{where}: notes {g['notes']!r} is not a directory in the repo")
+        errors.extend(check_story(g, where))
         if g.get("status") == "live":
             game_dir = GAMES_DIR / gid
             if not game_dir.is_dir():
@@ -256,6 +291,10 @@ def check_manifest(game_dirs: list[Path]) -> list[str]:
                 errors.append(f"{where}: queued games need an integer issue")
         else:
             errors.append(f"{where}: status must be 'live' or 'queued'")
+    listed = {g["story"]["path"] for g in games if isinstance(g, dict) and isinstance(g.get("story"), dict) and g["story"].get("status") == "live"}
+    for d in sorted(STORIES_DIR.iterdir()) if STORIES_DIR.is_dir() else []:
+        if d.is_dir() and d.name != "shared" and f"docs/stories/{d.name}/" not in listed:
+            errors.append(f"{rel}: docs/stories/{d.name}/ exists but no board entry lists it as a live story")
     for d in game_dirs:
         if d.name not in NOT_ON_BOARD and d.name not in seen:
             errors.append(f"{rel}: game {d.name!r} has no entry (add it, or list it in NOT_ON_BOARD)")

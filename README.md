@@ -113,10 +113,10 @@ vulnerabilities.
 ## Docs site
 
 `pages.yml` publishes the site to <https://xudipta.github.io/cookbook/> on every push to
-`main`: the games-first home page (`docs/site/`), the browser games under **Play**, and the
-topic READMEs and notes under **Learn** (MkDocs Material, with Mermaid diagrams rendered
-inline). `scripts/build_docs.sh` assembles `site-src/` from the topic tree, adding a Play
-banner to the notes of every topic that has a game; `validate.yml` strict-builds it on every
+`main`: the stories-first home page (`docs/site/`), the stories under **Stories**, the topic
+READMEs and notes under **Notes** (MkDocs Material, with Mermaid diagrams rendered inline) and the
+browser games under **Practice**. `scripts/build_docs.sh` assembles `site-src/` from the topic
+tree, adding a story and a practice banner to the notes of every topic that has them; `validate.yml` strict-builds it on every
 docs change.
 
 ## Local checks

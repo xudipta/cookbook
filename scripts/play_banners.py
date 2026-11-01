@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Add a "Play it" banner to every note page of a topic that has a game (site build only).
+"""Add banners to every note page of a topic that has a story or a game (site build only).
 
 Reads docs/games/games.json. For each entry, every Markdown page under its `notes` folder in the
 assembled docs tree (site-src/) gets an admonition right after its first heading: a link to the game
@@ -42,11 +42,21 @@ def linked_sections(game: dict, page: Path, root: Path) -> list[tuple[str, str]]
     return found
 
 
+def story_banner(game: dict, page: Path, root: Path) -> list[str]:
+    """The story comes first: a topic with a live story points at it before the practice game."""
+    story = game["story"]
+    target = os.path.relpath(root / story["path"] / "index.md", page.parent)
+    return [
+        '!!! tip "Start with the story"',
+        f"    [{story['title']}]({Path(target).as_posix()}): {story['blurb']}",
+    ]
+
+
 def banner(game: dict, page: Path, root: Path) -> list[str]:
     if game["status"] == "live":
         target = os.path.relpath(root / "docs" / "games" / game["id"] / "index.md", page.parent)
         lines = [
-            '!!! tip "Play it"',
+            '!!! note "Practice it"',
             f"    [{game['title']}]({Path(target).as_posix()}): {game['blurb']}",
         ]
         sections = linked_sections(game, page, root)
@@ -68,16 +78,22 @@ def main(argv: list[str]) -> int:
         folder = root / game["notes"]
         for page in sorted(folder.rglob("*.md")):
             text = page.read_text(encoding="utf-8")
-            if game["status"] == "live" and f"games/{game['id']}/" in text:
-                continue
             lines = text.split("\n")
             at = next((i for i, l in enumerate(lines) if re.match(r"^# \S", l)), None)
             if at is None:
                 continue
-            lines[at + 1 : at + 1] = ["", *banner(game, page, root)]
+            add: list[str] = []
+            story_live = game["story"]["status"] == "live"
+            if story_live and f"stories/{game['id']}/" not in text:
+                add += ["", *story_banner(game, page, root)]
+            if not (game["status"] == "live" and f"games/{game['id']}/" in text):
+                add += ["", *banner(game, page, root)]
+            if not add:
+                continue
+            lines[at + 1 : at + 1] = add
             page.write_text("\n".join(lines), encoding="utf-8")
             added += 1
-    print(f"added {added} Play banner(s)")
+    print(f"added {added} story and practice banner(s)")
     return 0
 
 
