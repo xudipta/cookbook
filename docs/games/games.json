@@ -57,10 +57,18 @@
       ],
       "notes": "topics/docker/",
       "story": {
-        "status": "planned",
+        "status": "live",
+        "path": "docs/stories/docker/",
         "title": "The Layer Cake",
         "metaphor": "A bakery",
-        "issue": 116
+        "blurb": "Bake a layered cake, then change one line and see which layers come out of the fridge. Learn images, layers, the build cache and multi-stage builds by watching them happen.",
+        "chapters": 3,
+        "learns": [
+          "image",
+          "layer",
+          "build cache",
+          "multi-stage"
+        ]
       }
     },
     {

@@ -68,13 +68,18 @@ async function play(browser, id, screen, drive) {
     }
     const rule = drive.phases && drive.phases[phase];
     if (rule) {
-      if (!rule.once || !tapped.has(phase)) {
+      // `click` is one selector or a list (tapped in order). Unless `then` is set, the script is waiting for
+      // that tap and nothing else; with `then: "buttons"` the sheet's button is pressed afterwards.
+      const first = !tapped.has(phase);
+      if (first || !rule.once) {
         tapped.add(phase);
-        await page.click(rule.click);
-      } else await page.waitForTimeout(60);
-      continue;
-    }
-    tapped.clear();
+        for (const sel of [].concat(rule.click)) await page.click(sel);
+        if (!rule.then) continue;
+      } else if (!rule.then) {
+        await page.waitForTimeout(60);
+        continue;
+      }
+    } else tapped.clear();
     const buttons = page.locator('.ks-sheet .ks-btn');
     if (await buttons.count()) {
       const box = await buttons.first().boundingBox();
@@ -111,10 +116,28 @@ function sharedIsTopicFree() {
   return bad;
 }
 
+// A story's stylesheet is loaded on every page, so each of its rules must be scoped to the story's root (a game
+// page has classes of its own, and an unscoped rule here would restyle them).
+function unscopedRules(id) {
+  const file = path.join(STORIES_DIR, id, 'story.css');
+  const prefix = `.ks[data-story="${id}"]`;
+  const css = fs.readFileSync(file, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/@keyframes[^{]+\{(?:[^{}]*\{[^}]*\})*[^}]*\}/g, '').replace(/@media[^{]*\{/g, '');
+  const bad = [];
+  for (const m of css.matchAll(/([^{}@]+)\{/g)) {
+    for (const sel of m[1].split(',')) if (sel.trim() && !sel.trim().startsWith(prefix)) bad.push(sel.trim().slice(0, 50));
+  }
+  return bad.map((b) => `docs/stories/${id}/story.css: "${b}" is not scoped to ${prefix}`);
+}
+
 (async () => {
   const leaks = fs.existsSync(path.join(STORIES_DIR, 'shared')) ? sharedIsTopicFree() : [];
   if (leaks.length) {
     console.error(`topic words in the shared story shell:\n  ${leaks.join('\n  ')}`);
+    process.exit(1);
+  }
+  const unscoped = (fs.existsSync(STORIES_DIR) ? fs.readdirSync(STORIES_DIR) : []).filter((d) => fs.existsSync(path.join(STORIES_DIR, d, 'story.css')) && d !== 'shared').flatMap(unscopedRules);
+  if (unscoped.length) {
+    console.error(unscoped.join('\n'));
     process.exit(1);
   }
   const ids = fs.existsSync(STORIES_DIR) ? fs.readdirSync(STORIES_DIR).filter((d) => fs.existsSync(path.join(STORIES_DIR, d, 'index.md'))) : [];

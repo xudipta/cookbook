@@ -14,6 +14,9 @@ html.ks-on body {
   --ks-accent: #b3380e;
   --ks-head: #6b2d0f;
   --ks-bg: #fff4e0;
+  --ks-bg-2: #ffe8c4; /* the stage fades from --ks-bg to this */
+  --ks-tint: #fff4e0; /* soft panels in the sheet */
+  --ks-link-tint: #eaf1fd;
   --ks-line: #e0bf8d;
   --ks-link: #1d4fa3;
   position: fixed;
@@ -138,7 +141,7 @@ html.ks-on body {
   gap: 8px;
   padding: 10px 12px 8px;
   overflow-y: auto;
-  background: linear-gradient(var(--ks-bg), #ffe8c4);
+  background: linear-gradient(var(--ks-bg), var(--ks-bg-2));
 }
 
 .ks-stage > * {
@@ -369,7 +372,7 @@ html.ks-on body {
 .ks-learn {
   padding: 8px 12px;
   border-radius: 12px;
-  background: #fff4e0;
+  background: var(--ks-tint);
   font-size: 15px;
 }
 
@@ -416,7 +419,7 @@ html.ks-on body {
   gap: 10px;
   padding: 8px 12px;
   border-radius: 12px;
-  background: #eaf1fd;
+  background: var(--ks-link-tint);
   font-weight: 700;
 }
 
@@ -474,7 +477,7 @@ html.ks-on body {
 .ks-end-item {
   padding: 10px 12px;
   border-radius: 12px;
-  background: #fff4e0;
+  background: var(--ks-tint);
 }
 
 .ks-end-maps {
@@ -513,7 +516,7 @@ html.ks-on body {
   z-index: 5;
   padding: 10px 14px;
   border-radius: 12px;
-  background: #2b1a0e;
+  background: var(--ks-ink);
   color: #fff;
   font-size: 15px;
   font-weight: 600;

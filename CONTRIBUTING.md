@@ -184,8 +184,10 @@ To add a story `docs/stories/<id>/`:
    `id`, `title`, `characters`, `chapters`, `createStage(app)` (build the stage into `app.stage`, return an object
    with `reset()` and `stop()`), the card and ending texts, and `endLinks` to the notes and the practice game.
    `boot.js` loads it for any page with `#story[data-story]`.
-3. `story.css`: set the palette with the `--ks-*` tokens under `.ks[data-story="<id>"]` and style the stage. Add it
-   to `extra_css` in `mkdocs.yml`, after `docs/stories/shared/story.css`.
+3. `story.css`: set the palette with the `--ks-*` tokens under `.ks[data-story="<id>"]` and style the stage. Every
+   rule must start with `.ks[data-story="<id>"]` (the file is loaded on every page, and a game page has classes of
+   its own; `story_check.cjs` fails otherwise). Add it to `extra_css` in `mkdocs.yml`, after
+   `docs/stories/shared/story.css`.
 4. `drive.json`: the answer `scripts/story_check.cjs` prefers when you offer choices, and what to tap in the phases
    your script waits in (`"rush": { "click": "<selector>", "once": true }`).
 
