@@ -1,0 +1,5 @@
+{
+  "comment": "How scripts/story_check.cjs plays this story with taps: it prefers the right answer in each question.",
+  "prefer": "^Start it and talk down|^Dial its address and show the door code|^The files as a tool|^The dashboard as a tool|^A read-only key, by name|^The open issues as a tool|^Remove the old private entry|^Sign in through the host|^The ticket as a resource|^The bug report as a prompt|^The checkout tickets as a tool|^Read what its tools say|^Deny it$",
+  "phases": {}
+}
