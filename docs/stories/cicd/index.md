@@ -6,9 +6,11 @@ hide:
 
 # The Assembly Line
 
-A story that teaches CI/CD with a factory line. Three short chapters: making a workflow fast and cheap (triggers,
+A story that teaches CI/CD with a factory line. Four short chapters: making a workflow fast and cheap (triggers,
 caching, path filters, a matrix), locking it down (the safe trigger, pinned actions, a read-only token) and Deploy
-Day (environments, and rolling, blue-green and canary releases). Play it on a phone: every step is a tap.
+Day (environments, and rolling, blue-green and canary releases), then gates and drift (stopping a bad release at
+staging, keeping prod the same as git, and changing a database in steps you can undo). Play it on a phone: every
+step is a tap.
 
 <div id="story" data-story="cicd">
   <noscript>This story needs JavaScript.</noscript>

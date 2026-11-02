@@ -104,6 +104,7 @@ function createLine(app, { levels, cardDefs }) {
       A.world = createWorld(A.sc);
       A.kind = A.world.mode;
       for (const [name, ...args] of replay) applyAction(A.world, ctx, name, ...args);
+      A.hist = replay.map((s) => [...s]);
       A.lines = [];
       A.nextText = A.kind === 'pipeline' ? incoming(A.world, ctx) : null;
       paint();
@@ -114,6 +115,7 @@ function createLine(app, { levels, cardDefs }) {
       A.lines = [];
       const before = w.out.length;
       const result = applyAction(w, ctx, name, ...args);
+      (A.hist ||= []).push([name, ...args]);
       const out = w.out.splice(before).map((o) => o.text).filter((t) => t.trim()).concat(A.lines);
       A.nextText = A.kind === 'pipeline' ? incoming(w, ctx) : null;
       paint();
@@ -135,6 +137,19 @@ function createLine(app, { levels, cardDefs }) {
         if (kind === 'bluegreen' && i === 0) applyAction(w, c, 'cutover');
       }
       return Math.round(w.failedTotal);
+    },
+    // What a wrong choice would really do: the same steps so far, then these, on a scratch copy of the level.
+    // Returns what the simulator printed for the extra steps, the delivery health and the failed requests.
+    trial(steps) {
+      const w = createWorld(A.sc);
+      const c = { ticks: 0, fire() {}, resolve() {}, log(t, o) { lines.push(`${o && o.kind === 'warn' ? 'Problem' : 'Note'}: ${String(t).replace(/\s*\(-\d+ health\)/, '')}`); }, step() { c.ticks += 1; tick(w, c); }, rng: seedRng(A.sc.seed || 7), scenario: A.sc };
+      const lines = [];
+      for (const [name, ...args] of A.hist || []) applyAction(w, c, name, ...args);
+      lines.length = 0;
+      const before = w.out.length;
+      for (const [name, ...args] of steps) applyAction(w, c, name, ...args);
+      const out = w.out.slice(before).map((o) => o.text).filter((t) => t.trim()).concat(lines);
+      return { out: out.join('\n'), health: Math.round(w.health ?? 100), failed: Math.round(w.failedTotal || 0) };
     },
     alerted() { return A.world.alerted != null; },
     caption(text) { app.caption.textContent = text || ''; },
@@ -357,6 +372,78 @@ function makeChapters() {
           maps: [['The workshop, the shop floor, the customers', 'dev, staging, prod'], ['A few servers at a time', 'rolling update'], ['Switch everyone at once', 'blue-green'], ['5% of customers first', 'canary'], ['Undo the release', 'rollback']],
           plain: 'A **rolling** update replaces a few servers at a time, **blue-green** switches all traffic at once, and a **canary** sends a small share of customers first. Watch the error rate and **roll back** when it climbs.',
           cmd: 'kubectl set image deployment/shop web=shop:v1.5.0\nkubectl rollout status deployment/shop\nkubectl rollout undo deployment/shop   # roll back a bad release',
+        });
+      },
+    },
+    {
+      title: 'Gates and drift',
+      hook: 'Another deploy day, with three traps: a release that staging would catch, a hot-fix made by hand in prod, and a change that drops a column.',
+      learn: 'gates, keeping prod the same as git, and changing a database in steps you can undo.',
+      async play({ ui, sim: A }) {
+        A.load('gates-and-drift');
+        A.caption('Gates stop a bad release before the customers. Each one only works if you use it.');
+        await ui.say('ray', 'Another deploy day, and this time there are **gates**: a release must pass staging before it may reach the customers. Today\'s first release, **v1.7.0**, is the promo banner. Send it to staging.', 'Promote to staging');
+        let out = A.act('promote');
+        out = A.act('wait');
+        await ui.say('ray', 'The staging smoke tests **failed**: the checkout returns an error. This is exactly what a gate is for.', 'Next', box(out));
+        for (;;) {
+          const pick = await ui.choose('ray', 'What do we do with v1.7.0?', [
+            { label: 'Ship it to prod anyway: we are in a hurry', value: 'ship' },
+            { label: 'Reject it at the gate', value: 'reject' },
+          ]);
+          if (pick === 'reject') break;
+          const t = A.trial([['deploy', 'rolling'], ['wait']]);
+          await ui.say('ray', `A gate only helps if a bad release **stops** at it. Here is what shipping it really does: delivery health falls to **${t.health}%** and customers see errors.`, 'Try again', box(t.out));
+        }
+        out = A.act('reject');
+        await ui.say('ray', '**v1.7.0 never reaches the customers.** The next release is **v1.8.0**, order totals. Its notes say: "Migration 0042 **drops** the legacy_total column".', 'Next', box(out));
+        for (;;) {
+          const pick = await ui.choose('ray', 'The version running today still **reads that column**. How do we change the database?', [
+            { label: 'Drop the column with this release', value: 'drop' },
+            { label: 'Add the new column first, and drop the old one in a later release', value: 'expand' },
+          ]);
+          if (pick === 'expand') break;
+          const t = A.trial([['promote'], ['wait'], ['commit'], ['deploy', 'canary'], ['wait']]);
+          await ui.say('ray', 'The old version still reads **legacy_total**, so dropping it breaks it at once, and you cannot simply undo a dropped column. Here is what happens:', 'Try again', box(t.out));
+        }
+        out = A.act('expand');
+        await ui.say('ray', 'That is the **expand** step: the new column is added and the old one stays, so both versions of the app keep working. The **contract** step (the drop) comes in a later release, once nothing reads the old column.', 'Next', box(out));
+        await ui.say('ray', 'Now send v1.8.0 to staging.', 'Promote to staging');
+        out = A.act('promote');
+        out = A.act('wait');
+        await ui.say('ray', '**An alarm**: four prod pods run an image that is **not in git**. Somebody fixed the checkout timeout by hand with a **kubectl** command at 2am. It works, but nobody wrote it down.', 'Next', box(out));
+        for (;;) {
+          const pick = await ui.choose('ray', 'What do we do about the hand-made fix?', [
+            { label: 'Leave it: it works', value: 'leave' },
+            { label: 'Commit it to git, so prod matches git again', value: 'commit' },
+          ]);
+          if (pick === 'commit') break;
+          const t = A.trial([['deploy', 'canary']]);
+          await ui.say('ray', 'The next deploy **overwrites** whatever is not in git. The hand-made fix would silently disappear and the checkout timeouts would come back:', 'Try again', box(t.out));
+        }
+        out = A.act('commit');
+        await ui.say('ray', 'The fix is **in git** now, so prod and git agree. That is **drift** fixed: what runs in production is only ever what the repo says.', 'Next', box(out));
+        for (;;) {
+          const kind = await ui.choose('ray', 'v1.8.0 is ready for the customers. This release changes totals. How do we release it?', [
+            { label: 'Rolling: replace every server in turn', value: 'rolling' },
+            { label: 'Canary: 5% of customers first', value: 'canary' },
+          ]);
+          if (kind === 'canary') break;
+          const t = A.trial([['deploy', kind], ['wait'], ['wait']]);
+          await ui.say('ray', 'This release is a risky one, and a rolling update puts it in front of **more and more customers** before the alarm can ring. A small canary limits the damage.', 'Try again', box(t.out));
+        }
+        out = A.act('deploy', 'canary');
+        ui.phase('watch');
+        await ui.say('ray', 'The canary is out for **5%** of the customers. Watch the error rate.', 'Watch a minute', box(out));
+        out = A.act('wait');
+        await ui.say('ray', '**The alarm is ringing**: 30% of the new version\'s requests fail.', 'Roll back now', box(out));
+        ui.phase('story');
+        out = A.act('rollback');
+        await ui.say('ray', 'Rolled back, after only a handful of failed requests. And because we **expanded** first, rolling back is safe: the old column is still there, so the old version works. If we had dropped it, there would have been no way back.', 'Next', box(out));
+        await ui.card({
+          maps: [['A gate before the customers', 'staging smoke tests, environment protection rules'], ['Stop the bad release at the gate', 'reject the release'], ['What the hand-fix left behind', 'drift: prod differs from git'], ['Add first, remove later', 'expand then contract'], ['5% of customers first', 'canary release']],
+          plain: 'A **gate** only helps if a bad release stops at it. Keep prod the same as git by **committing every hand-fix**, and change a database in steps (**expand**, deploy, **contract**) so the last step can always be undone.',
+          cmd: '-- release 1 (expand): add the new column, keep the old one\nALTER TABLE orders ADD COLUMN status_v2 text;\n-- release 2: write both columns, backfill, then read the new one\nUPDATE orders SET status_v2 = status WHERE status_v2 IS NULL;\n-- release 3 (contract): only after nothing reads the old column\nALTER TABLE orders DROP COLUMN status;',
         });
       },
     },
