@@ -204,8 +204,8 @@ def check_game(game_dir: Path) -> list[str]:
     return errors
 
 
-# Game directories that are not on the home page's board (the shell's demo game).
-NOT_ON_BOARD = {"demo"}
+# Game directories that are not on the home page's board (none today: every game has a tile).
+NOT_ON_BOARD: set[str] = set()
 
 
 STORIES_DIR = REPO_ROOT / "docs" / "stories"

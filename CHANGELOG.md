@@ -21,6 +21,8 @@ for the process; see `CONTRIBUTING.md` for how to keep this updated.
 - Add the GitHub Pages docs site (MkDocs Material) (#11)
 - Polish the docs site: tabbed navigation, theme, a sharper README hook, and per-topic
   diagrams/quickstarts (#16)
+- Retire the Replica Rescue demo game and its page `docs/games/demo/`: the Kubernetes
+  story is the "start here", and the real games exercise the shared shell in CI (#99)
 
 ## CI/CD and repo setup
 

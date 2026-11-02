@@ -24,7 +24,6 @@ sections, and a scripted winning run must actually win.
 | [Merge Conflict Rush](github/index.md) | GitHub / Git | Playable: 3 levels, a commit graph, a `git` and `gh` prompt |
 | [Index Fund](database/index.md) | Database / SQL | Playable: 3 levels, a query planner with `EXPLAIN`, a migration pipeline |
 | [Night Shift](linux/index.md) | Linux / Shell | Playable: 3 levels, a simulated server, a shell you type real commands into |
-| [Replica Rescue (demo)](demo/index.md) | Kubernetes basics | Playable; exists to prove the shell |
 
 Every topic has a game. Follow the
 [epic on GitHub](https://github.com/xudipta/cookbook/issues/36) for what comes next.
