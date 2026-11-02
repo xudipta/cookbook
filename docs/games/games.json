@@ -183,10 +183,19 @@
       ],
       "notes": "topics/github/",
       "story": {
-        "status": "planned",
+        "status": "live",
+        "path": "docs/stories/github/",
         "title": "The Shared Cookbook",
         "metaphor": "Many chefs, one book",
-        "issue": 94
+        "blurb": "Add a page to a shared cookbook, catch up when the book moves on, and settle two chefs who changed the same line, with real Git and GitHub commands and no typing.",
+        "chapters": 3,
+        "learns": [
+          "branch",
+          "commit",
+          "pull request",
+          "merge vs rebase",
+          "merge conflict"
+        ]
       }
     },
     {

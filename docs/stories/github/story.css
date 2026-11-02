@@ -1,0 +1,246 @@
+/* Story mode, Git and GitHub ("The Shared Cookbook"): the commit graph is the stage. Warm orange and cream.
+   Every rule is scoped to this story. */
+
+.ks[data-story="github"] {
+  --ks-ink: #2a1405;
+  --ks-muted: #6b3410;
+  --ks-accent: #b8470f;
+  --ks-head: #7c2d12;
+  --ks-bg: #fff7ed;
+  --ks-bg-2: #fed7aa;
+  --ks-tint: #fff7ed;
+  --ks-link-tint: #e6f0fc;
+  --ks-line: #f5b87a;
+  --ks-link: #0b5cad;
+}
+
+.ks[data-story="github"] .gc-where {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 6px;
+  margin: 0;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: #fff;
+  font-size: 13px;
+}
+
+.ks[data-story="github"] .gc-where[hidden],
+.ks[data-story="github"] .gc-graph[hidden],
+.ks[data-story="github"] .gc-file[hidden],
+.ks[data-story="github"] .gc-conflict[hidden] {
+  display: none;
+}
+
+.ks[data-story="github"] .gc-changes {
+  flex-basis: 100%;
+  color: var(--ks-muted);
+  font-weight: 600;
+}
+
+.ks[data-story="github"] .gc-graph {
+  padding: 6px 10px 4px;
+  border: 2px solid var(--ks-line);
+  border-radius: 12px;
+  background: #fff;
+  font-size: 13px;
+}
+
+.ks[data-story="github"] .gc-row {
+  display: flex;
+  gap: 8px;
+  min-height: 34px;
+}
+
+.ks[data-story="github"] .gc-row.gc-new {
+  animation: gc-in 0.35s ease-out;
+}
+
+.ks[data-story="github"] .gc-gfx {
+  position: relative;
+  flex: none;
+}
+
+.ks[data-story="github"] .gc-svg {
+  position: absolute;
+  left: 0;
+  overflow: visible;
+}
+
+.ks[data-story="github"] .gc-svg-top {
+  top: 0;
+}
+
+.ks[data-story="github"] .gc-svg-bottom {
+  top: 14px;
+  height: calc(100% - 14px);
+}
+
+.ks[data-story="github"] .gc-edge {
+  fill: none;
+  stroke: var(--gc-c, var(--ks-accent));
+  stroke-width: 2;
+}
+
+.ks[data-story="github"] .gc-l0 { --gc-c: #b8470f; }
+.ks[data-story="github"] .gc-l1 { --gc-c: #6d3bb5; }
+.ks[data-story="github"] .gc-l2 { --gc-c: #0f766e; }
+.ks[data-story="github"] .gc-l3 { --gc-c: #0b5cad; }
+
+.ks[data-story="github"] .gc-node {
+  position: absolute;
+  top: 8px;
+  width: 12px;
+  height: 12px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: var(--gc-c, var(--ks-accent));
+}
+
+.ks[data-story="github"] .gc-node-merge {
+  border-radius: 2px;
+  transform: rotate(45deg) scale(0.85);
+}
+
+.ks[data-story="github"] .gc-node-head {
+  box-shadow: 0 0 0 2px var(--ks-ink);
+}
+
+.ks[data-story="github"] .gc-info {
+  flex: 1;
+  min-width: 0;
+  padding: 3px 0 5px;
+}
+
+.ks[data-story="github"] .gc-line {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+}
+
+.ks[data-story="github"] .gc-subj {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-weight: 600;
+}
+
+.ks[data-story="github"] .gc-who {
+  flex: none;
+  margin-left: auto;
+  color: var(--ks-muted);
+  font-size: 12px;
+}
+
+.ks[data-story="github"] .gc-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.ks[data-story="github"] .gc-pill {
+  padding: 0 7px;
+  border-radius: 999px;
+  font: 600 11px/1.6 "IBM Plex Mono", ui-monospace, monospace;
+}
+
+.ks[data-story="github"] .gc-pill-head { background: #7c2d12; color: #fff; }
+.ks[data-story="github"] .gc-pill-branch { background: #fde1c2; color: #5c2208; }
+.ks[data-story="github"] .gc-pill-remote { background: #dbeafe; color: #123c7a; }
+.ks[data-story="github"] .gc-pill-tag { background: #fef08a; color: #5c4600; }
+
+.ks[data-story="github"] .gc-more {
+  padding: 2px 0 4px 26px;
+  color: var(--ks-muted);
+  font-size: 12px;
+}
+
+.ks[data-story="github"] .gc-file {
+  padding: 6px 10px;
+  border: 2px dashed var(--ks-line);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.ks[data-story="github"] .gc-file-name {
+  padding: 0;
+  background: none;
+  color: var(--ks-muted);
+  font: 700 12px/1.4 "IBM Plex Mono", ui-monospace, monospace;
+}
+
+.ks[data-story="github"] .gc-file-text {
+  margin: 2px 0 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.ks[data-story="github"] .gc-file-text code {
+  padding: 0;
+  background: none;
+  color: var(--ks-ink);
+  font: 500 12.5px/1.45 "IBM Plex Mono", ui-monospace, monospace;
+}
+
+.ks[data-story="github"] .gc-conflict {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px;
+  border: 2px solid #c2410c;
+  border-radius: 12px;
+  background: #fff8f3;
+}
+
+.ks[data-story="github"] .gc-side-title {
+  margin: 4px 0 0;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ks-muted);
+}
+
+.ks[data-story="github"] .gc-line-pick {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 4px 10px;
+  border: 2px solid var(--ks-line);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--ks-ink);
+  text-align: left;
+}
+
+.ks[data-story="github"] .gc-line-pick.is-on {
+  border-color: #137536;
+  background: #ecfdf3;
+}
+
+.ks[data-story="github"] .gc-check {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--ks-muted);
+  border-radius: 6px;
+  color: #0b4d24;
+  font-weight: 800;
+}
+
+.ks[data-story="github"] .gc-line-pick.is-on .gc-check {
+  border-color: #137536;
+  background: #d4f0dc;
+}
+
+.ks[data-story="github"] .gc-line-pick code {
+  padding: 0;
+  background: none;
+  color: var(--ks-ink);
+  font: 600 13px/1.3 "IBM Plex Mono", ui-monospace, monospace;
+}
+
+@keyframes gc-in { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
