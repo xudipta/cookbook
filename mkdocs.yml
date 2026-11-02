@@ -93,6 +93,7 @@ extra_css:
   - docs/stories/linux/story.css
   - docs/stories/database/story.css
   - docs/stories/observability/story.css
+  - docs/stories/mcp/story.css
 
 extra_javascript:
   - path: docs/games/shared/boot.js
@@ -114,6 +115,7 @@ nav:
       - The Night Superintendent (Linux): docs/stories/linux/index.md
       - The Card Catalogue (Database): docs/stories/database/index.md
       - Quiet Hours (Observability): docs/stories/observability/index.md
+      - The Switchboard (MCP): docs/stories/mcp/index.md
   - Notes:
       - Overview: docs/learn.md
       - Kubernetes:

@@ -336,10 +336,19 @@
       ],
       "notes": "topics/mcp/",
       "story": {
-        "status": "planned",
+        "status": "live",
+        "path": "docs/stories/mcp/",
         "title": "The Switchboard",
-        "metaphor": "An office phone exchange",
-        "issue": 98
+        "metaphor": "A switchboard",
+        "blurb": "Plug an AI into its tools like an operator at a switchboard: local programs and hosted services, who may call, a door code that never goes on the label, and a stranger who must be read before approved. Real claude mcp commands, no typing.",
+        "chapters": 3,
+        "learns": [
+          "MCP servers",
+          "stdio and HTTP",
+          "scopes",
+          "secrets by name",
+          "untrusted servers"
+        ]
       }
     }
   ]

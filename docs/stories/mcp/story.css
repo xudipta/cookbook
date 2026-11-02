@@ -1,0 +1,126 @@
+/* Story mode, MCP ("The Switchboard"): the call that is waiting, the plugged-in extensions and the shared
+   .mcp.json. Switchboard blue. Every rule is scoped to this story. */
+
+.ks[data-story="mcp"] {
+  --ks-ink: #0f1e3d;
+  --ks-muted: #34507f;
+  --ks-accent: #1d4ed8;
+  --ks-head: #1e3a8a;
+  --ks-bg: #eff6ff;
+  --ks-bg-2: #bfdbfe;
+  --ks-tint: #eff6ff;
+  --ks-link-tint: #e6f0fc;
+  --ks-line: #93c5fd;
+  --ks-link: #0b5cad;
+}
+
+.ks[data-story="mcp"] .pb-call,
+.ks[data-story="mcp"] .pb-lines,
+.ks[data-story="mcp"] .pb-file {
+  margin: 0;
+}
+
+.ks[data-story="mcp"] .pb-call[hidden],
+.ks[data-story="mcp"] .pb-lines[hidden],
+.ks[data-story="mcp"] .pb-file[hidden] {
+  display: none;
+}
+
+.ks[data-story="mcp"] .pb-call {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 12px;
+  border: 2px dashed var(--ks-accent);
+  border-radius: 12px;
+  background: #fff;
+  font-size: 14px;
+}
+
+.ks[data-story="mcp"] .pb-call-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ks-muted);
+}
+
+.ks[data-story="mcp"] .pb-call-from {
+  font-size: 12px;
+  color: var(--ks-muted);
+}
+
+.ks[data-story="mcp"] .pb-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0;
+  list-style: none;
+}
+
+.ks[data-story="mcp"] .pb-line {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "name state" "how state";
+  align-items: baseline;
+  column-gap: 10px;
+  padding: 5px 10px;
+  border: 2px solid var(--ks-line);
+  border-radius: 10px;
+  background: #fff;
+  font-size: 13px;
+  animation: pb-in 0.25s ease-out;
+}
+
+.ks[data-story="mcp"] .pb-line-name {
+  grid-area: name;
+  font: 600 13px/1.3 "IBM Plex Mono", ui-monospace, monospace;
+  overflow-wrap: anywhere;
+}
+
+.ks[data-story="mcp"] .pb-line-how {
+  grid-area: how;
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  color: var(--ks-muted);
+}
+
+.ks[data-story="mcp"] .pb-line-state {
+  grid-area: state;
+  font-size: 12.5px;
+  text-align: right;
+}
+
+.ks[data-story="mcp"] .pb-line[data-state="failed"],
+.ks[data-story="mcp"] .pb-line[data-state="auth"] {
+  border-color: #b45309;
+  background: #fffbeb;
+}
+
+.ks[data-story="mcp"] .pb-line[data-state="rejected"] {
+  border-color: #b91c1c;
+  background: #fef2f2;
+  color: #7a1313;
+}
+
+.ks[data-story="mcp"] .pb-line[data-state="pending"] {
+  border-style: dashed;
+}
+
+.ks[data-story="mcp"] .pb-empty {
+  display: block;
+  color: var(--ks-muted);
+}
+
+.ks[data-story="mcp"] .pb-file {
+  max-height: 11rem;
+  overflow: auto;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #0f1e3d;
+  color: #e6f0fc;
+  font: 500 11.5px/1.35 "IBM Plex Mono", ui-monospace, monospace;
+  white-space: pre;
+}
+
+@keyframes pb-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
