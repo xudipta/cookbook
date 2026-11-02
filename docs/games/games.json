@@ -237,10 +237,19 @@
       ],
       "notes": "topics/observability/",
       "story": {
-        "status": "planned",
-        "title": "The Night Ward",
-        "metaphor": "A hospital at night",
-        "issue": 117
+        "status": "live",
+        "path": "docs/stories/observability/",
+        "title": "Quiet Hours",
+        "metaphor": "A night ward",
+        "blurb": "Read a patient's vitals, choose which alerts deserve to wake you, and see each rule replayed against last week before the night begins. Real PromQL, no typing.",
+        "chapters": 3,
+        "learns": [
+          "metrics",
+          "alerts",
+          "burn and trend",
+          "grouping",
+          "recording rules"
+        ]
       }
     },
     {

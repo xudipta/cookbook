@@ -1,0 +1,85 @@
+/* Story mode, Observability ("Quiet Hours"): a chart of one vital, last week's replay of the rules and the
+   night's scores. Ward teal and mint. Every rule is scoped to this story. */
+
+.ks[data-story="observability"] {
+  --ks-ink: #0b2a28;
+  --ks-muted: #2d5f5a;
+  --ks-accent: #0f766e;
+  --ks-head: #134e4a;
+  --ks-bg: #f0fdfa;
+  --ks-bg-2: #ccfbf1;
+  --ks-tint: #f0fdfa;
+  --ks-link-tint: #e6f0fc;
+  --ks-line: #7dd3c8;
+  --ks-link: #0b5cad;
+}
+
+.ks[data-story="observability"] .qh-chart-title {
+  margin: 0;
+  font: 600 12.5px/1.3 "IBM Plex Mono", ui-monospace, monospace;
+  overflow-wrap: anywhere;
+  color: var(--ks-ink);
+}
+
+.ks[data-story="observability"] .qh-chart-note {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--ks-muted);
+}
+
+.ks[data-story="observability"] .qh-chart-title[hidden],
+.ks[data-story="observability"] .qh-chart[hidden],
+.ks[data-story="observability"] .qh-chart-note[hidden],
+.ks[data-story="observability"] .qh-replay[hidden] {
+  display: none;
+}
+
+.ks[data-story="observability"] .qh-chart {
+  border: 2px solid var(--ks-line);
+  border-radius: 10px;
+  background: #fff;
+  overflow: hidden;
+  animation: qh-in 0.25s ease-out;
+}
+
+.ks[data-story="observability"] .qh-chart svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.ks[data-story="observability"] .qh-bg {
+  fill: #fff;
+}
+
+.ks[data-story="observability"] .qh-line {
+  stroke: var(--ks-accent);
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.ks[data-story="observability"] .qh-svg-text {
+  fill: var(--ks-muted);
+  font: 600 9px "IBM Plex Mono", ui-monospace, monospace;
+  paint-order: stroke;
+  stroke: #fff;
+  stroke-width: 3px;
+}
+
+.ks[data-story="observability"] .qh-replay {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 12px;
+  padding: 6px 10px;
+  border: 2px solid var(--ks-line);
+  border-radius: 10px;
+  background: #fff;
+  font-size: 13px;
+}
+
+.ks[data-story="observability"] .qh-bad {
+  color: #7a1313;
+  font-weight: 700;
+}
+
+@keyframes qh-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
