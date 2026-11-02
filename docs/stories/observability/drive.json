@@ -1,0 +1,5 @@
+{
+  "comment": "How scripts/story_check.cjs plays this story with taps: it prefers the right answer in each question.",
+  "prefer": "^Requests: a counter|^Queue: a gauge, so read it as it is|^Latency: a histogram|^p95 line: a summary|^Disk: a gauge that is running out|^Up: a gauge, so read it as it is|^About nine|More than 5% of requests failing, for 5 minutes|Above 90% for 10 minutes, as a ticket|The 95th percentile|Will it run out in 4 hours|The alert name and the job|It must be down for 2 minutes|Precompute the query",
+  "phases": {}
+}
