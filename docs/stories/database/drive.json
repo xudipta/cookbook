@@ -1,0 +1,5 @@
+{
+  "comment": "How scripts/story_check.cjs plays this story with taps: it prefers the right answer in each question.",
+  "prefer": "^By email$|Add a catalogue by customer|Look at its plan, then leave it|The three with zero uses|By customer first, then date|Order lines by product|Ship the join as|In the practice library|Add the column first, then ship|The undo is empty|Bring back the old app first|Ship the app that does not read it",
+  "phases": {}
+}

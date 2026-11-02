@@ -20,6 +20,7 @@ docs/games/skills/
 docs/games/terraform/
 docs/stories/cicd/
 docs/stories/linux/
+docs/stories/database/
 docs/stories/docker/
 docs/stories/github/
 docs/stories/kubernetes/
