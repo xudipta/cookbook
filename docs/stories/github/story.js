@@ -6,7 +6,7 @@
 // output, the graph and the conflicts are the game's. Each chapter is a plain async script over it
 // (see ../shared/story.js).
 import { h, outputBox, mountStory as mount, siteUrl } from '../shared/story.js';
-import { branchInfo, createWorld, editFile, execute, graphRows, workStatus } from '../../games/github/sim.js';
+import { branchInfo, createWorld, editFile, execute, goalStatus, graphRows, mainBuild, prCards, tick, workStatus } from '../../games/github/sim.js';
 
 const HUB = siteUrl('docs/games/');
 const NOTE = (name) => siteUrl(`topics/github/notes/${name}/`);
@@ -59,10 +59,28 @@ function createCookbook(app, { levels }) {
   const graphEl = h('div', { class: 'gc-graph', role: 'list', 'aria-label': 'The commit graph, newest first', hidden: true });
   const fileEl = h('div', { class: 'gc-file', hidden: true });
   const conflictEl = h('div', { class: 'gc-conflict', hidden: true });
-  app.caption.before(where, graphEl, fileEl, conflictEl);
+  const gateEl = h('div', { class: 'gc-gate', hidden: true });
+  app.caption.before(gateEl, where, graphEl, fileEl, conflictEl);
 
-  const G = { sc: null, world: null, shown: null, conflict: null, seen: new Set() };
+  const G = { sc: null, world: null, shown: null, conflict: null, seen: new Set(), gate: false, hist: [] };
   const ctx = { ticks: 0, step() {}, fire() {}, resolve() {}, log() {}, scenario: null };
+
+  // The lock on main: its build, and every open pull request with what it still waits for.
+  function paintGate() {
+    gateEl.hidden = !G.gate;
+    if (!G.gate) return;
+    const w = G.world;
+    const build = mainBuild(w);
+    const rows = [h('p', { class: `gc-gate-main${build === 'FAILING' ? ' is-bad' : ''}` }, h('strong', { text: 'main is locked' }), h('span', { text: ` · its build is ${build || 'unchecked'}` }))];
+    for (const pr of prCards(w).filter((p) => p.state === 'open')) {
+      const review = pr.reviewers.map((r) => `${r.name} ${r.state}`).join(', ') || 'no reviewer';
+      const checks = pr.checks.map((c) => `${c.name} ${c.state}`).join(', ') || 'no checks';
+      rows.push(h('p', { class: `gc-gate-pr${pr.blockers.length ? ' is-wait' : ' is-ready'}` },
+        h('strong', { text: `#${pr.n} ${pr.title}` }),
+        h('span', { text: `${checks} · ${review} · ${pr.blockers.length ? `waiting: ${pr.blockers[0]}` : 'ready to merge'}` })));
+    }
+    gateEl.replaceChildren(...rows);
+  }
 
   function paintGraph() {
     const w = G.world;
@@ -120,11 +138,12 @@ function createCookbook(app, { levels }) {
   }
 
   // While a conflict is open, the file and its lines get the whole stage.
-  const paint = () => { paintGraph(); paintWhere(); paintFile(); paintConflict(); graphEl.hidden = Boolean(G.conflict); };
+  const paint = () => { paintGate(); paintGraph(); paintWhere(); paintFile(); paintConflict(); graphEl.hidden = Boolean(G.conflict); };
 
   Object.assign(G, {
     // Start from one of the game's levels, optionally replaying commands to reach a situation.
-    load(levelId, replay = []) {
+    // `gate: true` shows the lock on main and the pull requests waiting at it.
+    load(levelId, replay = [], { gate = false } = {}) {
       const level = levels.find((l) => l.id === levelId);
       G.sc = level;
       ctx.scenario = level;
@@ -132,6 +151,8 @@ function createCookbook(app, { levels }) {
       G.seen = new Set();
       G.shown = null;
       G.conflict = null;
+      G.gate = gate;
+      G.hist = [];
       paint();
       for (const cmd of replay) execute(G.world, ctx, cmd);
       paint();
@@ -140,10 +161,43 @@ function createCookbook(app, { levels }) {
     run(line) {
       const w = G.world;
       const before = w.term.length;
+      G.hist.push(line);
       execute(w, ctx, line);
       paint();
       return w.term.slice(before).map((t) => t.text).join('\n').trim();
     },
+    // Let time pass: the checks finish and the reviewer answers.
+    wait() {
+      G.hist.push(null);
+      for (let i = 0; i < 6; i++) {
+        ctx.ticks += 1;
+        tick(G.world, ctx);
+        if (prCards(G.world).every((p) => p.state !== 'open' || !p.blockers.length)) break;
+      }
+      paint();
+    },
+    // What a wrong choice would really do: the same commands on a scratch copy of the repository.
+    // A `null` in the list is a wait. Returns what the scratch copy printed.
+    trial(cmds) {
+      const level = G.sc;
+      const w = createWorld({ ...level, schedule: [] });
+      const lines = [];
+      const c = { ticks: 0, step() {}, fire() {}, resolve() {}, log(t) { lines.push(String(t)); }, scenario: level };
+      const go = (cmd) => {
+        if (cmd === null) {
+          for (let i = 0; i < 6; i++) {
+            c.ticks += 1;
+            tick(w, c);
+            if (prCards(w).every((p) => p.state !== 'open' || !p.blockers.length)) break;
+          }
+        } else execute(w, c, cmd);
+      };
+      for (const cmd of G.hist) go(cmd);
+      const before = w.term.length;
+      for (const cmd of cmds) go(cmd);
+      return [w.term.slice(before).map((t) => t.text).join('\n').trim(), ...lines.map((l) => `(${l})`)].join('\n');
+    },
+    goals() { return goalStatus(G.world); },
     edit(path, text) {
       editFile(G.world, ctx, path, text);
       G.shown = path;
@@ -174,6 +228,10 @@ function createCookbook(app, { levels }) {
       G.conflict = null;
       G.seen = new Set();
       where.hidden = true;
+      G.gate = false;
+      G.hist = [];
+      gateEl.hidden = true;
+      gateEl.replaceChildren();
       graphEl.replaceChildren();
       graphEl.hidden = true;
       fileEl.hidden = true;
@@ -290,6 +348,86 @@ function makeChapters() {
           maps: [['Two chefs, one line', 'merge conflict'], ['The lines around it', '<<<<<<< ======= >>>>>>>'], ['Say it is fixed', 'git add'], ['Carry on', 'git commit / git rebase --continue'], ['Safe overwrite after a rebase', 'git push --force-with-lease']],
           plain: 'A **merge conflict** is Git asking a person to decide. Edit the file to keep what you want, remove the markers, **git add** it, then finish with **git commit** (merge) or **git rebase --continue**.',
           cmd: '<<<<<<< HEAD\ntimeout: 30\nretries: 3\n=======\ntimeout: 60\n>>>>>>> origin/main\n\n# edit the file, then:\ngit add config.yml\ngit commit            # or: git rebase --continue',
+        });
+      },
+    },
+    {
+      title: 'The locked book',
+      hook: 'The book is locked now, and a teammate\'s page failed the proofread. You also have a typo fix on the wrong copy.',
+      learn: 'why a push to main is refused, how to undo a page without tearing it out, and how to keep unfinished work safe.',
+      async play({ ui, sim: G }) {
+        G.load('protected-main', [], { gate: true });
+        G.caption('The strip shows the lock on main and every pull request waiting at it.');
+        await ui.say('ines', 'The printed book is **locked**. A page goes in only after three things: a **pull request** (a review), the **code owner**\'s OK, and a passing **build** (the proofread). Nobody can push straight into it, not even you.');
+        await ui.say('ines', 'And look at the strip: since Marc\'s page, the book **fails its proofread**. On your laptop you also made a mistake: you committed your typo fix straight onto your copy of main, and README.md has half-finished notes.', 'Look at my copy');
+        let out = [G.run('git log --oneline'), G.run('git status')].join('\n');
+        await ui.say('ines', 'Marc\'s page is the one at the bottom, and your typo fix sits on top of it on **main**. The notes in README.md are only edited, not saved anywhere.', 'Next', box(out));
+        const guess = await ui.choose('ines', 'You try to push your main, with the typo fix, straight to the book. Will it work?', [
+          { label: 'Yes: it is only a typo', value: 'yes' },
+          { label: 'No: the book is locked', value: 'no' },
+        ]);
+        out = G.run('git push origin main');
+        await ui.say('ines', `${guess === 'no' ? 'Right!' : 'No!'} GitHub refuses: **Changes must be made through a pull request.** The lock is **branch protection**. Every change goes through a branch and a pull request.`, 'Next', box(out));
+        await ui.say('ines', 'To fix the book you must move your own **main** back to match GitHub. But you have unfinished work on it. Protect it first.', 'Next');
+        for (;;) {
+          const pick = await ui.choose('ines', 'Before you touch main, what do you do with the typo fix and the half-finished notes?', [
+            { label: 'Just reset main to match GitHub', value: 'reset' },
+            { label: 'Put the typo fix on its own branch, and stash the notes', value: 'keep' },
+          ]);
+          if (pick === 'keep') break;
+          const t = G.trial(['git reset --hard origin/main', 'git status', 'git log --oneline', 'git stash list']);
+          await ui.say('ines', 'That would throw both away: the notes in README.md are gone, and so is your typo commit. Nothing is left to get back. Keep them first.', 'Try again', box(t));
+        }
+        out = [G.run('git stash push -m wip'), G.run('git branch fix/runbook-typo')].filter(Boolean).join('\n');
+        await ui.say('ines', 'The notes are on a **stash**: a shelf for unfinished work. The typo fix has its **own branch**, which still points at it. Now nothing can be lost.', 'Next', box(out));
+        out = G.run('git reset --hard origin/main');
+        await ui.say('ines', 'Now it is safe to match your main to GitHub. Your copy of the book is the same as the real one again, bad page and all.', 'Next', box(out));
+        for (;;) {
+          const pick = await ui.choose('ines', 'How do you take Marc\'s broken page out of the book?', [
+            { label: 'Delete it from history and force-push', value: 'force' },
+            { label: 'Add a new page that cancels it, on a branch', value: 'revert' },
+          ]);
+          if (pick === 'revert') break;
+          const t = G.trial(['git reset --hard HEAD~1', 'git push --force origin main']);
+          await ui.say('ines', 'The book is locked against that, and rewriting history under everyone would break their copies anyway. A **revert** adds a **new page that cancels the old one**, so nothing is torn out.', 'Try again', box(t));
+        }
+        out = ['git switch -c revert/speed-up-deploy', 'git revert --no-edit HEAD', 'git push -u origin HEAD', 'gh pr create --fill'].map((c) => G.run(c)).join('\n');
+        await ui.say('ines', 'That was **git revert**, on a new branch, then a pull request. Look at the strip: the pull request waits for the **code owner** (Dana owns deploy.sh).', 'Next', box(out));
+        for (;;) {
+          const pick = await ui.choose('ines', 'The pull request is open. What now?', [
+            { label: 'Merge it right now', value: 'now' },
+            { label: 'Wait for the check and the review', value: 'wait' },
+          ]);
+          if (pick === 'wait') break;
+          const t = G.trial(['gh pr merge 12 --squash --delete-branch']);
+          await ui.say('ines', 'Blocked: the lock wants the code owner\'s OK first. Give them a moment.', 'Try again', box(t));
+        }
+        G.wait();
+        await ui.say('ines', 'Time passes. The build passed on the pull request and **Dana approved**: the strip says it is ready.', 'Merge it');
+        out = [G.run('git switch fix/runbook-typo'), G.run('gh pr merge 12 --squash --delete-branch')].join('\n');
+        await ui.say('ines', 'Merged. The book builds again, and Marc\'s page is **still in history**, cancelled by yours. Now your typo fix, which is on its own branch.', 'Next', box(out));
+        for (;;) {
+          const pick = await ui.choose('ines', 'Your typo branch still has Marc\'s broken page underneath it. What do you do before you open its pull request?', [
+            { label: 'Open the pull request as it is', value: 'asis' },
+            { label: 'Bring in the fixed main first', value: 'rebase' },
+          ]);
+          if (pick === 'rebase') break;
+          const t = G.trial(['git push -u origin HEAD', 'gh pr create --fill', null, 'gh pr checks']);
+          await ui.say('ines', 'The branch still carries the broken page, so its build fails and the lock refuses it.', 'Try again', box(t));
+        }
+        out = ['git fetch', 'git rebase origin/main', 'git push -u origin HEAD', 'gh pr create --fill'].map((c) => G.run(c)).join('\n');
+        await ui.say('ines', '**fetch** and **rebase** put your typo fix on top of the repaired main, then the pull request. Wait for the check and the review again.', 'Wait', box(out));
+        G.wait();
+        await ui.say('ines', 'Check passed and the reviewer approved. Merge it, and update your own main.', 'Merge it');
+        out = ['git switch main', 'gh pr merge 13 --squash --delete-branch', 'git pull'].map((c) => G.run(c)).join('\n');
+        await ui.say('ines', 'Merged, and your main matches the book. One more thing: your notes.', 'Get my notes back', box(out));
+        out = G.run('git stash pop');
+        const done = G.goals().every((g) => g.done);
+        await ui.say('ines', done ? 'Your half-finished notes are back, exactly as you left them. The book builds, the typo is fixed, nothing was rewritten and nothing was lost.' : 'Your notes are back.', 'Next', box(out));
+        await ui.card({
+          maps: [['The locked book', 'branch protection: a pull request, a code owner and a passing check'], ['The proofread', 'a required status check (the build)'], ['A page that cancels another', 'git revert'], ['A shelf for unfinished work', 'git stash']],
+          plain: 'A **protected** main only takes changes through a **pull request** that passes its required checks and gets the code owner\'s approval. Undo a bad commit with **git revert** (a new commit), never by rewriting history, and **stash** unfinished work before you move anything.',
+          cmd: 'git stash push -m wip\ngit branch fix/runbook-typo\ngit reset --hard origin/main\ngit switch -c revert/speed-up-deploy\ngit revert --no-edit HEAD\ngit push -u origin HEAD\ngh pr create --fill\ngh pr merge 12 --squash --delete-branch\ngit stash pop',
         });
       },
     },

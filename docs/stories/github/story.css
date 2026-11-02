@@ -243,4 +243,44 @@
   font: 600 13px/1.3 "IBM Plex Mono", ui-monospace, monospace;
 }
 
+.ks[data-story="github"] .gc-gate[hidden] {
+  display: none;
+}
+
+.ks[data-story="github"] .gc-gate {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ks[data-story="github"] .gc-gate p {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin: 0;
+  padding: 6px 10px;
+  border: 2px solid var(--ks-line);
+  border-radius: 10px;
+  background: #fff;
+  font-size: 12.5px;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.ks[data-story="github"] .gc-gate-main.is-bad {
+  border-color: #b91c1c;
+  background: #fef2f2;
+  color: #7a1313;
+}
+
+.ks[data-story="github"] .gc-gate-pr.is-wait {
+  border-color: #b45309;
+  background: #fffbeb;
+}
+
+.ks[data-story="github"] .gc-gate-pr.is-ready {
+  border-color: #137536;
+  background: #ecfdf3;
+}
+
 @keyframes gc-in { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
