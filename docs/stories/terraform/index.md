@@ -6,9 +6,10 @@ hide:
 
 # The Drift Detective
 
-A story that teaches Terraform with a detective agency. Three short chapters: a building that has to match its
-blueprint (plan and apply), a mystery overnight edit (drift and import), and two detectives sharing one ledger
-(remote state and locks). Play it on a phone: every step is a tap.
+A story that teaches Terraform with a detective agency. Four short chapters: a building that has to match its
+blueprint (plan and apply), a mystery overnight edit (drift and import), two detectives sharing one ledger
+(remote state and locks), and renaming a room without rebuilding it (modules and moved blocks). Play it on a
+phone: every step is a tap.
 
 <div id="story" data-story="terraform">
   <noscript>This story needs JavaScript.</noscript>
