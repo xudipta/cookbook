@@ -22,6 +22,7 @@ docs/stories/cicd/
 docs/stories/linux/
 docs/stories/database/
 docs/stories/observability/
+docs/stories/skills/
 docs/stories/docker/
 docs/stories/github/
 docs/stories/kubernetes/

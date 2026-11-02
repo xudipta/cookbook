@@ -309,10 +309,19 @@
       ],
       "notes": "topics/skills/",
       "story": {
-        "status": "planned",
+        "status": "live",
+        "path": "docs/stories/skills/",
         "title": "The New Hire",
         "metaphor": "An assistant with a binder",
-        "issue": 97
+        "blurb": "Help a new hire fit a skill onto a small desk, write a title that gets picked, pass the lint gate and tell a skill from a hook. Real sizes, real picks, no typing.",
+        "chapters": 4,
+        "learns": [
+          "progressive disclosure",
+          "descriptions",
+          "lint gate",
+          "allowed-tools",
+          "skill vs hook"
+        ]
       }
     },
     {
