@@ -89,6 +89,7 @@ extra_css:
   - docs/stories/docker/story.css
   - docs/stories/terraform/story.css
   - docs/stories/github/story.css
+  - docs/stories/cicd/story.css
 
 extra_javascript:
   - path: docs/games/shared/boot.js
@@ -106,6 +107,7 @@ nav:
       - The Layer Cake (Docker): docs/stories/docker/index.md
       - The Drift Detective (Terraform): docs/stories/terraform/index.md
       - The Shared Cookbook (Git and GitHub): docs/stories/github/index.md
+      - The Assembly Line (CI/CD): docs/stories/cicd/index.md
   - Notes:
       - Overview: docs/learn.md
       - Kubernetes:

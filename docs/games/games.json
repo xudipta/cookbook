@@ -156,10 +156,19 @@
       ],
       "notes": "topics/cicd/",
       "story": {
-        "status": "planned",
+        "status": "live",
+        "path": "docs/stories/cicd/",
         "title": "The Assembly Line",
         "metaphor": "A factory line",
-        "issue": 93
+        "blurb": "Make a slow, costly workflow fast, lock it against a hostile fork and a hacked vendor, then release a bad version three ways and see which hurts customers least. Real workflow YAML, no typing.",
+        "chapters": 3,
+        "learns": [
+          "workflow",
+          "caching",
+          "matrix",
+          "least privilege",
+          "canary"
+        ]
       }
     },
     {
