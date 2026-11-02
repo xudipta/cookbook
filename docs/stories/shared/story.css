@@ -381,6 +381,11 @@ html.ks-on body {
   flex-direction: column;
   gap: 8px;
   margin-top: 2px;
+  /* The way on stays in reach when a tall card scrolls inside the sheet. */
+  position: sticky;
+  bottom: -14px;
+  padding: 6px 0 2px;
+  background: #fff;
 }
 
 .ks-btn {
@@ -403,6 +408,27 @@ html.ks-on body {
 
 .ks-btn:active {
   transform: translateY(1px);
+}
+
+/* a box of command output under a line of story */
+.ks-out {
+  margin: 0;
+  padding: 10px 12px;
+  max-height: 150px;
+  overflow: auto;
+  border-radius: 10px;
+  background: #0f171e;
+  color: #dbe6ee;
+  font: 500 12px/1.5 "IBM Plex Mono", ui-monospace, monospace;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.ks-out code {
+  padding: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
 }
 
 /* concept card */
