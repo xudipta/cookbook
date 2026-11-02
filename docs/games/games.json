@@ -98,13 +98,14 @@
         "title": "The Drift Detective",
         "metaphor": "Blueprint, ledger and building",
         "blurb": "A building has to match its blueprint. Run plan and apply, catch an overnight edit, adopt an object nobody wrote down and break a stale lock, without typing a command.",
-        "chapters": 3,
+        "chapters": 4,
         "learns": [
           "plan",
           "apply",
           "drift",
           "import",
-          "state lock"
+          "state lock",
+          "moved blocks"
         ]
       }
     },

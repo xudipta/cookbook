@@ -5,7 +5,7 @@
 // practice game's real simulator (docs/games/terraform/sim.js), so plan, apply, import and
 // force-unlock print what the game prints. Each chapter is a plain async script over it (see ../shared/story.js).
 import { h, outputBox, mountStory as mount, siteUrl } from '../shared/story.js';
-import { computePlan, createWorld, evalValue, runCommand } from '../../games/terraform/sim.js';
+import { addMoved, computePlan, createWorld, evalValue, extractModule, runCommand } from '../../games/terraform/sim.js';
 
 const HUB = siteUrl('docs/games/');
 const NOTE = (name) => siteUrl(`topics/terraform/notes/${name}/`);
@@ -77,6 +77,12 @@ function createCaseBoard(app, { levels, schema }) {
     },
     plan() { return computePlan(T.world); },
     paint,
+    // Chapter 4: wrap the copy-pasted resources in a module (only the addresses change), then tell Terraform
+    // the objects are the same ones with a `moved` block. `mapping` is the level's own list of old -> new addresses.
+    extract() { extractModule(T.world, ctx); paint(); },
+    mapping() { return T.world.refactor.mapping; },
+    addMoved(from, to) { addMoved(T.world, from, to); paint(); },
+    setRows(rows) { T.rows = rows; paint(); },
     // Things that happen behind Terraform's back, as in the game's own events:
     setVar(name, value) { T.world.config.vars[name] = value; paint(); },
     setAttr(addr, attr, value) { T.world.config.resources[addr].attrs[attr] = value; paint(); },
@@ -292,6 +298,67 @@ function makeChapters() {
           maps: [['Shared ledger', 'remote backend'], ['A reservation on the ledger', 'state lock'], ['Break a dead reservation', 'terraform force-unlock']],
           plain: 'A team keeps the **state** in a **remote backend** that supports **locking**. While one run holds the lock, others wait. Use force-unlock only for a **stale** lock, after you checked that nothing is running.',
           cmd: 'terraform {\n  backend "s3" {\n    bucket         = "acme-tfstate"\n    key            = "prod/terraform.tfstate"\n    dynamodb_table = "tf-locks"\n  }\n}\n\nterraform force-unlock LOCK_ID   # only if the lock is stale',
+        });
+      },
+    },
+    {
+      title: 'Renaming a room',
+      hook: 'The blueprint is full of copy-pasted rooms. Ada wants them tidied into one reusable design, without touching a single real room.',
+      learn: 'how a rename looks like a rebuild, and how a moved block or state mv says "same room, new name".',
+      async play({ ui, sim: T }) {
+        const stacks = [
+          { addr: 'aws_instance.web_a', attr: 'name', id: 'i-01a2b3', to: 'module.svc_a.aws_instance.web' },
+          { addr: 'aws_s3_bucket.logs_a', attr: 'bucket', id: 'acme-a-logs', to: 'module.svc_a.aws_s3_bucket.logs' },
+          { addr: 'aws_instance.web_b', attr: 'name', id: 'i-01a2b4', to: 'module.svc_b.aws_instance.web' },
+          { addr: 'aws_s3_bucket.logs_b', attr: 'bucket', id: 'acme-b-logs', to: 'module.svc_b.aws_s3_bucket.logs' },
+        ];
+        T.load('module', { rows: stacks.map(({ addr, attr, id }) => ({ addr, attr, id })) });
+        T.caption('Each row is one real room. Look at its name in the blueprint and in the ledger.');
+        await ui.say('ada', 'Two services, each with a server and a log bucket, were **copy-pasted** into the blueprint. A **module** is a reusable design: write it once, use it twice. The real rooms must stay exactly as they are, because the buckets hold years of logs.');
+        await ui.say('ada', 'Look at the board: all three worlds agree on every room.', 'Move them into a module');
+        T.extract();
+        T.setRows(stacks.map(({ to, attr, id }) => ({ addr: to, attr, id })));
+        await ui.say('ada', 'Done: the blueprint now builds the rooms from the module. Notice the new names, like **module.svc_a.aws_instance.web**. The rooms are the same, but the **ledger** still knows them by their **old** names.');
+        const guess = await ui.choose('ada', 'Before the detective writes the report: what will it say?', [
+          { label: 'Nothing: they are the same rooms', value: 'same' },
+          { label: 'Rename each room on the spot', value: 'rename' },
+          { label: 'Tear each room down and build a new one', value: 'replace' },
+        ]);
+        let out = T.run('terraform plan');
+        await ui.say('ada', `${guess === 'replace' ? 'Right.' : 'Not quite.'} The detective only compares **names**. The old names vanished from the blueprint (so: **destroy**), and new names appeared (so: **create**). It cannot tell it is the same room: **4 to add, 4 to destroy**.`, 'Next', lastCommandBox(out));
+        for (;;) {
+          const pick = await ui.choose('ada', 'The report says to destroy the log buckets and build empty ones. Do we apply it?', [
+            { label: 'Apply it: the end result looks the same', value: 'apply' },
+            { label: 'No: tell Terraform it is the same room', value: 'stop' },
+          ]);
+          if (pick === 'stop') break;
+          await ui.say('ada', 'Stop! The new buckets would look the same on the board, but the old ones, **and their logs**, would be deleted first. A rename must never be a rebuild.', 'Back');
+        }
+        const how = await ui.choose('ada', 'There are two ways to say "same room, new name". Which do you want?', [
+          { label: 'A moved note in the blueprint', value: 'moved' },
+          { label: 'Edit the ledger by hand (state mv)', value: 'mv' },
+        ]);
+        if (how === 'moved') {
+          const mapping = T.mapping();
+          for (const m of mapping) T.addMoved(m.from, m.to);
+          const notes = mapping.map((m) => `moved {\n  from = ${m.from}\n  to   = ${m.to}\n}`).join('\n\n');
+          await ui.say('ada', 'You add a **moved** note for each room. It lives in the blueprint, so the whole team reviews it and every environment follows it.', 'Run terraform plan', outputBox(notes));
+          out = T.run('terraform plan');
+          await ui.say('ada', 'Now the report says "**has moved to**" for every room, and the plan is **0 to add, 0 to change, 0 to destroy**. Nothing is built or deleted.', 'Run terraform apply', lastCommandBox(out));
+          out = T.run('terraform apply -auto-approve');
+          await ui.say('ada', 'The apply only renamed the entries in the ledger. The real rooms were never touched.', 'Run terraform plan', lastCommandBox(out));
+        } else {
+          await ui.say('ada', 'You edit the **ledger** directly: one **state mv** for each room. It is quick and happens now, but it is a one-off by hand: nobody else sees it, and every other environment needs the same commands.', 'Run the four state mv commands');
+          const printed = [];
+          for (const m of T.mapping()) printed.push(T.run(`terraform state mv ${m.from} ${m.to}`));
+          await ui.say('ada', 'Each one says "Successfully moved 1 object(s). The real object is untouched."', 'Run terraform plan', outputBox(printed.join('\n\n')));
+        }
+        out = T.run('terraform plan');
+        await ui.say('ada', 'The report says **No changes**. The ledger and the blueprint use the new names, and the building never moved. Both ways end here.', 'Next', lastCommandBox(out));
+        await ui.card({
+          maps: [['The same room, a new name', 'moved block'], ['Edit the ledger by hand', 'terraform state mv'], ['A reusable room design', 'module'], ['A room inside a module', 'module.svc_a.aws_instance.web'], ['A good report after a refactor', '0 to add, 0 to change, 0 to destroy']],
+          plain: 'Moving a resource into a module changes its **address**, which a plan reads as a **destroy and create**. Add a **moved** block (or run **terraform state mv**) so Terraform keeps the real object, and check the plan says **0 to destroy**.',
+          cmd: 'moved {\n  from = aws_instance.web_a\n  to   = module.svc_a.aws_instance.web\n}\n\n# or, on the state directly:\nterraform state mv aws_instance.web_a module.svc_a.aws_instance.web\n\nterraform plan   # 0 to add, 0 to change, 0 to destroy',
         });
       },
     },
