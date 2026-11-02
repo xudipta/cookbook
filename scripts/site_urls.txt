@@ -9,7 +9,6 @@ docs/delivery/
 docs/games/
 docs/games/cicd/
 docs/games/database/
-docs/games/demo/
 docs/games/docker/
 docs/games/github/
 docs/games/kubernetes/
@@ -23,6 +22,7 @@ docs/stories/linux/
 docs/stories/database/
 docs/stories/observability/
 docs/stories/mcp/
+docs/stories/skills/
 docs/stories/docker/
 docs/stories/github/
 docs/stories/kubernetes/

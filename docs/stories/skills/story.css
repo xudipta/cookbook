@@ -1,0 +1,111 @@
+/* Story mode, Agent Skills ("The New Hire"): the desk (context window) as a bar of what is loaded, and the
+   queue of requests. Binder indigo and paper. Every rule is scoped to this story. */
+
+.ks[data-story="skills"] {
+  --ks-ink: #171b3a;
+  --ks-muted: #454c85;
+  --ks-accent: #3b4a9c;
+  --ks-head: #242c6b;
+  --ks-bg: #f3f4fd;
+  --ks-bg-2: #d9dcf7;
+  --ks-tint: #f3f4fd;
+  --ks-link-tint: #e6f0fc;
+  --ks-line: #aab1ea;
+  --ks-link: #0b5cad;
+}
+
+.ks[data-story="skills"] .sk-desk,
+.ks[data-story="skills"] .sk-desk-text,
+.ks[data-story="skills"] .sk-queue {
+  margin: 0;
+}
+
+.ks[data-story="skills"] .sk-desk[hidden],
+.ks[data-story="skills"] .sk-desk-text[hidden],
+.ks[data-story="skills"] .sk-queue[hidden] {
+  display: none;
+}
+
+.ks[data-story="skills"] .sk-desk {
+  display: flex;
+  align-items: stretch;
+  min-height: 34px;
+  border: 2px solid var(--ks-line);
+  border-radius: 10px;
+  background: #fff;
+  overflow: hidden;
+  animation: sk-in 0.25s ease-out;
+}
+
+.ks[data-story="skills"] .sk-desk.is-over {
+  border-color: #b91c1c;
+}
+
+.ks[data-story="skills"] .sk-seg {
+  min-width: 0;
+  padding: 4px 6px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.25;
+  overflow: hidden;
+  color: #fff;
+}
+
+.ks[data-story="skills"] .sk-seg-base {
+  background: #4b5563;
+}
+
+.ks[data-story="skills"] .sk-seg-meta {
+  background: #3b4a9c;
+}
+
+.ks[data-story="skills"] .sk-seg-body {
+  background: #6b3fa0;
+}
+
+.ks[data-story="skills"] .sk-seg-bundled {
+  background: #8a4b12;
+}
+
+.ks[data-story="skills"] .sk-free {
+  min-width: 0;
+  background: #fff;
+}
+
+.ks[data-story="skills"] .sk-desk-text {
+  font-size: 12.5px;
+  color: var(--ks-muted);
+}
+
+.ks[data-story="skills"] .sk-queue {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 0;
+  list-style: none;
+}
+
+.ks[data-story="skills"] .sk-req {
+  display: grid;
+  grid-template-columns: 1.4rem minmax(0, 1fr);
+  gap: 6px;
+  align-items: baseline;
+  padding: 4px 10px;
+  border: 2px solid var(--ks-line);
+  border-radius: 10px;
+  background: #fff;
+  font-size: 12.5px;
+  line-height: 1.3;
+}
+
+.ks[data-story="skills"] .sk-req[data-ok="no"] {
+  border-color: #b91c1c;
+  background: #fef2f2;
+  color: #7a1313;
+}
+
+.ks[data-story="skills"] .sk-mark {
+  font-weight: 700;
+}
+
+@keyframes sk-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }

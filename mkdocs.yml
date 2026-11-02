@@ -94,6 +94,7 @@ extra_css:
   - docs/stories/database/story.css
   - docs/stories/observability/story.css
   - docs/stories/mcp/story.css
+  - docs/stories/skills/story.css
 
 extra_javascript:
   - path: docs/games/shared/boot.js
@@ -116,6 +117,7 @@ nav:
       - The Card Catalogue (Database): docs/stories/database/index.md
       - Quiet Hours (Observability): docs/stories/observability/index.md
       - The Switchboard (MCP): docs/stories/mcp/index.md
+      - The New Hire (Agent Skills): docs/stories/skills/index.md
   - Notes:
       - Overview: docs/learn.md
       - Kubernetes:
@@ -192,7 +194,6 @@ nav:
       - Merge Conflict Rush (GitHub / Git): docs/games/github/index.md
       - Index Fund (Database / SQL): docs/games/database/index.md
       - Night Shift (Linux / Shell): docs/games/linux/index.md
-      - Replica Rescue (demo): docs/games/demo/index.md
   - About:
       - Project overview: about.md
       - Contributing: CONTRIBUTING.md

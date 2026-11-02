@@ -1,0 +1,5 @@
+{
+  "comment": "How scripts/story_check.cjs plays this story with taps: it prefers the right answer in each question.",
+  "prefer": "^On the card \\(the body\\)$|^In the appendix, with a pointer on the card$|^In the appendix, with a pointer$|^What it does, then \"Use when\"|^Cut it to what it does|^Both release-notes$|^In \\.claude/skills/$|^Only Bash and Read$|^A hook for the formatter$|^A skill for the release notes$|^An MCP server for the tickets$|^A subagent for the bug hunt$",
+  "phases": {}
+}

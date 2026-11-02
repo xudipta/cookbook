@@ -62,15 +62,6 @@
   "action": 0,
   "narrow": 0
  },
- "demo/_@390x844": {
-  "small44": 0,
-  "small24": 0,
-  "input16": 0,
-  "tiny11": 0,
-  "overflow": 0,
-  "action": 0,
-  "narrow": 0
- },
  "docker/broken@390x844": {
   "small44": 0,
   "small24": 0,
@@ -387,15 +378,6 @@
   "narrow": 0
  },
  "database/migrations@360x640": {
-  "small44": 0,
-  "small24": 0,
-  "input16": 0,
-  "tiny11": 0,
-  "overflow": 0,
-  "action": 0,
-  "narrow": 0
- },
- "demo/_@360x640": {
   "small44": 0,
   "small24": 0,
   "input16": 0,

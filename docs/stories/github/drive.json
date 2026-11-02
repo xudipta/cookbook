@@ -1,6 +1,6 @@
 {
-  "comment": "How scripts/story_check.cjs plays this story with taps. At the conflict it keeps Dana's timeout and the retries line, then presses Save; elsewhere it prefers the right answers.",
-  "prefer": "only my branch|Merge main into my branch",
+  "comment": "How scripts/story_check.cjs plays this story with taps. At the conflict it keeps Dana's timeout and the retries line, then presses Save; elsewhere it prefers the right answers, including the locked-book chapter.",
+  "prefer": "only my branch|Merge main into my branch|No: the book is locked|Put the typo fix on its own branch|Add a new page that cancels it|Wait for the check and the review|Bring in the fixed main first",
   "phases": {
     "conflict": {
       "click": [".gc-line-pick[data-text=\"retries: 3\"]", ".gc-line-pick[data-text=\"timeout: 60\"]"],

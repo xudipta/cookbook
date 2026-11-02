@@ -1,5 +1,5 @@
 {
-  "comment": "How scripts/story_check.cjs plays this story with taps: it prefers the right card in each question, and a canary release on Deploy Day.",
-  "prefer": "ready-made parts|notes-only|stop if it fails|Cancel older runs: only|both Node versions|Use pull_request and stop|One shared lint station|Fold the setup steps into one shared tool|One exact commit|read-only access|Canary: 5%|Roll back now",
+  "comment": "How scripts/story_check.cjs plays this story with taps: it prefers the right card in each question, a canary release on Deploy Day, and the gate, the expand step and the committed hot-fix in the last chapter.",
+  "prefer": "ready-made parts|notes-only|stop if it fails|Cancel older runs: only|both Node versions|Use pull_request and stop|One shared lint station|Fold the setup steps into one shared tool|One exact commit|read-only access|Canary: 5%|Roll back now|Reject it at the gate|Add the new column first|Commit it to",
   "phases": {}
 }

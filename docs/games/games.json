@@ -98,13 +98,14 @@
         "title": "The Drift Detective",
         "metaphor": "Blueprint, ledger and building",
         "blurb": "A building has to match its blueprint. Run plan and apply, catch an overnight edit, adopt an object nobody wrote down and break a stale lock, without typing a command.",
-        "chapters": 3,
+        "chapters": 4,
         "learns": [
           "plan",
           "apply",
           "drift",
           "import",
-          "state lock"
+          "state lock",
+          "moved blocks"
         ]
       }
     },
@@ -170,7 +171,7 @@
         "title": "The Assembly Line",
         "metaphor": "A factory line",
         "blurb": "Make a slow, costly workflow fast, lock it against a hostile fork and a hacked vendor, then release a bad version three ways and see which hurts customers least. Real workflow YAML, no typing.",
-        "chapters": 3,
+        "chapters": 4,
         "learns": [
           "workflow",
           "caching",
@@ -206,7 +207,7 @@
         "title": "The Shared Cookbook",
         "metaphor": "Many chefs, one book",
         "blurb": "Add a page to a shared cookbook, catch up when the book moves on, and settle two chefs who changed the same line, with real Git and GitHub commands and no typing.",
-        "chapters": 3,
+        "chapters": 4,
         "learns": [
           "branch",
           "commit",
@@ -309,10 +310,19 @@
       ],
       "notes": "topics/skills/",
       "story": {
-        "status": "planned",
+        "status": "live",
+        "path": "docs/stories/skills/",
         "title": "The New Hire",
         "metaphor": "An assistant with a binder",
-        "issue": 97
+        "blurb": "Help a new hire fit a skill onto a small desk, write a title that gets picked, pass the lint gate and tell a skill from a hook. Real sizes, real picks, no typing.",
+        "chapters": 4,
+        "learns": [
+          "progressive disclosure",
+          "descriptions",
+          "lint gate",
+          "allowed-tools",
+          "skill vs hook"
+        ]
       }
     },
     {

@@ -6,9 +6,9 @@ hide:
 
 # The Shared Cookbook
 
-A story that teaches Git and GitHub with a cookbook many chefs edit. Three short chapters: a first page (branch,
-commit, push, pull request), catching up with the book (fetch, merge and rebase) and two chefs changing one line
-(resolving a merge conflict). Play it on a phone: every step is a tap.
+A story that teaches Git and GitHub with a cookbook many chefs edit. Four short chapters: a first page (branch,
+commit, push, pull request), catching up with the book (fetch, merge and rebase), two chefs changing one line
+(resolving a merge conflict) and the locked book (a protected main, a revert, and stashing unfinished work). Play it on a phone: every step is a tap.
 
 <div id="story" data-story="github">
   <noscript>This story needs JavaScript.</noscript>
