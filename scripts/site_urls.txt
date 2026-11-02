@@ -9,7 +9,6 @@ docs/delivery/
 docs/games/
 docs/games/cicd/
 docs/games/database/
-docs/games/demo/
 docs/games/docker/
 docs/games/github/
 docs/games/kubernetes/

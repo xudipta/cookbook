@@ -190,7 +190,6 @@ nav:
       - Merge Conflict Rush (GitHub / Git): docs/games/github/index.md
       - Index Fund (Database / SQL): docs/games/database/index.md
       - Night Shift (Linux / Shell): docs/games/linux/index.md
-      - Replica Rescue (demo): docs/games/demo/index.md
   - About:
       - Project overview: about.md
       - Contributing: CONTRIBUTING.md
