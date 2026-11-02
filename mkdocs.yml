@@ -91,6 +91,7 @@ extra_css:
   - docs/stories/github/story.css
   - docs/stories/cicd/story.css
   - docs/stories/linux/story.css
+  - docs/stories/database/story.css
 
 extra_javascript:
   - path: docs/games/shared/boot.js
@@ -110,6 +111,7 @@ nav:
       - The Shared Cookbook (Git and GitHub): docs/stories/github/index.md
       - The Assembly Line (CI/CD): docs/stories/cicd/index.md
       - The Night Superintendent (Linux): docs/stories/linux/index.md
+      - The Card Catalogue (Database): docs/stories/database/index.md
   - Notes:
       - Overview: docs/learn.md
       - Kubernetes:

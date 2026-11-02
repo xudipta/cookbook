@@ -264,10 +264,19 @@
       ],
       "notes": "topics/database/",
       "story": {
-        "status": "planned",
-        "title": "The Library",
-        "metaphor": "A catalogue of books",
-        "issue": 96
+        "status": "live",
+        "path": "docs/stories/database/",
+        "title": "The Card Catalogue",
+        "metaphor": "A library",
+        "blurb": "Fix a slow library by building the right card catalogue, read a query plan, and renovate the shelves without ever closing the doors. Real SQL, real plans, no typing.",
+        "chapters": 3,
+        "learns": [
+          "indexes",
+          "query plans",
+          "column order",
+          "migrations",
+          "expand and contract"
+        ]
       }
     },
     {

@@ -1,0 +1,120 @@
+/* Story mode, Database ("The Card Catalogue"): the requests with their speed limits, then the shop and its
+   migrations. Library brown and parchment. Every rule is scoped to this story. */
+
+.ks[data-story="database"] {
+  --ks-ink: #2b1a0a;
+  --ks-muted: #6b4a22;
+  --ks-accent: #8a4b12;
+  --ks-head: #5c3310;
+  --ks-bg: #fdf6ec;
+  --ks-bg-2: #f3dfbf;
+  --ks-tint: #fdf6ec;
+  --ks-link-tint: #e6f0fc;
+  --ks-line: #e0b97a;
+  --ks-link: #0b5cad;
+}
+
+.ks[data-story="database"] .lb-reqs,
+.ks[data-story="database"] .lb-migs {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ks[data-story="database"] .lb-reqs[hidden],
+.ks[data-story="database"] .lb-migs[hidden],
+.ks[data-story="database"] .lb-shop[hidden] {
+  display: none;
+}
+
+.ks[data-story="database"] .lb-req {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "name ms" "limit ms";
+  align-items: baseline;
+  column-gap: 10px;
+  padding: 5px 10px;
+  border: 2px solid var(--ks-line);
+  border-radius: 10px;
+  background: #fff;
+  font-size: 13px;
+  animation: lb-in 0.25s ease-out;
+}
+
+.ks[data-story="database"] .lb-req-name {
+  grid-area: name;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.ks[data-story="database"] .lb-req strong {
+  grid-area: ms;
+  font: 700 15px/1.2 "IBM Plex Mono", ui-monospace, monospace;
+}
+
+.ks[data-story="database"] .lb-req-limit {
+  grid-area: limit;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ks-muted);
+}
+
+.ks[data-story="database"] .lb-req[data-slow="yes"] {
+  border-color: #b91c1c;
+  background: #fef2f2;
+}
+
+.ks[data-story="database"] .lb-req[data-slow="yes"] strong {
+  color: #7a1313;
+}
+
+.ks[data-story="database"] .lb-shop {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 12px;
+  border: 2px solid var(--ks-line);
+  border-radius: 10px;
+  background: #fff;
+  font-size: 13px;
+}
+
+.ks[data-story="database"] .lb-shop[data-broken="yes"] {
+  border-color: #b91c1c;
+  background: #fef2f2;
+  color: #7a1313;
+}
+
+.ks[data-story="database"] .lb-needs {
+  color: var(--ks-muted);
+  font: 500 12px/1.3 "IBM Plex Mono", ui-monospace, monospace;
+  overflow-wrap: anywhere;
+}
+
+.ks[data-story="database"] .lb-shop[data-broken="yes"] .lb-needs {
+  color: #7a1313;
+}
+
+.ks[data-story="database"] .lb-mig {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 8px;
+  align-items: baseline;
+  padding: 4px 10px;
+  border: 2px solid var(--ks-line);
+  border-radius: 10px;
+  background: #fff;
+  font-size: 12px;
+}
+
+.ks[data-story="database"] .lb-mig-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font: 500 12px/1.3 "IBM Plex Mono", ui-monospace, monospace;
+}
+
+@keyframes lb-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
