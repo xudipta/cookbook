@@ -1,0 +1,5 @@
+{
+  "comment": "How scripts/story_check.cjs plays this story with taps: it prefers the right answer in each question.",
+  "prefer": "Look at the keys on that door|Cut the run-key for this one script|List the people working, busiest first|Ask it politely to stop|Ask each room how full it is|Empty the log but keep the file|Ask the door how it is doing|Read its diary|Point it at the right room|Count who is behind the error lines|Add one line to the block list|List every listening door|Bind to all addresses|Fix the typo and make the script fail loudly|Run it once now|Now cut its power|Make the worker the owner|The old temporary export",
+  "phases": {}
+}

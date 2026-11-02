@@ -129,10 +129,19 @@
       ],
       "notes": "topics/linux/",
       "story": {
-        "status": "planned",
+        "status": "live",
+        "path": "docs/stories/linux/",
         "title": "The Night Superintendent",
         "metaphor": "A building at night",
-        "issue": 92
+        "blurb": "Walk a server at night: find who holds the lift, why a door keeps restarting, and what is safe to delete from a full storeroom. Real commands and real output, no typing.",
+        "chapters": 3,
+        "learns": [
+          "permissions",
+          "processes",
+          "logs and systemd",
+          "ports",
+          "disk space"
+        ]
       }
     },
     {
