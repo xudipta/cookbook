@@ -142,6 +142,14 @@
   font: 500 10.5px/1.2 "IBM Plex Mono", ui-monospace, monospace;
 }
 
+.ks[data-story="kubernetes"] .ks-cook-note {
+  padding: 0;
+  background: none;
+  color: var(--ks-ink);
+  font: 600 10.5px/1.2 "IBM Plex Mono", ui-monospace, monospace;
+  overflow-wrap: anywhere;
+}
+
 .ks[data-story="kubernetes"] .ks-chip {
   margin-top: 2px;
   padding: 1px 8px;
@@ -159,7 +167,8 @@
 
 .ks[data-story="kubernetes"] .is-ready .ks-chip { background: #d4f0dc; color: #0b4d24; }
 .ks[data-story="kubernetes"] .is-starting .ks-chip { background: #ffe7a8; color: #6b4200; }
-.ks[data-story="kubernetes"] .is-sick .ks-chip { background: #f9d0d0; color: #7f1818; }
+.ks[data-story="kubernetes"] .is-sick .ks-chip,
+.ks[data-story="kubernetes"] .is-blocked .ks-chip { background: #f9d0d0; color: #7f1818; }
 .ks[data-story="kubernetes"] .is-pending .ks-chip { background: #e4ddd3; color: #40362c; }
 
 .ks[data-story="kubernetes"] .is-starting .ks-body { fill: #8c8379; }
@@ -171,7 +180,9 @@
 .ks[data-story="kubernetes"] .is-pending .ks-cook-art { opacity: 0.6; }
 
 .ks[data-story="kubernetes"] .is-sick { border-color: #c0302b; animation: ks-shake 0.4s linear infinite; }
-.ks[data-story="kubernetes"] .is-sick .ks-body { fill: #b3261e; }
+.ks[data-story="kubernetes"] .is-blocked { border-color: #c0302b; }
+.ks[data-story="kubernetes"] .is-sick .ks-body,
+.ks[data-story="kubernetes"] .is-blocked .ks-body { fill: #b3261e; }
 .ks[data-story="kubernetes"] .is-sick .ks-face { fill: #cfe3b5; }
 .ks[data-story="kubernetes"] .is-sick .ks-m-ok { display: none; }
 .ks[data-story="kubernetes"] .is-sick .ks-m-bad { display: inline; }

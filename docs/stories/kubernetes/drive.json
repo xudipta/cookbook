@@ -1,6 +1,6 @@
 {
   "comment": "How scripts/story_check.cjs plays this story with taps: which answer to prefer, and what to tap in the phases the story script waits in (a phase listed here is tapped once per visit; pick phases tap the first pickable item).",
-  "prefer": "hires three|Try 7|Wait until",
+  "prefer": "hires three|Try 7|Wait until|wall card|Nothing until they start|In the safe|only encoded|Put the key back|Ask the pass who it found|Fix the tag the pass asks for",
   "phases": {
     "pick": { "click": ".ks-pick" },
     "rush": { "click": ".ks-step[aria-label=\"Hire one more cook\"]", "once": true },

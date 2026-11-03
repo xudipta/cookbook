@@ -25,13 +25,16 @@
         "path": "docs/stories/kubernetes/",
         "title": "Night Shift at Pizza Palace",
         "metaphor": "A pizza kitchen",
-        "blurb": "Send a cook home, survive the Friday rush and launch a new menu. Learn Pods, Deployments, replicas and readiness probes by watching them happen.",
-        "chapters": 3,
+        "blurb": "Send a cook home, survive the Friday rush, launch a new menu, change the recipe card and fix the wrong sign on the door. Learn Pods, Deployments, replicas, readiness probes, ConfigMaps, Secrets and Services by watching them happen.",
+        "chapters": 5,
         "learns": [
           "Pod",
           "Deployment",
           "replicas",
-          "readinessProbe"
+          "readinessProbe",
+          "ConfigMap",
+          "Secret",
+          "Service"
         ]
       }
     },
