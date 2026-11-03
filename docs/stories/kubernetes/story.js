@@ -541,7 +541,7 @@ const CHAPTERS = [
       K.caption('The pass now asks for app=wbe. Every cook still wears app=web.');
       ui.watch('The pass is asking for the wrong tag. Watch the lost orders.');
       await ui.sleep(2200);
-      await ui.say('maya', `All three cooks are **Ready**, but **${K.lost - before}** orders have already been lost. The cooks are not the problem.`);
+      await ui.say('maya', `All three cooks are **Ready**, but ${K.lost - before > 0 ? `**${K.lost - before}** orders have already been lost` : 'orders are piling up at the pass'}. The cooks are not the problem.`);
       for (;;) {
         const pick = await ui.choose('maya', 'What do you check first?', [
           { label: 'Restart all the cooks', value: 'restart' },
@@ -569,7 +569,7 @@ const CHAPTERS = [
       K.caption('The pass asks for app=web again.');
       ui.watch('The pass finds its cooks again.');
       await ui.sleep(2000);
-      await ui.say('maya', `Orders flow again (${K.lost - lostBefore} lost since the fix). The tag matches, so the pass found all three cooks.`);
+      await ui.say('maya', `Orders flow again${K.lost - lostBefore > 0 ? ` (only ${K.lost - lostBefore} more lost after the fix)` : ''}. The tag matches, so the pass found all three cooks.`);
       await ui.say('maya', 'Last thing. Cooks come and go, but customers always ring **the same number**. Send a cook home and watch.', 'Send a cook home');
       const sick = await ui.pick('maya', '**Tap a cook** to send them home.', K, 'Tap a cook above.');
       K.sendHome(sick);
