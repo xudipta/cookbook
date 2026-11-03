@@ -83,6 +83,8 @@ jobs:
               - 'scripts/games_smoke.cjs'
               - 'scripts/site_quality.cjs'
               - 'scripts/mobile_quality.cjs'
+              - 'scripts/first_screen_check.cjs'
+              - 'scripts/first_screen_limits.json'
               - 'scripts/compose_check.cjs'
               - 'scripts/story_check.cjs'
               - 'scripts/mobile_baseline.json'
@@ -518,5 +520,6 @@ jobs:
           node scripts/games_smoke.cjs
           node scripts/site_quality.cjs
           node scripts/mobile_quality.cjs
+          node scripts/first_screen_check.cjs
           node scripts/compose_check.cjs
           node scripts/story_check.cjs

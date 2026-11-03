@@ -106,6 +106,12 @@ scroll, and whether a primary action button is still on screen at the end of the
 `SITE_URL=http://localhost:8000/ NODE_PATH=<dir with playwright> node scripts/mobile_quality.cjs --update`
 and commit the lower baseline. Landscape (844x390) is reported but not enforced.
 
+`scripts/first_screen_check.cjs` guards the first screen of a practice game on a phone (390x844, touch): the
+board must start near the top (the page title and an "About this game" fold come first, the topic strip is
+hidden), the HUD shows the health bar and two buttons but no score or move numbers before the first move (the dock
+shows them), and no keyboard-shortcut badges appear on a touch screen. The limits are a ratchet in
+`scripts/first_screen_limits.json`: lower them, never raise them.
+
 Emulation cannot replace a phone. Before a release that changes game UI, spend ten minutes on a real
 iPhone (Safari) and a real Android phone (Chrome) and tick each item for one game of each kind (a
 terminal game, a card game, a chart game): play one level one-handed; open and close the keyboard (the

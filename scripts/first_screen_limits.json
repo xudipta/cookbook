@@ -1,0 +1,17 @@
+{
+  "comment": "First-screen limits at 390x844 (scripts/first_screen_check.cjs). A ratchet: lower these, never raise them. 'stats' counts visible score/moves/tick numbers; the board starts below the page title and the folded intro.",
+  "default": {
+    "board": 380,
+    "ctrls": 14,
+    "stats": 0
+  },
+  "games": {
+    "kubernetes": {
+      "board": 460,
+      "ctrls": 20
+    },
+    "docker": {
+      "ctrls": 20
+    }
+  }
+}
