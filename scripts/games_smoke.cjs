@@ -92,14 +92,15 @@ async function checkHome(browser) {
   if (!(await page.locator('.note-topic[data-topic="docker"] a[href="docs/games/docker/"]').count())) problems.push('the Docker topic card has no practice link');
   const noGameTeaser = await page.locator('#pods, .pod').count();
   if (noGameTeaser) problems.push('the old teaser game is still on the home page');
-  // Story progress shows on the tile after a chapter is finished.
+  // Story progress shows on the tile after a chapter is finished (the count comes from games.json).
+  const chapters = JSON.parse(fs.readFileSync(path.join(GAMES_DIR, 'games.json'), 'utf8')).games.find((g) => g.id === 'kubernetes').story.chapters;
   await page.evaluate(() => localStorage.setItem('cookbook-story-progress:kubernetes', JSON.stringify({ chapters: { 0: true } })));
   await page.reload({ waitUntil: 'load' });
   await page.waitForSelector('.story-tile');
-  if (!(await page.locator('.story-tile.live').first().innerText()).includes('1 of 3 chapters')) problems.push('the story tile does not show finished chapters');
+  if (!(await page.locator('.story-tile.live').first().innerText()).includes(`1 of ${chapters} chapters`)) problems.push('the story tile does not show finished chapters');
   await page.click('#reset-progress');
   await page.click('#reset-progress');
-  await page.waitForFunction(() => document.querySelector('.story-tile.live').innerText.includes('0 of 3 chapters'));
+  await page.waitForFunction((n) => document.querySelector('.story-tile.live').innerText.includes(`0 of ${n} chapters`), chapters);
   if (await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)) problems.push('home page scrolls horizontally');
   await page.close();
   return problems;
