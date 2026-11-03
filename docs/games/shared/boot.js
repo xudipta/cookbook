@@ -37,6 +37,23 @@ function foldSections(host) {
   }
 }
 
+// On a phone the intro sentence before the board folds into "About this game", so the board starts near the
+// top of the screen (#111). The first line of the page stays: it is the title.
+function foldIntro(host) {
+  if (!matchMedia('(max-width: 700px)').matches) return;
+  const intro = [];
+  for (let node = host.previousElementSibling; node && node.tagName !== 'H1'; node = node.previousElementSibling) {
+    if (node.tagName === 'P') intro.unshift(node);
+  }
+  if (!intro.length) return;
+  const panel = document.createElement('details');
+  panel.className = 'cg-fold cg-about';
+  const summary = document.createElement('summary');
+  summary.textContent = 'About this game';
+  intro[0].before(panel);
+  panel.append(summary, ...intro);
+}
+
 async function mount() {
   const host = document.querySelector('#game[data-game]');
   if (!host || host.dataset.mounted) return;
@@ -46,6 +63,7 @@ async function mount() {
     const { mountGame } = await import('./engine.js');
     await import(`../${id}/game.js`);
     await mountGame(host, { id });
+    foldIntro(host);
     foldSections(host);
   } catch (err) {
     host.textContent = `Could not load the "${id}" game: ${err.message}`;

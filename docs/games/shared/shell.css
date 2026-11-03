@@ -863,3 +863,112 @@ body:has(#game[data-game]) .md-typeset h1 {
     font-size: 16px;
   }
 }
+
+/* ---- game-first phone layout (#111): the board starts near the top of the first screen ---- */
+
+/* A touch screen has no keyboard shortcuts to advertise. */
+@media (pointer: coarse) {
+  .cg kbd {
+    display: none;
+  }
+}
+
+@media (max-width: 700px) {
+  /* The page title is a small line, and the edit icon is not for players. */
+  body:has(#game[data-game]) .md-content__inner > h1 {
+    margin: 0.4rem 0 0.2rem;
+    font-size: 1.35rem;
+    line-height: 1.2;
+  }
+
+  .md-content__inner:has(#game) > .md-content__button {
+    display: none;
+  }
+
+  .md-typeset details.cg-about {
+    margin: 0 0 0.4rem;
+  }
+
+  .md-typeset details.cg-about > summary {
+    padding: 0.35rem 2.2rem 0.35rem 0;
+    font: 500 0.9rem/1.3 var(--font-body, inherit);
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+  }
+
+  .md-typeset details.cg-about {
+    border: 0;
+    box-shadow: none;
+  }
+
+  .md-typeset details.cg-about > :not(summary) {
+    margin-inline: 0;
+  }
+
+  /* The topic strip repeats what the page title says; the notes link is on the result and in the nav. */
+  .cg .cg-head {
+    display: none;
+  }
+
+  /* The numbers are in the dock at the bottom of the screen, so the HUD keeps the health bar and the two
+     buttons. The stats stay in the page for screen readers. */
+  .cg-hud .cg-stat {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  /* The bar and the buttons share one line: the label is read aloud, not shown. */
+  .cg .cg-meter-wrap .cg-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .cg .cg-meter-wrap {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .cg-hud {
+    flex-wrap: nowrap;
+    gap: 0.5rem;
+  }
+
+  .cg-hud .cg-controls {
+    flex: 0 0 auto;
+    width: auto;
+  }
+
+  body:has(#game[data-game]) .md-main__inner {
+    margin-top: 0.25rem;
+  }
+
+  body:has(#game[data-game]) .md-content__inner {
+    margin-bottom: 0.5rem;
+    padding-top: 0;
+  }
+
+  body:has(#game[data-game]) .md-content__inner::before {
+    display: none;
+  }
+
+  .cg-hud .cg-status:not([data-status="playing"]) {
+    position: static;
+    width: auto;
+    height: auto;
+    clip: auto;
+    overflow: visible;
+  }
+
+  .cg-hud {
+    align-items: center;
+  }
+}
