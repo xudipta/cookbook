@@ -234,6 +234,20 @@ def check_story(g: dict, where: str) -> list[str]:
         for name in ("index.md", "story.js", "story.css", "drive.json"):
             if not (folder / name).is_file():
                 errors.append(f"{where}: live story is missing {folder.relative_to(REPO_ROOT)}/{name}")
+        # The links at the end of the story open the practice game on real levels.
+        story_js = folder / "story.js"
+        scenarios = GAMES_DIR / str(g["id"]) / "scenarios.json"
+        if story_js.is_file() and scenarios.is_file():
+            level_ids = {lv.get("id") for lv in json.loads(scenarios.read_text(encoding="utf-8")).get("levels", [])}
+            links = re.findall(r"practiceLinks\('([a-z]+)',\s*\[(.*?)\]\)", story_js.read_text(encoding="utf-8"), re.S)
+            if not links:
+                errors.append(f"{where}: story.js should end with practiceLinks('{g['id']}', [...levels])")
+            for game_id, body in links:
+                if game_id != g["id"]:
+                    errors.append(f"{where}: practiceLinks points at '{game_id}', not '{g['id']}'")
+                for level in re.findall(r"\['([a-z0-9-]+)',", body):
+                    if level not in level_ids:
+                        errors.append(f"{where}: practiceLinks names level '{level}', which {g['id']}/scenarios.json does not have")
     elif story.get("status") == "planned":
         if not isinstance(story.get("issue"), int):
             errors.append(f"{where}: a planned story needs an integer issue")

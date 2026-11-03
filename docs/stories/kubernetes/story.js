@@ -3,7 +3,7 @@
 // The cluster is a pizza kitchen: a cook is a Pod, the rota is a Deployment, the pass is a Service, the
 // stations are node capacity. The kitchen is a tiny simulation (createKitchen); each chapter is a plain
 // async script over it (see ../shared/story.js for the script API). Nothing here needs a keyboard.
-import { h, createStepper, createSwitch, createCounters, flyTo, mountStory as mount, FAST, siteUrl } from '../shared/story.js';
+import { h, createStepper, createSwitch, createCounters, flyTo, mountStory as mount, practiceLinks, FAST, siteUrl } from '../shared/story.js';
 
 const HUB = siteUrl('docs/games/');
 const NOTE = (name) => siteUrl(`topics/kubernetes/notes/${name}/`);
@@ -435,7 +435,7 @@ export function mountStory(host) {
     endLinks: [
       { text: 'Read: Pods and workloads', href: NOTE('02-pods-and-workloads') },
       { text: 'Read: Probes and resources', href: NOTE('07-probes-and-resources') },
-      { text: 'Play the real cluster game', href: new URL('kubernetes/', HUB).href },
+      ...practiceLinks('kubernetes', [['tutorial', 'The tutorial'], ['shift', 'The shift'], ['incident', 'The incident']]),
     ],
   });
 }

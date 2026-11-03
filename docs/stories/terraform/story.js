@@ -4,7 +4,7 @@
 // building (the real infrastructure). The detective story shows all three side by side and runs on the
 // practice game's real simulator (docs/games/terraform/sim.js), so plan, apply, import and
 // force-unlock print what the game prints. Each chapter is a plain async script over it (see ../shared/story.js).
-import { h, outputBox, mountStory as mount, siteUrl } from '../shared/story.js';
+import { h, outputBox, mountStory as mount, practiceLinks, siteUrl } from '../shared/story.js';
 import { addMoved, computePlan, createWorld, evalValue, extractModule, runCommand } from '../../games/terraform/sim.js';
 
 const HUB = siteUrl('docs/games/');
@@ -389,7 +389,7 @@ export async function mountStory(host) {
     endLinks: [
       { text: 'Read: Core workflow', href: NOTE('01-core-workflow') },
       { text: 'Read: State and workspaces', href: NOTE('03-state-and-workspaces') },
-      { text: 'Play the real Terraform game', href: new URL('terraform/', HUB).href },
+      ...practiceLinks('terraform', [['first-apply', 'First apply'], ['drift', 'Drift'], ['team', 'Team'], ['module', 'Modules']]),
     ],
   });
 }

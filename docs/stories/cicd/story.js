@@ -5,7 +5,7 @@
 // (docs/games/cicd/sim.js): the cards generate the real GitHub Actions YAML, every incoming pull request is run
 // through the workflow as it stands, and Deploy Day replays a bad release through three rollout strategies. Each
 // chapter is a plain async script over it (see ../shared/story.js).
-import { h, createCounters, outputBox, mountStory as mount, siteUrl } from '../shared/story.js';
+import { h, createCounters, outputBox, mountStory as mount, practiceLinks, siteUrl } from '../shared/story.js';
 import { applyAction, buildFiles, createWorld, goals, incoming, pipelineStats, tick, tileStates } from '../../games/cicd/sim.js';
 
 const HUB = siteUrl('docs/games/');
@@ -474,7 +474,7 @@ export async function mountStory(host) {
     endLinks: [
       { text: 'Read: GitHub Actions basics', href: NOTE('01-github-actions-basics') },
       { text: 'Read: Deployment strategies', href: NOTE('03-deployment-strategies') },
-      { text: 'Play the real CI/CD game', href: new URL('cicd/', HUB).href },
+      ...practiceLinks('cicd', [['fast-feedback', 'Fast feedback'], ['locked-down', 'Locked down'], ['deploy-day', 'Deploy day'], ['gates-and-drift', 'Gates and drift']]),
     ],
   });
 }

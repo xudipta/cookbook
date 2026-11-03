@@ -26,6 +26,9 @@ export const FAST = new URLSearchParams(location.search).has('fast');
 export const REDUCED = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 export const ROOT = new URL('../../../', import.meta.url);
 export const siteUrl = (path) => new URL(path, ROOT).href;
+
+// End-of-story links to the practice game, one per level: [[levelId, label], ...] (the game opens on that level).
+export const practiceLinks = (game, levels) => levels.map(([id, text]) => ({ text: `Practice: ${text}`, href: new URL(`${game}/?level=${id}`, siteUrl('docs/games/')).href }));
 export const sleep = (ms) => new Promise((r) => setTimeout(r, FAST ? Math.min(ms, 15) : ms));
 
 export const h = (tag, attrs = {}, ...kids) => {

@@ -171,6 +171,9 @@ async function playRun(browser, id, run) {
       if (next !== (run.isLast ? 0 : 1)) problems.push(`result panel has ${next} "Next level" button(s), expected ${run.isLast ? 0 : 1}`);
       const notes = await page.locator('.cg-result-won a[data-cg="notes"]').count();
       if (run.onBoard && notes !== 1) problems.push('result panel has no "Read the notes" link');
+      // A game that has a live story links back to it from the result.
+      const storyLink = await page.locator('.cg-result-won a[data-cg="story"]').count();
+      if (run.hasStory && storyLink !== 1) problems.push('result panel has no "Replay the story" link');
 
       // The win was saved: the stored entry says so, and after a reload the level is marked done.
       const key = `cookbook-game-progress:${id}`;
@@ -546,10 +549,12 @@ async function checkDockerPlay(browser, scenario) {
 
 async function playGame(browser, id) {
   const scenario = JSON.parse(fs.readFileSync(path.join(GAMES_DIR, id, 'scenarios.json'), 'utf8'));
-  const onBoard = JSON.parse(fs.readFileSync(path.join(GAMES_DIR, 'games.json'), 'utf8')).games.some((g) => g.id === id);
+  const entry = JSON.parse(fs.readFileSync(path.join(GAMES_DIR, 'games.json'), 'utf8')).games.find((g) => g.id === id);
+  const onBoard = Boolean(entry);
+  const hasStory = Boolean(entry && entry.story && entry.story.status === 'live');
   const runs = scenario.levels
-    ? scenario.levels.map((l, i) => ({ label: l.id, level: l.id, seed: l.seed ?? scenario.seed, solution: l.solution, par: l.par, path: l.path, manual: scenario.manual, isLast: i === scenario.levels.length - 1, onBoard }))
-    : [{ label: null, level: null, seed: scenario.seed, solution: scenario.solution, par: scenario.par, path: scenario.path, manual: scenario.manual, isLast: true, onBoard }];
+    ? scenario.levels.map((l, i) => ({ label: l.id, level: l.id, seed: l.seed ?? scenario.seed, solution: l.solution, par: l.par, path: l.path, manual: scenario.manual, isLast: i === scenario.levels.length - 1, onBoard, hasStory }))
+    : [{ label: null, level: null, seed: scenario.seed, solution: scenario.solution, par: scenario.par, path: scenario.path, manual: scenario.manual, isLast: true, onBoard, hasStory }];
 
   const problems = [];
   for (const run of runs) {

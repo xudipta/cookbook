@@ -4,7 +4,7 @@
 // answering. The story runs on the practice game's real simulator (docs/games/observability/sim.js): the charts are
 // the simulated week and night, every alert is a real rule that is replayed against the last seven days, and the
 // night is played through the real engine. Each chapter is a plain async script over it (see ../shared/story.js).
-import { h, createCounters, outputBox, mountStory as mount, siteUrl } from '../shared/story.js';
+import { h, createCounters, outputBox, mountStory as mount, practiceLinks, siteUrl } from '../shared/story.js';
 import { backtest, classify, createWorld, exprOf, nightOver, saveRule, tick, valueAt } from '../../games/observability/sim.js';
 
 const HUB = siteUrl('docs/games/');
@@ -426,7 +426,7 @@ export async function mountStory(host) {
     endLinks: [
       { text: 'Read: Prometheus basics', href: NOTE('01-prometheus-basics') },
       { text: 'Read: Alerting and rules', href: NOTE('02-alerting-and-rules') },
-      { text: 'Play the real observability game', href: new URL('observability/', HUB).href },
+      ...practiceLinks('observability', [['first-shift', 'First shift'], ['slow-burn', 'Slow burn'], ['storm-night', 'Storm night']]),
     ],
   });
 }

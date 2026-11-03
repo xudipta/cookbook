@@ -4,7 +4,7 @@
 // lift, services are the doors, permissions are the keys. The story runs on the practice game's real
 // simulated shell (docs/games/linux/sim.js): every card runs a real command and the box shows what the
 // server printed. Each chapter is a plain async script over it (see ../shared/story.js).
-import { h, createCounters, outputBox, mountStory as mount, siteUrl } from '../shared/story.js';
+import { h, createCounters, outputBox, mountStory as mount, practiceLinks, siteUrl } from '../shared/story.js';
 import { createWorld, run, start, status, tick } from '../../games/linux/sim.js';
 
 const HUB = siteUrl('docs/games/');
@@ -315,7 +315,7 @@ export async function mountStory(host) {
     endLinks: [
       { text: 'Read: Shell fundamentals', href: NOTE('01-shell-fundamentals') },
       { text: 'Read: systemd and networking', href: NOTE('03-systemd-and-networking') },
-      { text: 'Play the real Linux game', href: new URL('linux/', HUB).href },
+      ...practiceLinks('linux', [['first-night', 'First night'], ['web-tier', 'The web tier'], ['bad-friday', 'Bad Friday']]),
     ],
   });
 }
