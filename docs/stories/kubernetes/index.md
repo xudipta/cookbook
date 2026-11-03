@@ -6,9 +6,10 @@ hide:
 
 # Night Shift at Pizza Palace
 
-A story that teaches Kubernetes with a pizza kitchen. Three short chapters: a cook who goes home sick
-(Pods and Deployments), a Friday rush (replicas and Pending), and a new menu (readiness probes and
-rolling updates). Play it on a phone: every step is a tap.
+A story that teaches Kubernetes with a pizza kitchen. Five short chapters: a cook who goes home sick
+(Pods and Deployments), a Friday rush (replicas and Pending), a new menu (readiness probes and
+rolling updates), the recipe card (ConfigMaps and Secrets) and the wrong sign on the door (Services and
+labels). Play it on a phone: every step is a tap.
 
 <div id="story" data-story="kubernetes">
   <noscript>This story needs JavaScript.</noscript>

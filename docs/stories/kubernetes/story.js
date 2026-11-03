@@ -24,7 +24,7 @@ const COOK_SVG = `<svg viewBox="0 0 64 72" aria-hidden="true" focusable="false">
   <path class="ks-m ks-m-wait" d="M28 35.5h8" fill="none" stroke="#2b1a0e" stroke-width="1.8" stroke-linecap="round"/>
 </svg>`;
 
-const STATE_LABEL = { ready: 'Ready', starting: 'Starting', sick: 'Sick', pending: 'Pending' };
+const STATE_LABEL = { ready: 'Ready', starting: 'Starting', sick: 'Sick', pending: 'Pending', blocked: 'Cannot start' };
 
 // The stage: the rota stepper, the ready-check switch, the pass, the kitchen stations, the cooks waiting
 // outside and the served/lost counters, added to the shared stage in front of its caption.
@@ -54,6 +54,7 @@ function createKitchen(app) {
     cooks: [], stations: 4, desired: 3, rate: 0, warm: 2, probe: true, version: 'v1',
     queue: 0, served: 0, lost: 0, maxQueue: 6, tickMs: 800, ticks: 0, timer: null, picking: null,
     startLabel: 'Starting', rolloutTo: null, rolloutFrom: 0, serial: 0, sawPending: false,
+    noteFn: null, passSel: 'web', sauce: 'classic',
   };
   let slots = [];
 
@@ -77,6 +78,8 @@ function createKitchen(app) {
     c.el.className = `ks-cook is-${c.state} ${c.ver}${K.picking && c.state !== 'pending' ? ' ks-pick' : ''}`;
     c.el.disabled = !(K.picking && c.state !== 'pending');
     c.chip.textContent = c.state === 'starting' ? K.startLabel : STATE_LABEL[c.state];
+    c.noteEl.textContent = c.note || '';
+    c.noteEl.hidden = !c.note;
     c.el.setAttribute('aria-label', `${c.name}, pod ${c.pod}, ${c.chip.textContent}${K.picking ? '. Tap to send home' : ''}`);
   }
   function paintOutside() {
@@ -88,9 +91,11 @@ function createKitchen(app) {
   }
   function make(ver, state) {
     const n = K.serial++;
-    const c = { name: COOK_NAMES[n % COOK_NAMES.length], pod: POD_IDS[n % POD_IDS.length], ver, state, warm: K.warm, slot: null };
+    const c = { name: COOK_NAMES[n % COOK_NAMES.length], pod: POD_IDS[n % POD_IDS.length], ver, state, warm: K.warm, slot: null, tag: 'web' };
+    c.note = K.noteFn ? K.noteFn(c) : '';
     c.chip = h('span', { class: 'ks-chip' });
-    c.el = h('button', { class: 'ks-cook', type: 'button' }, h('span', { class: 'ks-cook-art' }), h('span', { class: 'ks-cook-name', text: c.name }), h('code', { class: 'ks-cook-pod', text: `web-${c.pod}` }), c.chip);
+    c.noteEl = h('code', { class: 'ks-cook-note', text: c.note, hidden: !c.note });
+    c.el = h('button', { class: 'ks-cook', type: 'button' }, h('span', { class: 'ks-cook-art' }), h('span', { class: 'ks-cook-name', text: c.name }), h('code', { class: 'ks-cook-pod', text: `web-${c.pod}` }), c.noteEl, c.chip);
     c.el.firstChild.innerHTML = COOK_SVG;
     c.el.addEventListener('click', () => K.picking && K.picking(c));
     return c;
@@ -135,11 +140,11 @@ function createKitchen(app) {
     paintOutside();
     // The rota: keep the number of cooks at what was asked for.
     if (!K.rolloutTo) {
-      const counted = K.cooks.filter((c) => ['ready', 'starting', 'pending'].includes(c.state));
+      const counted = K.cooks.filter((c) => ['ready', 'starting', 'pending', 'blocked'].includes(c.state));
       for (let n = counted.length; n < K.desired; n++) spawn(K.version);
       const extra = counted.length - K.desired;
       if (extra > 0) {
-        const order = ['pending', 'starting', 'ready'];
+        const order = ['pending', 'blocked', 'starting', 'ready'];
         const victims = [...counted].sort((a, b) => order.indexOf(a.state) - order.indexOf(b.state)).slice(0, extra);
         victims.forEach((c) => remove(c));
       }
@@ -167,7 +172,7 @@ function createKitchen(app) {
     reconcile();
     if (K.rolloutTo) rolloutStep();
     K.queue += K.rate;
-    const takers = K.cooks.filter(accepting);
+    const takers = K.cooks.filter((c) => accepting(c) && c.tag === K.passSel);
     for (let i = 0; i < takers.length && K.queue > 0; i++) {
       const c = takers[(i + K.ticks) % takers.length];
       K.queue -= 1;
@@ -211,16 +216,17 @@ function createKitchen(app) {
     refresh() { K.cooks.forEach(paint); },
     readyCount,
     // Set the kitchen up for a chapter.
-    reset({ stations = 4, desired = 3, rate = 0, warm = 2, version = 'v1', probe = true, maxQueue = 6, tickMs = 800, startLabel = 'Starting' } = {}) {
+    reset({ stations = 4, desired = 3, rate = 0, warm = 2, version = 'v1', probe = true, maxQueue = 6, tickMs = 800, startLabel = 'Starting', noteFn = null, sauce = 'classic', passSel = 'web' } = {}) {
       stop();
       K.cooks.forEach((c) => c.el.remove());
-      Object.assign(K, { cooks: [], stations, desired, rate, warm, version, probe, maxQueue, tickMs, startLabel, queue: 0, served: 0, lost: 0, ticks: 0, rolloutTo: null, picking: null, sawPending: false });
+      Object.assign(K, { cooks: [], stations, desired, rate, warm, version, probe, maxQueue, tickMs, startLabel, noteFn, sauce, passSel, queue: 0, served: 0, lost: 0, ticks: 0, rolloutTo: null, picking: null, sawPending: false });
       layout();
       for (let i = 0; i < desired; i++) spawn(version, 'ready');
       app.rota.hidden = true;
       app.caption.textContent = '';
       app.probe.hidden = true;
       app.hud.hidden = true;
+      K.setPassSel(passSel);
       paintHud();
       refreshRota();
       K.setProbe(probe);
@@ -260,6 +266,26 @@ function createKitchen(app) {
       K.rolloutFrom = K.cooks.filter((c) => c.ver !== to && c.state === 'ready').length;
     },
     cooksNow() { return K.cooks.filter((c) => c.state === 'ready'); },
+    // The pass looks for cooks by name tag (a label). Cooks keep the tag they were hired with.
+    setPassSel(sel, show = false) {
+      K.passSel = sel;
+      app.pass.querySelector('.ks-pass-label').textContent = show ? `The pass asks for: app=${sel}` : 'The pass';
+    },
+    setSauce(v) { K.sauce = v; },
+    // A cook that cannot start (it reads a recipe key that is not on the card).
+    spawnBlocked(note) {
+      const c = spawn(K.version);
+      c.state = 'blocked';
+      c.note = note;
+      paint(c);
+      return c;
+    },
+    unblock(c, note) {
+      c.state = 'starting';
+      c.warm = K.warm;
+      c.note = note;
+      paint(c);
+    },
   });
   app.probe.addEventListener('click', () => { if (!app.probe.disabled) { K.setProbe(!K.probe); K.onProbe && K.onProbe(K.probe); } });
   return K;
@@ -412,6 +438,152 @@ const CHAPTERS = [
       });
     },
   },
+  {
+    title: 'The recipe card',
+    hook: 'The owner wants a spicier sauce. Changing a cook\'s training for every small tweak would take all night.',
+    learn: 'ConfigMaps for settings, Secrets for passwords, and when a change takes effect.',
+    async play({ ui, sim: K }) {
+      const sauceNote = () => (c) => `sauce: ${K.sauce}`;
+      K.reset({ stations: 6, desired: 3, rate: 0, warm: 2, noteFn: sauceNote() });
+      K.caption('Each cook shows the recipe they follow. The card on the wall says: sauce = classic.');
+      await ui.say('maya', 'Tonight the sauce changes from **classic** to **spicy**. Each cook follows a recipe, shown on their badge.');
+      const how = await ui.choose('maya', 'How do we change the recipe?', [
+        { label: 'Retrain every cook from scratch', value: 'train' },
+        { label: 'Put the recipe on a wall card and let cooks read it', value: 'card' },
+      ]);
+      await ui.say('maya', how === 'card' ? 'Yes. Settings live **outside** the cook, on a card, so one edit changes the recipe for everyone.' : 'That works, but it is slow: you would rebuild and redeploy the app for every tiny tweak. Better to keep settings on a card on the wall and let cooks read it.');
+      await ui.card({
+        maps: [['The recipe card', 'ConfigMap'], ['A cook reading the card', 'env or a mounted file']],
+        plain: 'A **ConfigMap** holds settings outside your image. Pods read it as environment variables or as files, so you change the setting without rebuilding.',
+        cmd: 'kubectl create configmap web-config --from-literal=sauce=classic\n\nenv:\n  - name: SAUCE\n    valueFrom:\n      configMapKeyRef: { name: web-config, key: sauce }',
+      });
+      const bet = await ui.choose('maya', 'Test time. I change the card to **spicy**. What do the cooks already on shift do?', [
+        { label: 'They switch to spicy at once', value: 'now' },
+        { label: 'Nothing until they start a new shift', value: 'later' },
+      ]);
+      K.setSauce('spicy');
+      K.caption('The card now says: sauce = spicy. Cooks on shift still follow what they read when they started.');
+      await ui.say('maya', `${bet === 'later' ? 'Right.' : 'Not quite.'} Look at the badges: they still say **classic**. A cook reads the card **once, when the shift starts** (that is how environment variables work).`, 'Next');
+      await ui.say('maya', 'To pick up the change, the cooks need a fresh shift. Swap them one at a time, like the new menu.', 'Restart the cooks');
+      K.start();
+      K.rollout('v2');
+      ui.watch('A fresh shift is starting. New cooks read the card as they arrive.');
+      await K.until((k) => !k.rolloutTo && k.cooks.filter((c) => c.state !== 'gone').every((c) => c.ver === 'v2' && c.state === 'ready'), 160);
+      K.stop();
+      await ui.say('maya', 'Now every badge says **spicy**. The card changed once, and a rolling restart carried it to every cook with no downtime.');
+      await ui.card({
+        maps: [['A fresh shift for everyone', 'rollout restart']],
+        plain: 'A Pod reads **environment variables** from a ConfigMap only when it starts, so after an edit you run a **rollout restart**. Settings mounted as **files** are refreshed in place after a short delay.',
+        cmd: 'kubectl edit configmap web-config\nkubectl rollout restart deployment/web\nkubectl rollout status deployment/web',
+      });
+      await ui.say('maya', 'Now a trickier one. The kitchen needs the **safe\'s code**, the database password.', 'Next');
+      const where = await ui.choose('maya', 'Where should the password go?', [
+        { label: 'On the open recipe card', value: 'card' },
+        { label: 'In the safe', value: 'safe' },
+      ]);
+      const encoded = btoa('pizza-42');
+      await ui.say('maya', where === 'safe' ? 'Right. A **Secret** is the safe: separate from the open card, with its own access rules.' : 'Anyone who can read the card could read the password. Put it in the **safe**, called a **Secret**, which has its own access rules.');
+      const scrambled = await ui.choose('maya', `A Secret shows the code as **${encoded}**. Is it encrypted, so nobody can read it?`, [
+        { label: 'Yes, it looks scrambled', value: 'yes' },
+        { label: 'No, it is only encoded', value: 'no' },
+      ]);
+      await ui.say('maya', `${scrambled === 'no' ? 'Right.' : 'No!'} Anyone can undo it: decoding **${encoded}** gives **${atob(encoded)}**. That is **base64**, an encoding and not encryption. What keeps the safe safe is **who may open it**.`);
+      await ui.card({
+        maps: [['The safe', 'Secret'], ['Looks scrambled', 'base64 (not encryption)'], ['Who may open the safe', 'RBAC, plus encryption at rest']],
+        plain: 'A **Secret** is stored base64-encoded, which anyone can decode. Protect it with **RBAC** (who can read Secrets) and turn on **encryption at rest**. Never commit the values to git.',
+        cmd: 'kubectl create secret generic db --from-literal=password=pizza-42\nkubectl get secret db -o jsonpath=\'{.data.password}\' | base64 -d\n# access is controlled with RBAC, not by the encoding',
+      });
+      K.reset({ stations: 6, desired: 3, rate: 0, warm: 2, noteFn: () => 'sauce: spicy' });
+      K.caption('The card now has the key "sauce_level", renamed by a colleague. The cooks still ask for "sauce".');
+      await ui.say('maya', 'One last problem. A colleague **renamed the key** on the card, and a new cook is asking for the old name.', 'Hire a cook');
+      K.start();
+      K.desired = 4;
+      const stuck = K.spawnBlocked('no key "sauce"');
+      await ui.say('maya', 'The new cook stands at the door and **cannot start**. The other cooks are fine. How do we find out why?', 'Ask the cook');
+      await ui.say('maya', 'The cook says: **couldn\'t find key sauce in ConfigMap web-config**. The card has no key with that name.');
+      const fix = await ui.choose('maya', 'What fixes it?', [
+        { label: 'Fire and rehire the cook, again and again', value: 'again' },
+        { label: 'Put the key back on the card (or ask for the right key)', value: 'fix' },
+      ]);
+      if (fix !== 'fix') await ui.say('maya', 'A new cook would read the same card and fail the same way. The problem is the **key name**, not the cook. The card and the cooks must agree.', 'Fix the key');
+      K.unblock(stuck, 'sauce: spicy');
+      K.caption('The card has the key "sauce" again.');
+      ui.watch('The key is back. The cook starts.');
+      await K.until((k) => k.readyCount() >= 4, 40);
+      K.stop();
+      await ui.say('maya', 'She started right away. Check the card and the cook agree on the key before blaming the cook.');
+      await ui.card({
+        maps: [['"Cannot start"', 'CreateContainerConfigError'], ['A key not on the card', 'missing key in ConfigMap']],
+        plain: 'A Pod that asks for a ConfigMap key that does not exist stays in **CreateContainerConfigError**. **describe** shows the event with the exact name it could not find.',
+        cmd: 'kubectl get pods\nkubectl describe pod web-p2m7   # Events: couldn\'t find key sauce in ConfigMap web-config\nkubectl get configmap web-config -o yaml',
+      });
+    },
+  },
+  {
+    title: 'The wrong sign on the door',
+    hook: 'Every cook is healthy, but customers get nothing. The pass sends orders into thin air.',
+    learn: 'how a Service finds Pods by label, and the one command that shows the match.',
+    async play({ ui, sim: K }) {
+      K.reset({ stations: 6, desired: 3, rate: 2, warm: 2, maxQueue: 2, noteFn: () => 'app=web' });
+      K.setPassSel('web', true);
+      K.caption('Each cook wears a name tag, shown on the badge. The pass looks for cooks by tag, never by name.');
+      K.start();
+      await ui.say('maya', 'The pass does not know the cooks by name, because cooks come and go. It looks for a **name tag**: here, **app=web**.');
+      await ui.say('maya', 'Watch an order go out. The pass finds every cook wearing **app=web** and hands them the ticket.');
+      await ui.card({
+        maps: [['A name tag', 'label'], ['The tag the pass looks for', 'Service selector']],
+        plain: 'A **Service** finds its Pods by **labels**: its **selector** is the tag it looks for, and any Ready Pod that wears it receives traffic.',
+        cmd: 'kubectl get pods --show-labels\nkubectl describe service web       # Selector: app=web',
+      });
+      await ui.say('maya', 'Now someone is editing the pass and makes **a small typo**.', 'Edit the pass');
+      const before = K.lost;
+      K.setPassSel('wbe', true);
+      K.caption('The pass now asks for app=wbe. Every cook still wears app=web.');
+      ui.watch('The pass is asking for the wrong tag. Watch the lost orders.');
+      await ui.sleep(2200);
+      await ui.say('maya', `All three cooks are **Ready**, but **${K.lost - before}** orders have already been lost. The cooks are not the problem.`);
+      for (;;) {
+        const pick = await ui.choose('maya', 'What do you check first?', [
+          { label: 'Restart all the cooks', value: 'restart' },
+          { label: 'Ask the pass who it found', value: 'ask' },
+        ]);
+        if (pick === 'ask') break;
+        await ui.say('maya', 'Fresh cooks would still wear **app=web**, and the pass would still look for **app=wbe**. Nothing changes. Ask the pass who it found instead.', 'Try again');
+      }
+      await ui.say('maya', 'The pass says it found **nobody**: no endpoints. It looks for **app=wbe** and the cooks wear **app=web**.');
+      await ui.card({
+        maps: [['Who the pass found', 'endpoints'], ['Nobody matched', 'no endpoints']],
+        plain: 'A Service with a selector that matches no Pods has **no endpoints**, so every request fails even though the Pods are healthy. Compare the Service\'s **selector** with the Pods\' **labels**.',
+        cmd: 'kubectl get endpoints web           # ENDPOINTS: <none>\nkubectl describe service web         # Selector: app=wbe\nkubectl get pods --show-labels       # LABELS: app=web',
+      });
+      for (;;) {
+        const fix = await ui.choose('maya', 'What do you change?', [
+          { label: 'Give every cook the new tag, app=wbe', value: 'cooks' },
+          { label: 'Fix the tag the pass asks for', value: 'pass' },
+        ]);
+        if (fix === 'pass') break;
+        await ui.say('maya', 'It would work, but it spreads the typo to every cook, and new cooks would get the right tag again. The mistake lives in the **pass**: fix it there.', 'Try again');
+      }
+      const lostBefore = K.lost;
+      K.setPassSel('web', true);
+      K.caption('The pass asks for app=web again.');
+      ui.watch('The pass finds its cooks again.');
+      await ui.sleep(2000);
+      await ui.say('maya', `Orders flow again (${K.lost - lostBefore} lost since the fix). The tag matches, so the pass found all three cooks.`);
+      await ui.say('maya', 'Last thing. Cooks come and go, but customers always ring **the same number**. Send a cook home and watch.', 'Send a cook home');
+      const sick = await ui.pick('maya', '**Tap a cook** to send them home.', K, 'Tap a cook above.');
+      K.sendHome(sick);
+      ui.watch('A cook left. Her replacement wears the same tag, so the pass finds her too.');
+      await K.until((k) => k.readyCount() >= 3 && k.cooks.filter((c) => c.state !== 'gone').length === 3);
+      K.stop();
+      await ui.say('maya', 'A new cook with a different name now takes orders, and customers never noticed. The pass keeps **one address** and follows the tags.');
+      await ui.card({
+        maps: [['One number to ring', 'ClusterIP and DNS name'], ['Follow the name tags', 'selector and endpoints']],
+        plain: 'A **Service** gives your Pods one stable address and name (such as **web**). Pods come and go, and the Service follows the **label selector**, so callers never have to change.',
+        cmd: 'apiVersion: v1\nkind: Service\nmetadata: { name: web }\nspec:\n  selector: { app: web }   # must match the Pods\' labels\n  ports: [{ port: 80, targetPort: 8080 }]',
+      });
+    },
+  },
 ];
 
 export function mountStory(host) {
@@ -434,6 +606,8 @@ export function mountStory(host) {
     endIntro: 'Every kitchen word you used has a real name. Here is your notebook.',
     endLinks: [
       { text: 'Read: Pods and workloads', href: NOTE('02-pods-and-workloads') },
+      { text: 'Read: Config and secrets', href: NOTE('03-config-and-secrets') },
+      { text: 'Read: Services and networking', href: NOTE('04-services-and-networking') },
       { text: 'Read: Probes and resources', href: NOTE('07-probes-and-resources') },
       ...practiceLinks('kubernetes', [['tutorial', 'The tutorial'], ['shift', 'The shift'], ['incident', 'The incident']]),
     ],
