@@ -4,7 +4,7 @@
 // the fridge of layers already baked. The bakery runs on the game's real build simulator
 // (docs/games/docker/sim.js): the same layer cache, the same errors and the same timings, so what the story
 // shows is what `docker build` does. Each chapter is a plain async script over it (see ../shared/story.js).
-import { h, createSwitch, createCounters, mountStory as mount, siteUrl } from '../shared/story.js';
+import { h, createSwitch, createCounters, mountStory as mount, practiceLinks, siteUrl } from '../shared/story.js';
 import { arrange, createWorld, simulateBuild } from '../../games/docker/sim.js';
 
 const HUB = siteUrl('docs/games/');
@@ -357,7 +357,7 @@ export async function mountStory(host) {
     endLinks: [
       { text: 'Read: Images and Dockerfiles', href: NOTE('01-images-and-dockerfiles') },
       { text: 'Read: Multi-stage builds and caching', href: NOTE('02-multi-stage-builds-and-caching') },
-      { text: 'Play the real Docker game', href: new URL('docker/', HUB).href },
+      ...practiceLinks('docker', [['hello', 'The first image'], ['cache', 'Layer cache'], ['bloat', 'Smaller images']]),
     ],
   });
 }

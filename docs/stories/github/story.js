@@ -5,7 +5,7 @@
 // runs on the practice game's real git and gh simulator (docs/games/github/sim.js), so the commands, the
 // output, the graph and the conflicts are the game's. Each chapter is a plain async script over it
 // (see ../shared/story.js).
-import { h, outputBox, mountStory as mount, siteUrl } from '../shared/story.js';
+import { h, outputBox, mountStory as mount, practiceLinks, siteUrl } from '../shared/story.js';
 import { branchInfo, createWorld, editFile, execute, goalStatus, graphRows, mainBuild, prCards, tick, workStatus } from '../../games/github/sim.js';
 
 const HUB = siteUrl('docs/games/');
@@ -458,7 +458,7 @@ export async function mountStory(host) {
     endLinks: [
       { text: 'Read: Git fundamentals', href: NOTE('01-git-fundamentals') },
       { text: 'Read: GitHub CLI and PRs', href: NOTE('02-github-cli-and-prs') },
-      { text: 'Play the real Git game', href: new URL('github/', HUB).href },
+      ...practiceLinks('github', [['first-pr', 'Everyday flow'], ['behind-main', 'Behind main'], ['protected-main', 'Protected main']]),
     ],
   });
 }

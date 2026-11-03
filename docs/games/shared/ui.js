@@ -452,6 +452,8 @@ export function createUI(container, { def, scenario, levels, siteRoot, handlers,
       const retry = !won ? el('button', { class: 'cg-btn', type: 'button', 'data-cg': 'retry-hint', text: 'Retry with a hint' }) : null;
       if (retry) retry.addEventListener('click', () => handlers.retryWithHint());
       const notes = meta ? el('a', { class: 'cg-btn', 'data-cg': 'notes', href: new URL(meta.notes, siteRoot).href, text: 'Read the notes' }) : null;
+      // The same topic told as a story, when one is live (the story is the gentler way in).
+      const story = meta && meta.story && meta.story.status === 'live' ? el('a', { class: 'cg-btn', 'data-cg': 'story', href: new URL(meta.story.path, siteRoot).href, text: 'Replay the story' }) : null;
       const facts = [`Score ${score}`, `Best ${best}`, `${ticks} ticks`, `${actionsUsed} actions`];
       if (version && !version.standard) facts.push(`version ${version.seed}`);
       if (pace) facts.push(`${pace.label.toLowerCase()} pace${pace.multiplier !== 1 ? ` (x${pace.multiplier})` : ''}`);
@@ -467,7 +469,7 @@ export function createUI(container, { def, scenario, levels, siteRoot, handlers,
           events.length ? el('p', { text: 'What happened, and where to read more:' }) : null,
           list,
           debrief ? debriefView(debrief) : null,
-          el('div', { class: 'cg-result-actions' }, next, again, retry, other, standard, notes),
+          el('div', { class: 'cg-result-actions' }, next, again, retry, other, standard, notes, story),
         ),
       );
       (next || again).focus({ preventScroll: true });

@@ -6,7 +6,7 @@
 // real model (docs/games/mcp/sim.js): every card runs a real `claude mcp` command, the extension list is the
 // host's real view of its servers, and a wrong choice is replayed on a scratch copy so the learner sees what it
 // would really do. Each chapter is a plain async script over it (see ../shared/story.js).
-import { h, createCounters, outputBox, mountStory as mount, siteUrl } from '../shared/story.js';
+import { h, createCounters, outputBox, mountStory as mount, practiceLinks, siteUrl } from '../shared/story.js';
 import { afterMove, createWorld, decide as simDecide, fileText, requestRows, runCommand, serve as simServe, serverRows, start, tick } from '../../games/mcp/sim.js';
 
 const HUB = siteUrl('docs/games/');
@@ -343,7 +343,7 @@ export async function mountStory(host) {
     endLinks: [
       { text: 'Read: MCP overview', href: NOTE('01-mcp-overview') },
       { text: 'Read: MCP in Claude Code', href: NOTE('02-mcp-in-claude-code') },
-      { text: 'Play the real MCP game', href: new URL('mcp/', HUB).href },
+      ...practiceLinks('mcp', [['first-plugs', 'First plugs'], ['scopes-secrets', 'Scopes and secrets'], ['vet-build', 'Vet and build']]),
     ],
   });
 }

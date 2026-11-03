@@ -6,7 +6,7 @@
 // real simulator (docs/games/skills/sim.js): a request queue is replayed against the card the learner built, the
 // agent's pick is scored from the words in the descriptions, and the card is checked by the same lint the game uses.
 // Each chapter is a plain async script over it (see ../shared/story.js).
-import { h, createCounters, outputBox, mountStory as mount, siteUrl } from '../shared/story.js';
+import { h, createCounters, outputBox, mountStory as mount, practiceLinks, siteUrl } from '../shared/story.js';
 import { createWorld, footprint, isClean, place, setDir, setLocation, saveText, skillStatus, tick } from '../../games/skills/sim.js';
 
 const HUB = siteUrl('docs/games/');
@@ -406,7 +406,7 @@ export async function mountStory(host) {
     endLinks: [
       { text: 'Read: What are Agent Skills', href: NOTE('01-what-are-agent-skills') },
       { text: 'Read: Authoring a skill', href: NOTE('02-authoring-skills') },
-      { text: 'Play the real skills game', href: new URL('skills/', HUB).href },
+      ...practiceLinks('skills', [['disclosure', 'Disclosure'], ['descriptions', 'Descriptions'], ['ship-it', 'Ship it']]),
     ],
   });
 }

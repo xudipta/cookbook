@@ -4,7 +4,7 @@
 // catalogue, and a migration is renovating the library without closing it. The story runs on the practice game's
 // real engine (docs/games/database/sim.js): every card runs real SQL against the simulated database and shows the
 // plan the planner printed. Each chapter is a plain async script over it (see ../shared/story.js).
-import { h, createCounters, outputBox, mountStory as mount, siteUrl } from '../shared/story.js';
+import { h, createCounters, outputBox, mountStory as mount, practiceLinks, siteUrl } from '../shared/story.js';
 import { afterMove, createWorld, describeApp, evalQuery, metrics, migrationRows, runLine, saveFile, start, swapQuery, tick } from '../../games/database/sim.js';
 
 const HUB = siteUrl('docs/games/');
@@ -361,7 +361,7 @@ export async function mountStory(host) {
     endLinks: [
       { text: 'Read: Queries and indexing', href: NOTE('03-queries-and-indexing') },
       { text: 'Read: Migrations', href: NOTE('02-migrations') },
-      { text: 'Play the real database game', href: new URL('database/', HUB).href },
+      ...practiceLinks('database', [['seq-scans', 'Seq scans'], ['plans', 'Read the plan'], ['migrations', 'Safe migrations']]),
     ],
   });
 }
