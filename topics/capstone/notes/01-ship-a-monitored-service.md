@@ -7,7 +7,7 @@ and focuses on how the pieces connect.
 
 ```mermaid
 flowchart LR
-    Dockerfile["hello-nginx\nDockerfile"] -->|docker build| Image["hello-nginx:latest"]
+    Dockerfile["hello-nginx\nDockerfile"] -->|docker build| Image["hello-nginx:0.1"]
     Image -->|kind load docker-image| Cluster["kind cluster"]
     Cluster --> Deploy["Deployment: 2 replicas\n+ nginx-exporter sidecar"]
     Deploy --> Svc["Service: :80 app, :9113 metrics"]
@@ -24,8 +24,8 @@ Reuse `topics/docker/examples/hello-nginx` as-is; see `topics/docker/notes/01-im
 for what's actually in it.
 
 ```bash
-docker build -t hello-nginx:latest topics/docker/examples/hello-nginx
-docker run -d --name hello-nginx-check -p 8080:80 hello-nginx:latest
+docker build -t hello-nginx:0.1 topics/docker/examples/hello-nginx
+docker run -d --name hello-nginx-check -p 8080:80 hello-nginx:0.1
 curl http://localhost:8080   # -> "hello from the cookbook"
 docker rm -f hello-nginx-check
 ```
@@ -38,7 +38,7 @@ the rest of the `kubectl`/`kind` vocabulary this assumes:
 
 ```bash
 kind create cluster
-kind load docker-image hello-nginx:latest
+kind load docker-image hello-nginx:0.1
 ```
 
 The Deployment adds one thing beyond `topics/kubernetes/examples/deployment/sample-deployment.yaml`:
@@ -80,7 +80,7 @@ spec:
     spec:
       containers:
         - name: hello-nginx
-          image: hello-nginx:latest
+          image: hello-nginx:0.1
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 80

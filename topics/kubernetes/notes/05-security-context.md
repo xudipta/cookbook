@@ -12,7 +12,7 @@ spec:
     fsGroup: 2000
   containers:
     - name: secure-container
-      image: nginx:latest
+      image: nginx:1.27
       securityContext:     # container-level — overrides the Pod-level setting for this container only
         allowPrivilegeEscalation: false
 ```
@@ -46,14 +46,14 @@ spec:
         fsGroup: 101
       containers:
         - name: secure-container
-          image: nginxinc/nginx-unprivileged:latest
+          image: nginxinc/nginx-unprivileged:1.27
           ports:
             - containerPort: 8080   # this image listens on 8080, not 80
           securityContext:
             allowPrivilegeEscalation: false
 ```
 
-Stock `nginx:latest` binds port 80, which needs root (`CAP_NET_BIND_SERVICE` for a port
+The stock `nginx` image (any tag, `nginx:1.27` here) binds port 80, which needs root (`CAP_NET_BIND_SERVICE` for a port
 below 1024) — forcing a non-root `runAsUser` against that image would crash-loop. The
 `nginxinc/nginx-unprivileged` image is built to listen on `8080` instead specifically so
 it can run as a non-root UID; a Service or Ingress in front of it maps external `80` to

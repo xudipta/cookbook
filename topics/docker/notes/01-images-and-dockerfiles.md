@@ -31,7 +31,8 @@ maps to one layer.
 ## Dockerfile tips
 
 - Pin base image tags (`nginx:1.27-alpine`, not `nginx:latest`) so builds are
-  reproducible.
+  reproducible. A tag can still be re-pushed; for a fully immutable build pin the digest
+  (`nginx:1.27-alpine@sha256:<digest>`, from `docker buildx imagetools inspect`).
 - Order instructions least- to most-frequently-changing: dependency manifests before
   source code, so an edit to application code doesn't invalidate the (slow) dependency
   install layer.
