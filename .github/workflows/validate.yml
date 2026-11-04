@@ -30,8 +30,8 @@ jobs:
       docs: ${{ steps.filter.outputs.docs }}
       games: ${{ steps.filter.outputs.games }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: dorny/paths-filter@v3
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      - uses: dorny/paths-filter@0e4a8c6effa4802afeda77dc8d303f8176d7dfad # v3
         id: filter
         with:
           filters: |
@@ -103,8 +103,8 @@ jobs:
     if: needs.changes.outputs.md == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: DavidAnson/markdownlint-cli2-action@v16
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      - uses: DavidAnson/markdownlint-cli2-action@b4c9feab76d8025d1e83c653fa3990936df0e6c8 # v16
         with:
           config: .markdownlint.yaml
           globs: '**/*.md'
@@ -114,7 +114,7 @@ jobs:
     if: needs.changes.outputs.md == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           fetch-depth: 0
       - name: Check internal cross-references resolve
@@ -142,12 +142,14 @@ jobs:
     if: needs.changes.outputs.yaml == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
         with:
           python-version: '3.x'
       - run: pip install yamllint
       - run: yamllint .
+      - name: Actions are pinned by commit SHA (ratchet)
+        run: python3 scripts/check_actions_pinned.py
       - name: Pin example images (no :latest, no untagged image)
         run: python3 scripts/check_image_tags.py
 
@@ -156,7 +158,7 @@ jobs:
     if: needs.changes.outputs.k8s == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
       - name: Install kubeconform
         run: |
           curl -sSLo kubeconform.tar.gz \
@@ -170,7 +172,7 @@ jobs:
             -ignore-filename-pattern '.*/examples/helm/.*' \
             -ignore-filename-pattern '.*/kustomization\.yaml$' \
             topics/kubernetes/examples/
-      - uses: azure/setup-helm@v4
+      - uses: azure/setup-helm@1a275c3b69536ee54be43f2070a358922e12c8d4 # v4
         with:
           version: v3.15.4
       - name: helm lint + schema-validate the rendered chart
@@ -192,10 +194,10 @@ jobs:
     env:
       K8S_EXAMPLES: topics/kubernetes/examples
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
 
       - name: Set up kind cluster
-        uses: helm/kind-action@v1.9.0
+        uses: helm/kind-action@99576bfa6ddf9a8e612d83b513da5a75875caced # v1.9.0
         with:
           version: v0.20.0
           wait: 60s
@@ -253,8 +255,8 @@ jobs:
     if: needs.changes.outputs.docker == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: hadolint/hadolint-action@v3.1.0
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      - uses: hadolint/hadolint-action@54c9adbab1582c2ef04b2016b760714a4bfde3cf # v3.1.0
         with:
           recursive: true
           dockerfile: 'topics/docker/**/Dockerfile*'
@@ -264,7 +266,7 @@ jobs:
     if: needs.changes.outputs.docker == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
       - name: Build image
         run: docker build -t hello-nginx topics/docker/examples/hello-nginx
       - name: Run and wait for readiness
@@ -285,7 +287,7 @@ jobs:
     if: needs.changes.outputs.shell == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
       - name: Run shellcheck
         run: |
           mapfile -t files < <(find topics scripts -type f -name '*.sh')
@@ -301,7 +303,7 @@ jobs:
     if: needs.changes.outputs.linux == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
       - name: Run the README Quickstart for real
         run: |
           mkdir -p /tmp/demo/src
@@ -314,13 +316,13 @@ jobs:
     if: needs.changes.outputs.terraform == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: hashicorp/setup-terraform@v3
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3
         with:
           terraform_wrapper: false
       - name: terraform fmt
         run: terraform fmt -check -recursive topics/terraform
-      - uses: terraform-linters/setup-tflint@v4
+      - uses: terraform-linters/setup-tflint@90f302c255ef959cbfb4bd10581afecdb7ece3e6 # v4
       - name: tflint
         working-directory: topics/terraform
         run: tflint --recursive
@@ -330,8 +332,8 @@ jobs:
     if: needs.changes.outputs.terraform == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: hashicorp/setup-terraform@v3
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3
         with:
           terraform_wrapper: false
       - name: terraform init + apply
@@ -354,10 +356,10 @@ jobs:
     if: needs.changes.outputs.cicd == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
       - name: Run actionlint
         run: |
-          bash <(curl -sSL https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
+          bash <(curl -sSL https://raw.githubusercontent.com/rhysd/actionlint/914e7df21a07ef503a81201c76d2b11c789d3fca/scripts/download-actionlint.bash) 1.7.12  # v1.7.12, pinned
           ./actionlint -color topics/cicd/examples/workflows/*.yml
 
   skills-validate:
@@ -365,8 +367,8 @@ jobs:
     if: needs.changes.outputs.skills == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
         with:
           python-version: '3.x'
       - run: pip install pyyaml
@@ -384,7 +386,7 @@ jobs:
     if: needs.changes.outputs.mcp == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
       - name: Validate JSON config examples
         run: |
           mapfile -t files < <(find topics/mcp/examples -type f \( -name '*.json' -o -name '.mcp.json' \))
@@ -402,7 +404,7 @@ jobs:
     if: needs.changes.outputs.observability == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
       - name: Install promtool
         run: |
           curl -sSLo prometheus.tar.gz \
@@ -421,8 +423,8 @@ jobs:
     if: needs.changes.outputs.database == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
         with:
           python-version: '3.x'
       - run: pip install sqlfluff
@@ -450,7 +452,7 @@ jobs:
       PGUSER: postgres
       PGPASSWORD: postgres
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
       - name: Apply schema.sql directly
         run: psql -v ON_ERROR_STOP=1 -f topics/database/examples/schema/schema.sql
       - name: Reset database
@@ -481,8 +483,8 @@ jobs:
     env:
       DISABLE_MKDOCS_2_WARNING: "true"
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
         with:
           python-version: '3.x'
       - run: pip install -r requirements-docs.txt
@@ -503,8 +505,8 @@ jobs:
     env:
       DISABLE_MKDOCS_2_WARNING: "true"
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
         with:
           python-version: '3.x'
       - name: Validate game scenarios
@@ -518,7 +520,7 @@ jobs:
       - name: Check the rules the Observability game builds with promtool
         run: node scripts/check_observability_rules.mjs
       - run: pip install -r requirements-docs.txt
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
         with:
           node-version: '20'
       - name: Check the Agent Skills game's lint gate against scripts/check_skill.py
@@ -529,7 +531,7 @@ jobs:
           mkdocs build --strict --site-dir _site
       - name: actionlint the workflow YAML the CI/CD game generates
         run: |
-          bash <(curl -sSL https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
+          bash <(curl -sSL https://raw.githubusercontent.com/rhysd/actionlint/914e7df21a07ef503a81201c76d2b11c789d3fca/scripts/download-actionlint.bash) 1.7.12  # v1.7.12, pinned
           PATH="$PWD:$PATH" node docs/games/cicd/lint-yaml.mjs
       - name: Install Playwright and Chromium
         run: |
