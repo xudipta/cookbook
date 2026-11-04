@@ -1,5 +1,5 @@
 # Minimal static site image. Kept hadolint-clean as a CI smoke test.
-FROM nginx:1.27-alpine
+FROM nginx:1.31-alpine
 
 COPY index.html /usr/share/nginx/html/index.html
 
