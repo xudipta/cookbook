@@ -1,0 +1,14 @@
+# Placeholder or local hosts used in snippets and examples: not real links to check.
+# One regular expression per line, matched against the whole URL.
+^https?://(localhost|127\.0\.0\.1|0\.0\.0\.0)(:|/|$)
+^https?://[^/]*\.example\.(com|org)(/|$)
+^https?://example\.(com|org)(/|$)
+^https?://grafana(:|/|$)
+^https?://www\.w3\.org/2000/svg$
+^https://github\.com/acme/
+# Fonts are fetched by the browser, not linked from prose (and have their own issue).
+^https://fonts\.(googleapis|gstatic)\.com
+# Badge images are generated on demand.
+^https://img\.shields\.io/
+# Workflow badges and run pages are this repo's own.
+^https://github\.com/xudipta/cookbook/actions/

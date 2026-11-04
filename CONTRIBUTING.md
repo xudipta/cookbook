@@ -53,6 +53,7 @@ Terraform examples use the `local`/`random`/`null` providers, not real clouds).
 | --- | --- | --- |
 | all | markdownlint | `npx markdownlint-cli2 "**/*.md"` |
 | all | check_links.py | `python3 scripts/check_links.py` — internal cross-references (`` `NN-title.md` ``, `` `examples/...` ``, and real Markdown links) actually resolve |
+| all | check_external_links.py | `python3 scripts/check_external_links.py` — external `http(s)` links in the notes, docs and stories still resolve (standard library only). A 404/410 or a host that does not exist is **dead** and fails; timeouts, 5xx, 429 and bot walls (401/403) are only listed. On a pull request, `validate.yml` checks just the links the PR adds (`--changed origin/main`). The weekly `links.yml` job checks them all and opens or updates one `Broken external links` issue. Placeholder hosts from snippets go in `scripts/external_links_ignore.txt` |
 | all YAML | yamllint | `make lint` |
 | kubernetes | kubeconform | `kubeconform -summary -strict topics/kubernetes/examples/**/*.yaml` |
 | kubernetes | kind | see `validate.yml` `k8s-kind` job |
