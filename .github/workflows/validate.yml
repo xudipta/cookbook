@@ -37,6 +37,8 @@ jobs:
           filters: |
             md:
               - '**/*.md'
+              - 'scripts/check_external_links.py'
+              - 'scripts/external_links_ignore.txt'
             yaml:
               - '**/*.yaml'
               - '**/*.yml'
@@ -111,8 +113,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Check internal cross-references resolve
         run: python3 scripts/check_links.py
+      - name: Check the external links this pull request adds
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: python3 scripts/check_external_links.py --changed "origin/${BASE_REF}"
 
   yamllint:
     needs: changes

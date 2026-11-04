@@ -1,0 +1,63 @@
+name: External links
+
+# Weekly check that the external links in the notes, docs and stories still resolve. A third-party
+# outage must never block a merge, so this does not run on pull requests (validate.yml's link-check
+# job checks only the links a pull request adds). It opens, updates or closes one issue instead.
+#
+# No third-party action is used: the checkout is a plain `git clone` with the job's own token, the
+# checker is scripts/check_external_links.py (standard library only), and the issue is managed with
+# the `gh` CLI that ships on the runner. Nothing here needs pinning.
+
+on:
+  schedule:
+    - cron: '17 5 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: external-links
+  cancel-in-progress: false
+
+env:
+  ISSUE_TITLE: Broken external links
+
+jobs:
+  external-links:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out the repository
+        env:
+          TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: git clone --depth 1 "https://x-access-token:${TOKEN}@github.com/${REPO}.git" .
+
+      - name: Check every external link
+        id: check
+        run: |
+          set +e
+          python3 scripts/check_external_links.py --report links-report.md
+          echo "status=$?" >> "$GITHUB_OUTPUT"
+
+      - name: Open, update or close the issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          STATUS: ${{ steps.check.outputs.status }}
+        run: |
+          existing=$(gh issue list --state open --label documentation --search "in:title ${ISSUE_TITLE}" --json number,title \
+            --jq "[.[] | select(.title == \"${ISSUE_TITLE}\")][0].number // empty")
+          if [ "${STATUS}" = "1" ]; then
+            if [ -n "${existing}" ]; then
+              gh issue edit "${existing}" --body-file links-report.md
+            else
+              gh issue create --title "${ISSUE_TITLE}" --label documentation --body-file links-report.md
+            fi
+            echo "Dead links found; see the issue."
+            exit 1
+          fi
+          if [ -n "${existing}" ]; then
+            gh issue close "${existing}" --comment "All external links resolve again (weekly check)."
+          fi
