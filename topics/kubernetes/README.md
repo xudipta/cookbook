@@ -73,7 +73,7 @@ kubectl apply -f examples/deployment/sample-deployment.yaml
 kubectl apply -f examples/services/sample-service.yaml
 
 kubectl get pods                     # should show 2 Running nginx pods
-kubectl run curl --rm -i --restart=Never --image=curlimages/curl:latest -- \
+kubectl run curl --rm -i --restart=Never --image=curlimages/curl:8.10.1 -- \
   curl -s sample-service | grep 'Welcome to nginx'
 ```
 

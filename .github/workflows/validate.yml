@@ -43,6 +43,8 @@ jobs:
               - '**/*.yaml'
               - '**/*.yml'
               - '.yamllint.yaml'
+              - 'scripts/check_image_tags.py'
+              - 'scripts/image_tags_allow.txt'
             k8s:
               - 'topics/kubernetes/**'
             docker:
@@ -146,6 +148,8 @@ jobs:
           python-version: '3.x'
       - run: pip install yamllint
       - run: yamllint .
+      - name: Pin example images (no :latest, no untagged image)
+        run: python3 scripts/check_image_tags.py
 
   k8s-validate:
     needs: changes
