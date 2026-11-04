@@ -2,7 +2,8 @@
 // Layout and accessibility checks on the BUILT site, in a real browser:
 //   * no page scrolls sideways at phone width (390px) or desktop width (1280px);
 //   * axe-core finds no serious or critical violations, in the light and the dark theme.
-// Pages checked: the home page, one page of every game, a note with its Play banner, and the Learn overview.
+//   * no page requests another origin (fonts and scripts are self-hosted).
+// Pages checked: the home page, one page of every game, a story, a note with its Play banner, and the Learn overview.
 //
 // Usage: SITE_URL=http://localhost:8000/ NODE_PATH=<dir with playwright and axe-core> node scripts/site_quality.cjs
 // Optional: CHROMIUM_PATH=<browser binary>.
@@ -24,6 +25,7 @@ const PAGES = [
   { name: 'home', url: '', ready: '.tile' },
   { name: 'learn overview', url: 'docs/learn/', ready: '.md-content' },
   { name: 'note with a Play banner', url: 'topics/docker/notes/01-images-and-dockerfiles/', ready: '.admonition' },
+  { name: 'story', url: 'docs/stories/linux/', ready: '.ks .ks-btn' },
   // Games are audited with the guided start open, a hint revealed and the first level won, so the debrief on the
   // result panel (timeline, efficient path, copyable commands) is on the page too.
   ...games.map((g) => ({
@@ -58,6 +60,10 @@ const VIEWS = [
   { label: 'desktop, light', width: 1280, height: 900, scheme: 'light' },
 ];
 
+// The one allowed third party: Material's header fetches the repository's star and fork counts from the GitHub API
+// (the "source" widget, enabled by repo_url in mkdocs.yml). Drop repo_url to remove it and then remove this entry.
+const ALLOWED_ORIGINS = new Set(['https://api.github.com']);
+
 // Violations in Material's own chrome (header, search, footer) are not ours to fix here.
 const IGNORED_SELECTORS = ['.md-search', '.md-progress', '.md-header', '.md-footer', '.md-tabs', '.md-sidebar'];
 
@@ -66,6 +72,15 @@ async function checkPage(browser, page, view) {
   const ctx = await browser.newContext({ viewport: { width: view.width, height: view.height }, colorScheme: view.scheme });
   const tab = await ctx.newPage();
   tab.on('pageerror', (e) => problems.push(`page error: ${e.message}`));
+  // Nothing may load from another origin (fonts, scripts, images): the site is self-contained.
+  const own = new URL(SITE_URL).origin;
+  const foreign = new Set();
+  tab.on('request', (r) => {
+    const u = r.url();
+    if (/^(data|blob|about):/.test(u)) return;
+    const origin = new URL(u).origin;
+    if (origin !== own && !ALLOWED_ORIGINS.has(origin)) foreign.add(origin);
+  });
   await tab.goto(SITE_URL + page.url, { waitUntil: 'load' });
   try {
     await tab.waitForSelector(page.ready, { timeout: 15000 });
@@ -85,6 +100,8 @@ async function checkPage(browser, page, view) {
     });
     problems.push(`scrolls sideways (first element past the edge: ${wide})`);
   }
+
+  if (foreign.size) problems.push(`requests to another origin: ${[...foreign].join(', ')}`);
 
   await tab.evaluate(AXE);
   const result = await tab.evaluate(

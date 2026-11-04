@@ -32,7 +32,7 @@ done < <(find topics docs -type f -name '*.md' -not -path '*/examples/*')
 while IFS= read -r f; do
   mkdir -p "$dest/$(dirname "$f")"
   cp "$f" "$dest/$f"
-done < <(find docs -type f \( -name '*.js' -o -name '*.css' -o -name '*.json' -o -name '*.png' -o -name '*.svg' -o -name '*.jpg' -o -name '*.gif' \))
+done < <(find docs -type f \( -name '*.js' -o -name '*.css' -o -name '*.json' -o -name '*.png' -o -name '*.svg' -o -name '*.jpg' -o -name '*.gif' -o -name '*.woff2' -o -name 'OFL.txt' \))
 
 # Notes of topics with a game (or a planned one) get a Play banner; see scripts/play_banners.py.
 python3 scripts/play_banners.py "$dest"

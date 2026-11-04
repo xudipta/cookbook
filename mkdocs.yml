@@ -30,7 +30,7 @@ theme:
       toggle:
         icon: material/brightness-4
         name: Switch to light mode
-  # Fonts are loaded in extra_css below (Archivo, Public Sans, IBM Plex Mono) and set in docs/site/material.css.
+  # Fonts are self-hosted (docs/site/fonts.css, listed in extra_css below: Archivo, Public Sans, IBM Plex Mono) and set in docs/site/material.css.
   font: false
   features:
     - navigation.instant
@@ -80,7 +80,7 @@ plugins:
 # Site design tokens (docs/site/), then the shared shell for the browser games under docs/games/
 # (see CONTRIBUTING.md, "Adding a game").
 extra_css:
-  - https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,500..900&family=IBM+Plex+Mono:wght@400;500;600&family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap
+  - docs/site/fonts.css
   - docs/site/tokens.css
   - docs/site/material.css
   - docs/games/shared/shell.css
