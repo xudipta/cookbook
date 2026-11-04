@@ -16,9 +16,11 @@ mkdir -p "$dest"
 
 cp CONTRIBUTING.md CHANGELOG.md "$dest/"
 
-# The site root is the games-first home page (docs/site/index.html), so the README is published as the
+# The site root is the stories-first home page (docs/site/index.html), so the README is published as the
 # About page instead of becoming index.html. CONTRIBUTING links to it as README.md.
 cp README.md "$dest/about.md"
+# The README is published at about/, so raw <img> tags (MkDocs only rewrites Markdown images) need a ../ prefix.
+sed -i 's#src="docs/images/#src="../docs/images/#g' "$dest/about.md"
 sed -i 's#](README.md)#](about.md)#g' "$dest/CONTRIBUTING.md"
 cp docs/site/index.html "$dest/index.html"
 
@@ -34,7 +36,7 @@ while IFS= read -r f; do
   cp "$f" "$dest/$f"
 done < <(find docs -type f \( -name '*.js' -o -name '*.css' -o -name '*.json' -o -name '*.png' -o -name '*.svg' -o -name '*.jpg' -o -name '*.gif' \))
 
-# Notes of topics with a game (or a planned one) get a Play banner; see scripts/play_banners.py.
+# Notes of topics with a story or a game get a banner; see scripts/play_banners.py.
 python3 scripts/play_banners.py "$dest"
 
 echo "assembled $(find "$dest" -name '*.md' | wc -l | tr -d ' ') pages into $dest/"
