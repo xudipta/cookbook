@@ -1,0 +1,3 @@
+# PR numbers deliberately left out of CHANGELOG.md, one per line: "<number> <reason>".
+# Empty on purpose: every merged PR to date is covered. Add a line only for a pure revert or a
+# fix to a PR that was never released on its own.
