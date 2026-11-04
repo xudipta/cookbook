@@ -1,0 +1,3 @@
+# Images allowed to stay unpinned by scripts/check_image_tags.py.
+# One entry per line: <repo-relative path><TAB><image reference><TAB><reason>.
+# Keep this empty unless an unpinned image is the point of the example.

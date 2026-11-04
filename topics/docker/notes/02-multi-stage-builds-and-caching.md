@@ -62,7 +62,7 @@ Each CI run typically starts from an empty cache. To carry a cache between runs:
 
 ```bash
 # BuildKit inline cache: push the cache metadata alongside the image
-docker build --cache-from myapp:latest --build-arg BUILDKIT_INLINE_CACHE=1 -t myapp:latest .
+docker build --cache-from myapp:main --build-arg BUILDKIT_INLINE_CACHE=1 -t myapp:main .
 
 # or export/import a cache directory (docker/build-push-action's cache-to/cache-from
 # in GitHub Actions does this for you — see topics/cicd/)

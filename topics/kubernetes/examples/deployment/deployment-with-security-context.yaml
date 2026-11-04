@@ -19,7 +19,7 @@ spec:
         fsGroup: 101
       containers:
         - name: secure-container
-          image: nginxinc/nginx-unprivileged:latest
+          image: nginxinc/nginx-unprivileged:1.27
           ports:
             - containerPort: 8080   # this image listens on 8080, not 80
           securityContext:
