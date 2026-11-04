@@ -114,6 +114,18 @@ jobs:
       - name: Check internal cross-references resolve
         run: python3 scripts/check_links.py
 
+  changelog:
+    # Every PR already merged to main must be in CHANGELOG.md. Pull requests only: on main the newest
+    # commit is the PR that just merged, whose number only appears in the changelog in the next PR.
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+      - name: Check CHANGELOG.md covers every merged PR
+        run: python3 scripts/check_changelog.py origin/main
+
   yamllint:
     needs: changes
     if: needs.changes.outputs.yaml == 'true'

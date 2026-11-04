@@ -329,6 +329,18 @@ style, logo) would make them look stale, regenerate them from a local build
 (`make docs-serve`, then screenshot the home page and a topic page at a ~1400px-wide
 viewport) and replace the files in the same PR as the theme change.
 
+## Changelog
+
+`CHANGELOG.md` lists every merged PR once, by number, under Topics, Docs site, Stories, Practice games or CI and
+tooling. `python3 scripts/check_changelog.py` reads the squash commits on `origin/main` (their subjects end in
+`(#N)`) and fails when a merged PR is neither in the changelog nor in `scripts/changelog_skip.txt` (one number and a
+reason per line, for a pure revert or a fix to a PR that was never released on its own). The `changelog` job runs it
+on every pull request.
+
+The PR you are writing cannot list itself, because its number is not known until it merges, and the newest five
+merged PRs are not required yet (so PRs that merge back to back do not fail each other). Add the entries for the PRs
+that merged since the last update to a later PR, or batch them in one small docs PR.
+
 ## Commit / PR
 
 - Branch from `main`; don't push to `main` directly.
