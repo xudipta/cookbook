@@ -323,11 +323,18 @@ NODE_PATH=<dir containing node_modules/playwright> SITE_URL=http://localhost:800
 
 ## Updating the README screenshots
 
-`docs/images/docs-home.png` and `docs/images/docs-topic-page.png` are real
-screenshots of the built docs site. If a theme change in `mkdocs.yml` (palette, nav
-style, logo) would make them look stale, regenerate them from a local build
-(`make docs-serve`, then screenshot the home page and a topic page at a ~1400px-wide
-viewport) and replace the files in the same PR as the theme change.
+The four images under `docs/images/` (`docs-home.png`, `docs-topic-page.png`, `story-kubernetes.png`, which is
+also the home page's hero image, and `docs-game.png`) are produced by `scripts/screenshots.cjs` from the built
+site, so nothing is edited by hand:
+
+```bash
+make screenshots              # builds the site, serves it, regenerates the images (needs playwright)
+node scripts/screenshots.cjs --check   # no browser: the images exist and are not older than the home page
+```
+
+Refresh them in the same PR whenever the home page (`docs/site/`), the theme in `mkdocs.yml`, a story's first
+screen or the practice-game layout changes enough to make them look stale. There is no pixel comparison in CI
+(it would be flaky); the `--check` mode is a quick local reminder.
 
 ## Commit / PR
 

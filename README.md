@@ -11,15 +11,29 @@ every example is **checked in CI** on every change: linted, schema-validated, or
 built/applied/deployed against a real target. Nothing here is stale by construction —
 if an example stops working, the badge above goes red.
 
-🎮 **Play the games and read the notes: <https://xudipta.github.io/cookbook/>**
+🎮 **Start with a story, then read the notes: <https://xudipta.github.io/cookbook/>**
 
-The home page: a playable incident, and a board with one game per topic.
+Each topic is taught first as a short **story** you play with taps on your phone (a pizza kitchen
+for Kubernetes, a library for databases, a night ward for observability): you see the idea happen,
+and only then get the real name and the real command. The **notes** hold the full reference by
+topic, and the browser **games** are practice, with a real prompt, clocks and scores, once a story
+has made the idea click.
 
-[![The games-first home page](docs/images/docs-home.png)](https://xudipta.github.io/cookbook/)
+The home page leads with the stories, then the notes by topic, then the practice games:
 
-A note page. Topics with a game link to it from the top of every page:
+[![The stories-first home page](docs/images/docs-home.png)](https://xudipta.github.io/cookbook/)
 
-[![A note page with its Play banner](docs/images/docs-topic-page.png)](https://xudipta.github.io/cookbook/topics/docker/notes/01-images-and-dockerfiles/)
+A story on a phone: tap a cook to send them home, and watch Kubernetes replace them. Next to it, a
+practice game on a phone, with the pager and the terminal on the first screen:
+
+<p>
+  <a href="https://xudipta.github.io/cookbook/docs/stories/kubernetes/"><img src="docs/images/story-kubernetes.png" alt="The Kubernetes story on a phone: three cooks in a kitchen, one of them to be sent home, and Maya the owner asking you to tap a cook." width="260"></a>
+  <a href="https://xudipta.github.io/cookbook/docs/games/linux/"><img src="docs/images/docs-game.png" alt="The Linux practice game on a phone: a pager message about a failed deploy, the server status and a terminal." width="260"></a>
+</p>
+
+A note page. Topics with a story or a practice game link to them from the top of every page:
+
+[![A note page with its story and practice banners](docs/images/docs-topic-page.png)](https://xudipta.github.io/cookbook/topics/docker/notes/01-images-and-dockerfiles/)
 
 ## About this project
 
@@ -97,8 +111,9 @@ topics/<topic>/
   notes/NN-*.md          # prose notes, numbered in reading order
   examples/<name>/       # runnable files (manifests, Dockerfiles, scripts, .tf, ...)
 docs/<category>.md       # a landing page for a group of topics (Infrastructure, Delivery, ...) in the docs site nav
-docs/games/<game>/       # a browser game for the site's Play section (see CONTRIBUTING.md)
-docs/games/games.json    # the games on the home page's board
+docs/stories/<topic>/    # a topic taught as a tap-only story (see CONTRIBUTING.md, "Story mode")
+docs/games/<game>/       # a browser game for the site's Practice section (see CONTRIBUTING.md)
+docs/games/games.json    # the stories and games on the home page's board
 docs/site/               # the home page and the shared design tokens
 ```
 
