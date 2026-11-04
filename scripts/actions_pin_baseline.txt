@@ -1,0 +1,17 @@
+# Actions still on a movable tag (file: action@ref). Pin them with scripts/pin_actions.py and delete the line.
+pages.yml: actions/checkout@v4
+pages.yml: actions/deploy-pages@v4
+pages.yml: actions/setup-python@v5
+pages.yml: actions/upload-pages-artifact@v3
+trivy.yml: actions/checkout@v4
+trivy.yml: aquasecurity/trivy-action@v0.36.0
+validate.yml: DavidAnson/markdownlint-cli2-action@v16
+validate.yml: actions/checkout@v4
+validate.yml: actions/setup-node@v4
+validate.yml: actions/setup-python@v5
+validate.yml: azure/setup-helm@v4
+validate.yml: dorny/paths-filter@v3
+validate.yml: hadolint/hadolint-action@v3.1.0
+validate.yml: hashicorp/setup-terraform@v3
+validate.yml: helm/kind-action@v1.9.0
+validate.yml: terraform-linters/setup-tflint@v4

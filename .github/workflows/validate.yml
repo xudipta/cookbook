@@ -125,6 +125,8 @@ jobs:
           python-version: '3.x'
       - run: pip install yamllint
       - run: yamllint .
+      - name: Actions are pinned by commit SHA (ratchet)
+        run: python3 scripts/check_actions_pinned.py
 
   k8s-validate:
     needs: changes

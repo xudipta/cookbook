@@ -1,0 +1,32 @@
+# Keeps CI actions, the docs build's Python packages and the example Dockerfiles current.
+# Actions are meant to be pinned by commit SHA (scripts/check_actions_pinned.py); Dependabot then bumps the SHA
+# and the version comment together.
+---
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]
+    commit-message:
+      prefix: "ci"
+
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      python:
+        patterns: ["*"]
+    commit-message:
+      prefix: "deps"
+
+  - package-ecosystem: docker
+    directory: /topics/docker/examples/hello-nginx
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "deps"
