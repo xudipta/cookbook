@@ -1,6 +1,7 @@
 site_name: cookbook
 site_description: >-
-  CI-validated notes and runnable examples for infrastructure and AI tooling.
+  Learn infrastructure and AI tooling through short phone-friendly stories, then reference notes and
+  practice games. Ten topics, every example checked in CI.
 site_url: https://xudipta.github.io/cookbook/
 repo_url: https://github.com/xudipta/cookbook
 repo_name: xudipta/cookbook
