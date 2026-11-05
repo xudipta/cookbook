@@ -74,6 +74,7 @@ Terraform examples use the `local`/`random`/`null` providers, not real clouds).
 | database | sqlfluff | `sqlfluff lint topics/database/examples/` |
 | database | live migrate | see `validate.yml` `database-migrate` job (migrate up/down against a real Postgres service container) |
 | games | scenario validator | `python3 scripts/check_games.py` (schema, and every event's `learn.note`/`learn.section` must exist) |
+| games | simulator unit tests | `make unit` (`node --test "docs/games/**/*.test.mjs"`, Node 22+, a second; the `unit` job gates `games-smoke`) |
 | games | live playthrough | see `validate.yml` `games-smoke` job (builds the site, replays each game's scripted solution in Chromium) |
 
 ## Site design tokens
@@ -315,6 +316,7 @@ the clock and `?seed=42` for a repeatable run; in the browser console,
 `cookbookGames.<id>.step(5)` and `.act('doThing')` drive it by hand. To run what CI runs:
 
 ```bash
+make unit                               # simulator unit tests, about a second
 python3 scripts/check_games.py
 make docs                               # builds the site into site/
 python3 -m http.server 8000 --directory site &

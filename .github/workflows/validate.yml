@@ -498,8 +498,21 @@ jobs:
       - name: Check the design tokens meet WCAG AA in both themes
         run: python3 scripts/check_contrast.py
 
-  games-smoke:
+  unit:
+    # Fast feedback (seconds) on the pure simulators before the 7-minute browser run. games-smoke needs it.
     needs: changes
+    if: needs.changes.outputs.games == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version: '22'
+      - name: Unit-test the game simulators
+        run: node --test "docs/games/**/*.test.mjs"
+
+  games-smoke:
+    needs: [changes, unit]
     if: needs.changes.outputs.games == 'true'
     runs-on: ubuntu-latest
     env:

@@ -1,7 +1,7 @@
 YAML_FILES=$(shell find . -type f \( -name '*.yaml' -o -name '*.yml' \) ! -path './venv/*' ! -path './.git/*' ! -path './.github/*')
 MD_FILES=$(shell find . -type f -name '*.md' ! -path './venv/*' ! -path './.git/*' ! -path './site-src/*')
 
-.PHONY: lint lint-md format venv docs docs-serve screenshots help
+.PHONY: lint lint-md format venv docs docs-serve screenshots unit help
 
 lint:
 	@yamllint $(YAML_FILES)
@@ -26,6 +26,10 @@ docs:
 
 docs-serve:
 	@bash scripts/build_docs.sh && mkdocs serve
+
+# Unit-test the pure game simulators (Node 22 or newer, no dependencies; takes about a second).
+unit:
+	node --test "docs/games/**/*.test.mjs"
 
 # Rebuild the site, serve it on a free port, regenerate the README/home screenshots, stop the server.
 screenshots:
