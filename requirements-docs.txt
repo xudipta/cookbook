@@ -1,2 +1,2 @@
 # Documentation site (GitHub Pages) — see .github/workflows/pages.yml
-mkdocs-material>=9.5,<10
+mkdocs-material>=9.8.0,<10
