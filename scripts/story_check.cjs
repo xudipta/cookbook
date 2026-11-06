@@ -11,7 +11,8 @@
 // phases the script waits in). A new story needs no change to this file, and docs/stories/shared/ must stay
 // free of topic words (checked below).
 //
-// Usage: SITE_URL=http://localhost:8000/ NODE_PATH=<dir with playwright> node scripts/story_check.cjs
+// Usage: SITE_URL=http://localhost:8000/ NODE_PATH=<dir with playwright> node scripts/story_check.cjs [--wrong]
+//   --wrong plays every wrong option of every question too (see below); ONLY=linux,docker limits the stories.
 const fs = require('fs');
 const path = require('path');
 const { chromium } = require('playwright');
@@ -28,7 +29,29 @@ const STORIES_DIR = path.join(__dirname, '..', 'docs', 'stories');
 const SCREENS = [{ name: 'phone 390x844', width: 390, height: 844 }, { name: 'small phone 360x640', width: 360, height: 640 }];
 const MIN = 44;
 
-async function play(browser, id, screen, drive) {
+// --wrong: play each story again, once per "wrong option number". In run r, the first time a question is asked the
+// story takes its r-th wrong option (every option the story's drive.json `prefer` does not accept); everything
+// else is answered rightly. A run passes if the story explains the pick, never loops, and still reaches its
+// ending, so every wrong option of every question is played at least once. Two valid ways to do something (the
+// Terraform `moved` block and `state mv`) are covered the same way: the one `prefer` does not name is a "wrong"
+// pick that must still lead to the end.
+const WRONG = process.argv.includes('--wrong');
+const norm = (t) => t.replace(/\s+/g, ' ').trim();
+
+// The question on the sheet if the sheet is one: the text above the options and the option labels. (Next, Got it
+// and the chapter buttons are single and not `alt`; the options of a question are two or more `alt` buttons.)
+async function readChoice(page) {
+  return page.evaluate(() => {
+    const sheet = document.querySelector('.ks-sheet');
+    if (!sheet) return null;
+    const labels = [...sheet.querySelectorAll('.ks-btn.alt')].map((b) => b.textContent.trim());
+    if (labels.length < 2) return null;
+    const q = sheet.querySelector('.ks-say');
+    return { text: q ? q.textContent.trim() : '', labels };
+  });
+}
+
+async function play(browser, id, screen, drive, wrongIndex = -1) {
   const ctx = await browser.newContext({ viewport: { width: screen.width, height: screen.height }, hasTouch: true, isMobile: true });
   const page = await ctx.newPage();
   const problems = [];
@@ -53,6 +76,9 @@ async function play(browser, id, screen, drive) {
   const offscreen = new Set();
   const scanned = new Set();
   const prefer = drive.prefer ? new RegExp(drive.prefer) : null;
+  const asked = new Map();
+  const notes = new Set();
+  let maxWrong = 0;
   const deadline = Date.now() + 90000;
   const tapped = new Set();
   let steps = 0;
@@ -81,6 +107,37 @@ async function play(browser, id, screen, drive) {
       }
     } else tapped.clear();
     const buttons = page.locator('.ks-sheet .ks-btn');
+    if (WRONG) {
+      const choice = await readChoice(page);
+      if (choice) {
+        const key = `${norm(choice.text)}|${choice.labels.join('|')}`;
+        const times = (asked.get(key) || 0) + 1;
+        asked.set(key, times);
+        const q = norm(choice.text).slice(0, 60);
+        if (times > 4) {
+          problems.push(`asked "${q}" ${times} times: a loop`);
+          break;
+        }
+        const right = (l) => Boolean(prefer && prefer.test(l));
+        const wrong = choice.labels.map((l, i) => [l, i]).filter(([l]) => !right(l));
+        if (times === 1) {
+          if (!prefer || !wrong.length) notes.add(`"${q}": every option is accepted, so it is not a choice`);
+          else if (wrong.length === choice.labels.length) notes.add(`"${q}": no option matches "prefer"`);
+          maxWrong = Math.max(maxWrong, wrong.length === choice.labels.length ? 0 : wrong.length);
+          if (wrongIndex >= 0 && wrongIndex < wrong.length && wrong.length < choice.labels.length) {
+            const [label, at] = wrong[wrongIndex];
+            await buttons.nth(at).click();
+            steps += 1;
+            await page.waitForTimeout(60);
+            const after = await readChoice(page);
+            const same = after && norm(after.text) === norm(choice.text) && after.labels.join('|') === choice.labels.join('|');
+            const toast = await page.evaluate(() => { const t = document.querySelector('.ks-toast'); return Boolean(t && !t.hidden && t.textContent.trim()); });
+            if (same && !toast) problems.push(`"${q}" -> "${label.slice(0, 40)}": the wrong pick showed nothing (no explanation, no change)`);
+            continue;
+          }
+        }
+      }
+    }
     if (await buttons.count()) {
       const box = await buttons.first().boundingBox();
       if (box && box.y + box.height > screen.height + 0.5) offscreen.add((await buttons.first().innerText()).slice(0, 30));
@@ -100,7 +157,7 @@ async function play(browser, id, screen, drive) {
   await ctx.close();
   if (small.size) problems.push(`controls under ${MIN}px: ${[...small].slice(0, 6).join(', ')}`);
   if (offscreen.size) problems.push(`the next-step button was below the fold: ${[...offscreen].join(', ')}`);
-  return { problems, steps };
+  return { problems, steps, maxWrong, notes: [...notes] };
 }
 
 // The shared shell must stay topic-free, so a new story never needs a change to it.
@@ -140,13 +197,26 @@ function unscopedRules(id) {
     console.error(unscoped.join('\n'));
     process.exit(1);
   }
-  const ids = fs.existsSync(STORIES_DIR) ? fs.readdirSync(STORIES_DIR).filter((d) => fs.existsSync(path.join(STORIES_DIR, d, 'index.md'))) : [];
+  const only = process.env.ONLY ? process.env.ONLY.split(',') : null;
+  const ids = (fs.existsSync(STORIES_DIR) ? fs.readdirSync(STORIES_DIR).filter((d) => fs.existsSync(path.join(STORIES_DIR, d, 'index.md'))) : []).filter((d) => !only || only.includes(d));
   if (!ids.length) { console.log('no stories'); return; }
   const browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {});
   let failed = 0;
   for (const id of ids) {
+    const drive = JSON.parse(fs.readFileSync(path.join(STORIES_DIR, id, 'drive.json'), 'utf8'));
+    if (WRONG) {
+      // Run 0 answers rightly and counts the wrong options; runs 1..n take wrong option number r at each question.
+      const first = await play(browser, id, SCREENS[0], drive, -1).catch((e) => ({ problems: [e.message.split('\n')[0]], steps: 0, maxWrong: 0, notes: [] }));
+      first.notes.forEach((n) => console.log(`      note: ${n}`));
+      for (let r = 0; r < first.maxWrong; r += 1) {
+        const out = await play(browser, id, SCREENS[0], drive, r).catch((e) => ({ problems: [e.message.split('\n')[0]], steps: 0 }));
+        console.log(`${out.problems.length ? 'FAIL' : 'ok  '} ${id}, wrong option ${r + 1} of ${first.maxWrong}: ${out.steps} taps`);
+        out.problems.forEach((p) => console.log(`      ${p}`));
+        if (out.problems.length) failed += 1;
+      }
+      continue;
+    }
     for (const screen of SCREENS) {
-      const drive = JSON.parse(fs.readFileSync(path.join(STORIES_DIR, id, 'drive.json'), 'utf8'));
       const r = await play(browser, id, screen, drive).catch((e) => ({ problems: [e.message.split('\n')[0]], steps: 0 }));
       console.log(`${r.problems.length ? 'FAIL' : 'ok  '} ${id} on ${screen.name}: ${r.steps} taps`);
       r.problems.forEach((p) => console.log(`      ${p}`));
@@ -155,5 +225,5 @@ function unscopedRules(id) {
   }
   await browser.close();
   if (failed) { console.error(`\n${failed} story run(s) failed`); process.exit(1); }
-  console.log('\nevery story can be played to the end by tapping');
+  console.log(WRONG ? '\nevery wrong option of every story was played and each story still reached its ending' : '\nevery story can be played to the end by tapping');
 })();

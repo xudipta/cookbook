@@ -563,3 +563,4 @@ jobs:
           node scripts/first_screen_check.cjs
           node scripts/compose_check.cjs
           node scripts/story_check.cjs
+          node scripts/story_check.cjs --wrong

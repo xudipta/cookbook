@@ -204,6 +204,14 @@ touch screen and fails on sideways scrolling, controls under 44px, a next-step b
 violation in any phase, a story that cannot finish, or a topic word in the shared shell. Chapters finished are
 saved in this browser (`cookbook-story-progress:<id>`).
 
+`node scripts/story_check.cjs --wrong` (also run in CI) plays every wrong option of every question: in run *r* the
+first time a question is asked the story takes its *r*-th wrong option (every option `drive.json`'s `prefer` does not
+accept) and answers the rest rightly. It fails if a wrong pick shows nothing, a question repeats more than four
+times, or the story no longer reaches its ending. A second valid way to do something (the Terraform `moved` block
+versus `state mv`) is just an option `prefer` does not name, so it is played the same way. `ONLY=linux,docker` limits
+the stories. Write `prefer` so it matches exactly the right option of each question; a question where nothing matches
+is reported as a note.
+
 ## Adding a game
 
 The browser games under `docs/games/` (see the **Play** section of the docs site) share one
