@@ -188,6 +188,11 @@ To add a story `docs/stories/<id>/`:
    `mkdocs.yml` and its URL to `scripts/site_urls.txt`, and change the topic's `story` entry in
    `docs/games/games.json` from `planned` to `live` (`path`, `blurb`, `chapters`, `learns`): that is what the
    home page's story board, the topic cards and the banners on the notes read (`check_games.py` checks it).
+   The learning path is data too: `games.json` has a top-level `path` (every topic id once, in the recommended
+   order) and each topic has a `short` name and `after` (the topics worth doing first, all earlier on the
+   path). The home page's **Continue** button and path strip, the Learn page and the "Next" link at the end of
+   each story read them, and `check_games.py` fails on an unknown topic, a topic missing from or repeated in
+   the path, or an `after` that points forward (a cycle). `docs/learn.md` lists the path by hand; update it too.
 2. `story.js`: export `mountStory(host)` that calls the shared `mountStory(host, config)` with the story's
    `id`, `title`, `characters`, `chapters`, `createStage(app)` (build the stage into `app.stage`, return an object
    with `reset()` and `stop()`), the card and ending texts, and `endLinks` to the notes and the practice game.

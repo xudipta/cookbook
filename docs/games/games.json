@@ -1,12 +1,28 @@
 {
+  "path": [
+    "linux",
+    "github",
+    "docker",
+    "kubernetes",
+    "cicd",
+    "terraform",
+    "observability",
+    "database",
+    "skills",
+    "mcp"
+  ],
   "games": [
     {
       "id": "kubernetes",
       "title": "Chaos Monkey Cluster",
       "topic": "Kubernetes",
+      "short": "Kubernetes",
       "code": "K8",
       "hue": "k8s",
       "status": "live",
+      "after": [
+        "docker"
+      ],
       "levels": 3,
       "blurb": "Keep a cluster serving while pods crash, nodes drain and releases go wrong.",
       "chips": [
@@ -42,9 +58,13 @@
       "id": "docker",
       "title": "Layer Cake",
       "topic": "Docker",
+      "short": "Docker",
       "code": "DK",
       "hue": "docker",
       "status": "live",
+      "after": [
+        "linux"
+      ],
       "levels": 7,
       "blurb": "Arrange Dockerfile lines and watch which layers the build cache reuses.",
       "chips": [
@@ -78,9 +98,13 @@
       "id": "terraform",
       "title": "Drift Detective",
       "topic": "Terraform",
+      "short": "Terraform",
       "code": "TF",
       "hue": "tf",
       "status": "live",
+      "after": [
+        "linux"
+      ],
       "levels": 4,
       "blurb": "Keep config, state and reality in agreement through drift, imports and locks.",
       "chips": [
@@ -116,9 +140,11 @@
       "id": "linux",
       "title": "Night Shift",
       "topic": "Linux / Shell",
+      "short": "Linux",
       "code": "LX",
       "hue": "linux",
       "status": "live",
+      "after": [],
       "levels": 3,
       "blurb": "Answer the pager on a simulated server: find the cause with real shell commands, then fix it.",
       "chips": [
@@ -152,9 +178,14 @@
       "id": "cicd",
       "title": "Pipeline Panic",
       "topic": "Pipelines",
+      "short": "CI/CD",
       "code": "CI",
       "hue": "cicd",
       "status": "live",
+      "after": [
+        "github",
+        "docker"
+      ],
       "levels": 4,
       "blurb": "Build a workflow from cards, then pick rolling, blue-green or canary for each release.",
       "chips": [
@@ -188,9 +219,11 @@
       "id": "github",
       "title": "Merge Conflict Rush",
       "topic": "Version control",
+      "short": "Git",
       "code": "GT",
       "hue": "git",
       "status": "live",
+      "after": [],
       "levels": 3,
       "blurb": "Rescue a branch on a shared repo with real git and gh commands while the commit graph redraws.",
       "chips": [
@@ -224,9 +257,13 @@
       "id": "observability",
       "title": "Quiet Hours",
       "topic": "Metrics and alerts",
+      "short": "Observability",
       "code": "OB",
       "hue": "obs",
       "status": "live",
+      "after": [
+        "kubernetes"
+      ],
       "levels": 3,
       "blurb": "Write the alert rules, then survive a night on call: page for real incidents, sleep through the noise.",
       "chips": [
@@ -260,9 +297,13 @@
       "id": "database",
       "title": "Index Fund",
       "topic": "SQL and migrations",
+      "short": "Database",
       "code": "DB",
       "hue": "db",
       "status": "live",
+      "after": [
+        "linux"
+      ],
       "levels": 3,
       "blurb": "Read query plans, add only the indexes that pay off, and ship schema changes without downtime.",
       "chips": [
@@ -296,9 +337,11 @@
       "id": "skills",
       "title": "Skill Issue",
       "topic": "AI tooling",
+      "short": "Agent Skills",
       "code": "SK",
       "hue": "skills",
       "status": "live",
+      "after": [],
       "levels": 3,
       "blurb": "Author a SKILL.md and see whether an agent would trigger it, inside a limited context window.",
       "chips": [
@@ -332,9 +375,13 @@
       "id": "mcp",
       "title": "Patch Bay",
       "topic": "AI tooling",
+      "short": "MCP",
       "code": "MC",
       "hue": "mcp",
       "status": "live",
+      "after": [
+        "skills"
+      ],
       "levels": 3,
       "blurb": "Wire an agent to MCP servers: pick transports and scopes, keep secrets out of version control, vet what you plug in.",
       "chips": [

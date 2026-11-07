@@ -28,6 +28,24 @@ export const ROOT = new URL('../../../', import.meta.url);
 export const siteUrl = (path) => new URL(path, ROOT).href;
 
 // End-of-story links to the practice game, one per level: [[levelId, label], ...] (the game opens on that level).
+// The story that follows this one on the recommended path (docs/games/games.json: "path"), or null: the last
+// story, a story not on the path, or games.json not loading all mean no "Next" link.
+async function nextInPath(id) {
+  try {
+    const res = await fetch(siteUrl('docs/games/games.json'));
+    if (!res.ok) return null;
+    const { path = [], games = [] } = await res.json();
+    const from = path.indexOf(id);
+    for (let i = from + 1; from >= 0 && i < path.length; i += 1) {
+      const g = games.find((x) => x.id === path[i]);
+      if (g && g.story && g.story.status === 'live') return { text: `Next: ${g.story.title} (${g.short || g.topic})`, href: siteUrl(g.story.path) };
+    }
+  } catch {
+    // Offline or blocked: the ending still has its own links.
+  }
+  return null;
+}
+
 export const practiceLinks = (game, levels) => levels.map(([id, text]) => ({ text: `Practice: ${text}`, href: new URL(`${game}/?level=${id}`, siteUrl('docs/games/')).href }));
 export const sleep = (ms) => new Promise((r) => setTimeout(r, FAST ? Math.min(ms, 15) : ms));
 
@@ -197,12 +215,16 @@ function createUI(app, config) {
     const rows = notebook.map((n) => h('li', { class: 'ks-end-item' },
       h('div', { class: 'ks-end-maps' }, n.maps.map(([k, r]) => h('span', { class: 'ks-end-map' }, k, ' → ', h('code', { text: r })))),
       h('p', { class: 'ks-end-plain' }, ...rich(n.plain))));
+    const links = h('div', { class: 'ks-links' }, config.endLinks.map((l) => h('a', { class: 'ks-link', href: l.href, text: l.text })));
+    nextInPath(config.id).then((next) => {
+      if (next) links.prepend(h('a', { class: 'ks-link ks-link-next', href: next.href, text: next.text }));
+    });
     show(true,
       h('p', { class: 'ks-kicker', text: config.endKicker }),
       h('h2', { class: 'ks-h', text: config.endTitle }),
       h('p', { class: 'ks-say', text: config.endIntro }),
       h('ul', { class: 'ks-end-list' }, rows),
-      h('div', { class: 'ks-links' }, config.endLinks.map((l) => h('a', { class: 'ks-link', href: l.href, text: l.text }))),
+      links,
       h('div', { class: 'ks-actions' }, h('button', { class: 'ks-btn alt', type: 'button', 'data-action': 'replay', text: 'Play the story again' })));
   };
   return ui;

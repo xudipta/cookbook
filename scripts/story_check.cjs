@@ -154,6 +154,17 @@ async function play(browser, id, screen, drive, wrongIndex = -1) {
   // The ending lists the whole notebook, so the replay button may be scrolled; the links must work as links.
   const links = await page.$$eval('.ks-end-list ~ .ks-links a', (a) => a.map((x) => x.getAttribute('href')));
   if (links.length < 2 || links.some((l) => !l || l === '#')) problems.push('the ending needs links to the notes and the real game');
+  // The ending also says what comes next on the recommended path (games.json "path"), unless this is the last story.
+  if (!WRONG) {
+    const manifest = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'docs', 'games', 'games.json'), 'utf8'));
+    const at = manifest.path.indexOf(id);
+    const nextId = at >= 0 ? manifest.path[at + 1] : null;
+    await page.waitForTimeout(400);
+    const next = await page.$$eval('.ks-link-next', (a) => a.map((x) => x.getAttribute('href')));
+    if (nextId && next.length !== 1) problems.push(`the ending has no "Next" link to the ${nextId} story`);
+    if (nextId && next.length === 1 && !next[0].includes(`/docs/stories/${nextId}/`)) problems.push(`the "Next" link goes to ${next[0]}, not the ${nextId} story`);
+    if (!nextId && next.length) problems.push('the last story on the path should not link to a next one');
+  }
   await ctx.close();
   if (small.size) problems.push(`controls under ${MIN}px: ${[...small].slice(0, 6).join(', ')}`);
   if (offscreen.size) problems.push(`the next-step button was below the fold: ${[...offscreen].join(', ')}`);

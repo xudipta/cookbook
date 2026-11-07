@@ -38,14 +38,15 @@
       <div>
         <p class="label hero-kicker">Infrastructure, as a story</p>
         <h1>Play the story.<br>See it happen.<br><em>Learn why.</em></h1>
-        <p class="lead">Short stories you play with taps, on your phone. A pizza kitchen teaches Kubernetes. Each step shows you the idea first, and only then gives you the real name and the real command.</p>
+        <p class="lead">Short stories you play with taps, on your phone. A pizza kitchen teaches Kubernetes, a library teaches databases. Each step shows you the idea first, and only then gives you the real name and the real command.</p>
         <div class="cta">
-          <a class="btn primary" href="docs/stories/kubernetes/">Start the Kubernetes story</a>
+          <a class="btn primary" id="continue" href="docs/stories/linux/">Start with the Linux story</a>
           <a class="btn" href="#notes">Browse notes by topic</a>
         </div>
+        <p class="cta-note" id="continue-note">Linux, step 1 of 10 on the path</p>
         <ul class="facts">
-          <li><strong data-stat="stories-live">1</strong> story live</li>
-          <li><strong data-stat="stories-planned">9</strong> on the way</li>
+          <li><strong data-stat="stories-live">10</strong> stories to play</li>
+          <li id="planned-fact" hidden><strong data-stat="stories-planned">0</strong> on the way</li>
           <li><strong>0</strong> installs, runs in your browser</li>
         </ul>
       </div>
@@ -60,10 +61,13 @@
       <div class="sec-head">
         <p class="label">Stories</p>
         <h2 id="stories-h">One story per topic.</h2>
-        <p>Each story is three or four short chapters. Start with the one that is live; the others are being written, in this order.</p>
+        <p>Each story is three or four short chapters. Not sure where to start? Follow the path from the top, or jump to any topic: the order is a suggestion, not a lock.</p>
       </div>
+      <ol class="path" id="path" aria-label="Recommended order">
+        <li class="path-step" data-state="now"><a href="docs/stories/linux/"><span class="path-n" aria-hidden="true">1</span><span class="path-name">Linux</span></a></li>
+      </ol>
       <div class="board" id="story-tiles">
-        <noscript><p>The story board needs JavaScript. Start with <a href="docs/stories/kubernetes/">the Kubernetes story</a>.</p></noscript>
+        <noscript><p>The story board needs JavaScript. Start with <a href="docs/stories/linux/">the Linux story</a>.</p></noscript>
       </div>
     </section>
 
