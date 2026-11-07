@@ -75,7 +75,7 @@ Terraform examples use the `local`/`random`/`null` providers, not real clouds).
 | database | live migrate | see `validate.yml` `database-migrate` job (migrate up/down against a real Postgres service container) |
 | games | scenario validator | `python3 scripts/check_games.py` (schema, and every event's `learn.note`/`learn.section` must exist) |
 | games | simulator unit tests | `make unit` (`node --test "docs/games/**/*.test.mjs"`, Node 22+, a second; the `unit` job gates `games-smoke`) |
-| games | live playthrough | see `validate.yml` `games-smoke` job (builds the site, replays each game's scripted solution in Chromium) |
+| games | live playthrough | see `validate.yml`: `site-build` builds the site once, the `browser` shards (games, site, stories, wrong picks) replay each game's scripted solution and check layout in Chromium in parallel, and `games-smoke` is the one aggregate check that gates merges |
 
 ## Site design tokens
 

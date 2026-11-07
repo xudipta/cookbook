@@ -78,6 +78,8 @@ jobs:
               - 'scripts/site_urls.txt'
               - 'scripts/play_banners.py'
             games:
+              # Changing this workflow reruns the browser shards it defines.
+              - '.github/workflows/validate.yml'
               - 'docs/games/**'
               - 'docs/stories/**'
               - 'docs/site/**'
@@ -499,7 +501,7 @@ jobs:
         run: python3 scripts/check_contrast.py
 
   unit:
-    # Fast feedback (seconds) on the pure simulators before the 7-minute browser run. games-smoke needs it.
+    # Fast feedback (seconds) on the pure simulators before the browser shards. site-build needs it.
     needs: changes
     if: needs.changes.outputs.games == 'true'
     runs-on: ubuntu-latest
@@ -511,7 +513,10 @@ jobs:
       - name: Unit-test the game simulators
         run: node --test "docs/games/**/*.test.mjs"
 
-  games-smoke:
+  # The browser checks used to be one serial job of about 7.5 minutes. The site is now built once (site-build),
+  # shared as an artifact, and the browser scripts run in parallel shards (browser). `games-smoke` stays as the one
+  # aggregate check that gates merges, so branch protection does not have to list each shard.
+  site-build:
     needs: [changes, unit]
     if: needs.changes.outputs.games == 'true'
     runs-on: ubuntu-latest
@@ -546,21 +551,79 @@ jobs:
         run: |
           bash <(curl -sSL https://raw.githubusercontent.com/rhysd/actionlint/914e7df21a07ef503a81201c76d2b11c789d3fca/scripts/download-actionlint.bash) 1.7.12  # v1.7.12, pinned
           PATH="$PWD:$PATH" node docs/games/cicd/lint-yaml.mjs
+      - name: Share the built site with the browser shards
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: site
+          path: _site
+          retention-days: 1
+
+  browser:
+    name: browser (${{ matrix.name }})
+    needs: site-build
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: games
+            run: node scripts/games_smoke.cjs
+          - name: site
+            run: |
+              node scripts/site_quality.cjs
+              node scripts/mobile_quality.cjs
+              node scripts/first_screen_check.cjs
+              node scripts/compose_check.cjs
+          - name: stories
+            run: node scripts/story_check.cjs
+          # The wrong-option pass is the longest script, so it runs as two halves.
+          - name: stories, wrong picks 1
+            only: cicd,database,docker,github,kubernetes
+            run: node scripts/story_check.cjs --wrong
+          - name: stories, wrong picks 2
+            only: linux,mcp,observability,skills,terraform
+            run: node scripts/story_check.cjs --wrong
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '20'
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: site
+          path: _site
+      - name: Cache the Playwright browser
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-1.49.1-${{ runner.os }}
       - name: Install Playwright and Chromium
         run: |
           npm install --prefix "$RUNNER_TEMP/pw" playwright@1.49.1 axe-core@4.10.2
           "$RUNNER_TEMP/pw/node_modules/.bin/playwright" install --with-deps chromium
-      - name: Play every game, then check layout and accessibility on the built site
+      - name: Serve the site and run the checks
         env:
           NODE_PATH: ${{ runner.temp }}/pw/node_modules
           SITE_URL: http://localhost:8000/
+          ONLY: ${{ matrix.only }}
         run: |
           python3 -m http.server 8000 --directory _site >/dev/null 2>&1 &
           timeout 30 sh -c 'until curl -sf http://localhost:8000/ >/dev/null; do sleep 1; done'
-          node scripts/games_smoke.cjs
-          node scripts/site_quality.cjs
-          node scripts/mobile_quality.cjs
-          node scripts/first_screen_check.cjs
-          node scripts/compose_check.cjs
-          node scripts/story_check.cjs
-          node scripts/story_check.cjs --wrong
+          ${{ matrix.run }}
+
+  # The one check branch protection needs: green when the game files did not change, or when every job above passed.
+  games-smoke:
+    needs: [changes, unit, site-build, browser]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: All game checks passed
+        env:
+          GAMES: ${{ needs.changes.outputs.games }}
+          RESULTS: ${{ needs.unit.result }} ${{ needs.site-build.result }} ${{ needs.browser.result }}
+        run: |
+          if [ "$GAMES" != "true" ]; then echo "no game files changed: nothing to check"; exit 0; fi
+          echo "unit, site-build, browser: $RESULTS"
+          for r in $RESULTS; do
+            [ "$r" = success ] || { echo "a game check did not succeed ($r)"; exit 1; }
+          done
