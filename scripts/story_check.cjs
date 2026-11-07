@@ -39,6 +39,9 @@ const MIN = 44;
 const WRONG = process.argv.includes('--wrong');
 // --dark: play every story in the dark colour scheme (Material's slate, chosen by prefers-color-scheme) at one phone size.
 const DARK = process.argv.includes('--dark');
+// --trace <dir> writes the text of every sheet each story showed, run by run (right answers, then each wrong option), as
+// <dir>/<story>.json: diff two directories to prove a refactor of the story scripts changed nothing the learner reads.
+const TRACE = process.argv.includes('--trace') ? process.argv[process.argv.indexOf('--trace') + 1] : null;
 const norm = (t) => t.replace(/\s+/g, ' ').trim();
 
 // The question on the sheet if the sheet is one: the text above the options and the option labels. (Next, Got it
@@ -90,6 +93,7 @@ async function play(browser, id, screen, drive, wrongIndex = -1) {
   const scanned = new Set();
   const prefer = drive.prefer ? new RegExp(drive.prefer) : null;
   const asked = new Map();
+  const seen = [];
   const notes = new Set();
   let maxWrong = 0;
   const deadline = Date.now() + 90000;
@@ -98,6 +102,10 @@ async function play(browser, id, screen, drive, wrongIndex = -1) {
   while (Date.now() < deadline) {
     const phase = await page.getAttribute('.ks', 'data-phase');
     if (phase === 'end') break;
+    if (TRACE) {
+      const text = await page.evaluate(() => { const n = document.querySelector('.ks-sheet'); return n ? n.innerText.replace(/\s+/g, ' ').trim() : ''; });
+      if (text && text !== seen[seen.length - 1]) seen.push(text);
+    }
     await audit();
     if (AXE && !scanned.has(phase)) {
       scanned.add(phase);
@@ -181,7 +189,7 @@ async function play(browser, id, screen, drive, wrongIndex = -1) {
   await ctx.close();
   if (small.size) problems.push(`controls under ${MIN}px: ${[...small].slice(0, 6).join(', ')}`);
   if (offscreen.size) problems.push(`the next-step button was below the fold: ${[...offscreen].join(', ')}`);
-  return { problems, steps, maxWrong, notes: [...notes] };
+  return { problems, steps, maxWrong, notes: [...notes], seen };
 }
 
 // The shared shell must stay topic-free, so a new story never needs a change to it.
@@ -194,6 +202,17 @@ function sharedIsTopicFree() {
       if (topic.test(line)) bad.push(`docs/stories/shared/${f}:${i + 1}: ${line.trim().slice(0, 60)}`);
     });
   }
+  return bad;
+}
+
+// The question loop, the "look" step, the seeded random numbers and the stub context live in docs/stories/shared/helpers.js;
+// a story that defines its own copy fails here (they used to drift apart, one copy per story).
+function ownCopies(id) {
+  const file = path.join(STORIES_DIR, id, 'story.js');
+  const bad = [];
+  fs.readFileSync(file, 'utf8').split('\n').forEach((line, i) => {
+    if (/^\s*(?:async\s+)?(?:function|const|let)\s+(?:decide|look|seedRng|seededRng|mulberry32)\b/.test(line)) bad.push(`docs/stories/${id}/story.js:${i + 1}: defines its own ${line.trim().split(/[\s(=]+/).slice(-3)[0] || 'helper'}; import it from ../shared/helpers.js`);
+  });
   return bad;
 }
 
@@ -217,6 +236,11 @@ function unscopedRules(id) {
     console.error(`topic words in the shared story shell:\n  ${leaks.join('\n  ')}`);
     process.exit(1);
   }
+  const copies = (fs.existsSync(STORIES_DIR) ? fs.readdirSync(STORIES_DIR) : []).filter((d) => d !== 'shared' && fs.existsSync(path.join(STORIES_DIR, d, 'story.js'))).flatMap(ownCopies);
+  if (copies.length) {
+    console.error(copies.join('\n'));
+    process.exit(1);
+  }
   const unscoped = (fs.existsSync(STORIES_DIR) ? fs.readdirSync(STORIES_DIR) : []).filter((d) => fs.existsSync(path.join(STORIES_DIR, d, 'story.css')) && d !== 'shared').flatMap(unscopedRules);
   if (unscoped.length) {
     console.error(unscoped.join('\n'));
@@ -233,11 +257,17 @@ function unscopedRules(id) {
       // Run 0 answers rightly and counts the wrong options; runs 1..n take wrong option number r at each question.
       const first = await play(browser, id, SCREENS[0], drive, -1).catch((e) => ({ problems: [e.message.split('\n')[0]], steps: 0, maxWrong: 0, notes: [] }));
       first.notes.forEach((n) => console.log(`      note: ${n}`));
+      const traces = { right: first.seen };
       for (let r = 0; r < first.maxWrong; r += 1) {
         const out = await play(browser, id, SCREENS[0], drive, r).catch((e) => ({ problems: [e.message.split('\n')[0]], steps: 0 }));
+        traces[`wrong${r + 1}`] = out.seen;
         console.log(`${out.problems.length ? 'FAIL' : 'ok  '} ${id}, wrong option ${r + 1} of ${first.maxWrong}: ${out.steps} taps`);
         out.problems.forEach((p) => console.log(`      ${p}`));
         if (out.problems.length) failed += 1;
+      }
+      if (TRACE) {
+        fs.mkdirSync(TRACE, { recursive: true });
+        fs.writeFileSync(path.join(TRACE, `${id}.json`), `${JSON.stringify(traces, null, 1)}\n`);
       }
       continue;
     }

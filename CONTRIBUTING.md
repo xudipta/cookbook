@@ -204,6 +204,12 @@ To add a story `docs/stories/<id>/`:
 4. `drive.json`: the answer `scripts/story_check.cjs` prefers when you offer choices, and what to tap in the phases
    your script waits in (`"rush": { "click": "<selector>", "once": true }`).
 
+Shared helpers live in `docs/stories/shared/helpers.js`: `decide` (ask until the right option is picked: the right
+one runs `cmd`/`run` and shows the output, a wrong one is explained and may replay a `trial` on a scratch copy), `look`,
+`askUntilRight` (the loop under both), `stubCtx` (the engine context a story hands a simulator), `seededRng` and
+`printedSince`. A story gives `decide` what is topic-specific through its `A` object (`A.who`, `A.sh`, `A.trial`,
+`A.trialText`) and its options; do not copy these into a story (`story_check.cjs` fails if you do).
+
 `?fast=1` shortens every wait. `scripts/story_check.cjs` plays each story to the end on a 390x844 and a 360x640
 touch screen and fails on sideways scrolling, controls under 44px, a next-step button below the fold, an axe
 violation in any phase, a story that cannot finish, or a topic word in the shared shell. Chapters finished are

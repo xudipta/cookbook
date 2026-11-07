@@ -5,6 +5,7 @@
 // practice game's real simulator (docs/games/terraform/sim.js), so plan, apply, import and
 // force-unlock print what the game prints. Each chapter is a plain async script over it (see ../shared/story.js).
 import { h, outputBox, mountStory as mount, practiceLinks, siteUrl } from '../shared/story.js';
+import { printedSince } from '../shared/helpers.js';
 import { addMoved, computePlan, createWorld, evalValue, extractModule, runCommand } from '../../games/terraform/sim.js';
 
 const HUB = siteUrl('docs/games/');
@@ -71,7 +72,7 @@ function createCaseBoard(app, { levels, schema }) {
       const w = T.world;
       const before = w.term.length;
       runCommand(w, ctx, line);
-      const out = w.term.slice(before).map((l) => l.text).join('\n').trim();
+      const out = printedSince(w.term, before).trim();
       paint();
       return out;
     },

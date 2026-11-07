@@ -5,7 +5,8 @@
 // (docs/games/cicd/sim.js): the cards generate the real GitHub Actions YAML, every incoming pull request is run
 // through the workflow as it stands, and Deploy Day replays a bad release through three rollout strategies. Each
 // chapter is a plain async script over it (see ../shared/story.js).
-import { h, createCounters, outputBox, mountStory as mount, practiceLinks, siteUrl } from '../shared/story.js';
+import { h, createCounters, outputBox as box, mountStory as mount, practiceLinks, siteUrl } from '../shared/story.js';
+import { askUntilRight, seededRng, stubCtx } from '../shared/helpers.js';
 import { applyAction, buildFiles, createWorld, goals, incoming, pipelineStats, tick, tileStates } from '../../games/cicd/sim.js';
 
 const HUB = siteUrl('docs/games/');
@@ -18,14 +19,8 @@ const GROUP_WORD = {
   checkout: 'Fetches the PR code',
 };
 
-const seedRng = (a) => () => {
-  a |= 0;
-  a = (a + 0x6d2b79f5) | 0;
-  let t = Math.imul(a ^ (a >>> 15), 1 | a);
-  t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-};
-
+// How a simulator log line reads in the box under a card.
+const noteLine = (t, o) => `${o && o.kind === 'warn' ? 'Problem' : 'Note'}: ${String(t).replace(/\s*\(-\d+ health\)/, '')}`;
 const fmt = (n) => (Number.isInteger(n) ? String(n) : n.toFixed(1));
 const pct = (n) => `${(n * 100).toFixed(1)}%`;
 
@@ -45,8 +40,7 @@ function createLine(app, { levels, cardDefs }) {
   app.caption.before(next, counters.el, line, envs, release, fleet, errors);
 
   const A = { sc: null, world: null, kind: null, lines: [] };
-  const ctx = { ticks: 0, fire() {}, resolve() {}, log(t, o) { A.lines.push(`${o && o.kind === 'warn' ? 'Problem' : 'Note'}: ${String(t).replace(/\s*\(-\d+ health\)/, '')}`); }, step() {}, rng: null, scenario: null };
-  ctx.step = () => { ctx.ticks += 1; tick(A.world, ctx); };
+  const ctx = stubCtx(null, (c) => tick(A.world, c), { log: (t, o) => A.lines.push(noteLine(t, o)), rng: null });
 
   function paintPipeline() {
     const w = A.world;
@@ -99,7 +93,7 @@ function createLine(app, { levels, cardDefs }) {
       const level = levels.find((l) => l.id === levelId);
       A.sc = { ...level, cardDefs };
       ctx.scenario = A.sc;
-      ctx.rng = seedRng(level.seed || 7);
+      ctx.rng = seededRng(level.seed || 7);
       ctx.ticks = 0;
       A.world = createWorld(A.sc);
       A.kind = A.world.mode;
@@ -128,7 +122,7 @@ function createLine(app, { levels, cardDefs }) {
     // Replay a bad release through a rollout strategy in a world of its own: how many requests failed?
     failedWith(kind, replay) {
       const w = createWorld(A.sc);
-      const c = { ticks: 0, fire() {}, resolve() {}, log() {}, step() { c.ticks += 1; tick(w, c); }, rng: seedRng(A.sc.seed || 7), scenario: A.sc };
+      const c = stubCtx(A.sc, (x) => tick(w, x), { rng: seededRng(A.sc.seed || 7) });
       for (const [name, ...args] of replay) applyAction(w, c, name, ...args);
       applyAction(w, c, 'promote'); applyAction(w, c, 'wait');
       applyAction(w, c, 'deploy', kind);
@@ -142,8 +136,8 @@ function createLine(app, { levels, cardDefs }) {
     // Returns what the simulator printed for the extra steps, the delivery health and the failed requests.
     trial(steps) {
       const w = createWorld(A.sc);
-      const c = { ticks: 0, fire() {}, resolve() {}, log(t, o) { lines.push(`${o && o.kind === 'warn' ? 'Problem' : 'Note'}: ${String(t).replace(/\s*\(-\d+ health\)/, '')}`); }, step() { c.ticks += 1; tick(w, c); }, rng: seedRng(A.sc.seed || 7), scenario: A.sc };
       const lines = [];
+      const c = stubCtx(A.sc, (x) => tick(w, x), { log: (t, o) => lines.push(noteLine(t, o)), rng: seededRng(A.sc.seed || 7) });
       for (const [name, ...args] of A.hist || []) applyAction(w, c, name, ...args);
       lines.length = 0;
       const before = w.out.length;
@@ -173,21 +167,12 @@ function createLine(app, { levels, cardDefs }) {
   return A;
 }
 
-// What a run printed, as an output box.
-const box = (text) => outputBox(text);
-
 // One problem on the line: the player picks the card that fixes it; a wrong pick is explained and asked again.
-async function pickFix(ui, A, ask, options) {
-  for (;;) {
-    const picked = await ui.choose('ray', ask, options.map((o) => ({ label: o.label, value: o.card })));
-    const opt = options.find((o) => o.card === picked);
-    if (opt.right) {
-      A.place(picked);
-      return;
-    }
-    await ui.say('ray', opt.why, 'Try again');
-  }
-}
+const pickFix = (ui, A, ask, options) => askUntilRight(ui, 'ray', ask, options, {
+  key: (o) => o.card,
+  right: (opt, card) => A.place(card),
+  wrong: (opt) => ui.say('ray', opt.why, 'Try again'),
+});
 
 function makeChapters() {
   return [

@@ -4,13 +4,13 @@
 // catalogue, and a migration is renovating the library without closing it. The story runs on the practice game's
 // real engine (docs/games/database/sim.js): every card runs real SQL against the simulated database and shows the
 // plan the planner printed. Each chapter is a plain async script over it (see ../shared/story.js).
-import { h, createCounters, outputBox, mountStory as mount, practiceLinks, siteUrl } from '../shared/story.js';
+import { h, createCounters, outputBox as box, mountStory as mount, practiceLinks, siteUrl } from '../shared/story.js';
+import { decide, look, printedSince, stubCtx } from '../shared/helpers.js';
 import { afterMove, createWorld, describeApp, evalQuery, metrics, migrationRows, runLine, saveFile, start, swapQuery, tick } from '../../games/database/sim.js';
 
 const HUB = siteUrl('docs/games/');
 const NOTE = (name) => siteUrl(`topics/database/notes/${name}/`);
 
-const box = (text) => outputBox(text);
 const fmtMs = (n) => (n >= 100 ? String(Math.round(n)) : n >= 10 ? n.toFixed(0) : n.toFixed(1));
 const MARK = { applied: 'done', pending: 'waiting', changed: 'edited' };
 
@@ -25,12 +25,8 @@ function createLibrary(app, { data }) {
   const migs = h('ol', { class: 'lb-migs', 'aria-label': 'Migrations', hidden: true });
   app.caption.before(reqs, counters.el, shop, migs);
 
-  const A = { world: null, sc: null, hist: [] };
-  const ctx = { ticks: 0, fire() {}, resolve() {}, log() {}, step() {}, rng: () => 0.5, scenario: null };
-  ctx.step = () => {
-    ctx.ticks += 1;
-    tick(A.world, ctx);
-  };
+  const A = { world: null, sc: null, hist: [], who: 'libby', trialText: (t) => t.out };
+  const ctx = stubCtx(null, (c) => tick(A.world, c));
 
   function paintTuning() {
     const w = A.world;
@@ -115,7 +111,7 @@ function createLibrary(app, { data }) {
       const before = w.term.length;
       for (const c of [].concat(cmds)) exec(w, ctx, { sh: c }, true);
       paint();
-      return w.term.slice(before).map((l) => l.text).join('\n');
+      return printedSince(w.term, before);
     },
     day() {
       exec(A.world, ctx, { day: 1 }, true);
@@ -133,19 +129,18 @@ function createLibrary(app, { data }) {
     // printed output, plus how the scratch copy ended up.
     trial(cmds) {
       const w = build();
-      const c = { ticks: 0, fire() {}, resolve() {}, log() {}, step() {}, rng: () => 0.5, scenario: A.sc };
-      c.step = () => { c.ticks += 1; tick(w, c); };
+      const c = stubCtx(A.sc, (x) => tick(w, x));
       start(w, c);
       for (const step of A.hist) exec(w, c, step, false);
       const before = w.term.length;
       for (const x of [].concat(cmds)) exec(w, c, { sh: x }, false);
-      return { out: w.term.slice(before).map((l) => l.text).join('\n'), world: w, metrics: w.mode === 'migrations' ? null : metrics(w), ctx: c };
+      return { out: printedSince(w.term, before), world: w, metrics: w.mode === 'migrations' ? null : metrics(w), ctx: c };
     },
     // Runs fn and returns everything the server printed meanwhile.
     capture(fn, head = '') {
       const before = A.world.term.length;
       fn();
-      const out = A.world.term.slice(before).map((l) => l.text).join('\n');
+      const out = printedSince(A.world.term, before);
       return head ? `${head}\n${out}` : out;
     },
     slow(id) {
@@ -171,30 +166,6 @@ function createLibrary(app, { data }) {
     stop() {},
   });
   return A;
-}
-
-// One decision. The right card runs the real SQL and shows what the database printed; a wrong card is explained
-// (with the real consequence on a scratch copy, when there is one) and the question is asked again.
-async function decide(ui, A, ask, options, after) {
-  for (;;) {
-    const picked = await ui.choose('libby', ask, options.map((o) => ({ label: o.label, value: o.label })));
-    const opt = options.find((o) => o.label === picked);
-    if (opt.right) {
-      const out = typeof opt.cmd === 'function' ? opt.cmd() : A.sh(opt.cmd);
-      await ui.say('libby', typeof after === 'function' ? after(out) : after, 'Next', box(out));
-      return out;
-    }
-    const t = opt.trial ? A.trial(opt.trial) : null;
-    await ui.say('libby', typeof opt.why === 'function' ? opt.why(t) : opt.why, 'Try again', t && opt.show !== false ? box(t.out) : null);
-  }
-}
-
-// A look that is not a decision: one button, then the real output.
-async function look(ui, A, text, button, cmd, after) {
-  await ui.say('libby', text, button);
-  const out = A.sh(cmd);
-  await ui.say('libby', typeof after === 'function' ? after(out) : after, 'Next', box(out));
-  return out;
 }
 
 // How long a request takes in a trial copy.

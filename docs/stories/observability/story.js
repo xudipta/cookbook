@@ -4,20 +4,12 @@
 // answering. The story runs on the practice game's real simulator (docs/games/observability/sim.js): the charts are
 // the simulated week and night, every alert is a real rule that is replayed against the last seven days, and the
 // night is played through the real engine. Each chapter is a plain async script over it (see ../shared/story.js).
-import { h, createCounters, outputBox, mountStory as mount, practiceLinks, siteUrl } from '../shared/story.js';
+import { h, createCounters, outputBox as box, mountStory as mount, practiceLinks, siteUrl } from '../shared/story.js';
+import { askUntilRight, seededRng, stubCtx } from '../shared/helpers.js';
 import { backtest, classify, createWorld, exprOf, nightOver, saveRule, tick, valueAt } from '../../games/observability/sim.js';
 
 const HUB = siteUrl('docs/games/');
 const NOTE = (name) => siteUrl(`topics/observability/notes/${name}/`);
-const box = (text) => outputBox(text);
-
-const seedRng = (a) => () => {
-  a |= 0;
-  a = (a + 0x6d2b79f5) | 0;
-  let t = Math.imul(a ^ (a >>> 15), 1 | a);
-  t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-};
 
 const NS = 'http://www.w3.org/2000/svg';
 const svg = (tag, attrs = {}) => {
@@ -53,7 +45,7 @@ function createWard(app, { data }) {
   app.caption.before(chartTitle, chart, chartNote, replay, counters.el);
 
   const A = { world: null, sc: null, lines: [] };
-  const ctx = { ticks: 0, fire() {}, resolve() {}, log(t) { A.lines.push(String(t)); }, step() {}, rng: null, scenario: null };
+  const ctx = stubCtx(null, null, { log: (t) => A.lines.push(String(t)), rng: null });
 
   // The word for what a replay found, one line per kind of real incident.
   function describe(r) {
@@ -105,7 +97,7 @@ function createWard(app, { data }) {
       ctx.ticks = 0;
       A.night = false;
       A.replayOn = false;
-      A.world = createWorld(A.sc, seedRng(A.sc.seed || 7));
+      A.world = createWorld(A.sc, seededRng(A.sc.seed || 7));
       A.lines = [];
       chartTitle.hidden = true;
       chart.hidden = true;
@@ -242,19 +234,17 @@ async function readVital(ui, A, index, during = false) {
 }
 
 // One alert decision. A wrong rule is replayed against the last week and the result shown; the right one is installed.
-async function decideRule(ui, A, ask, replaces, options, after) {
-  for (;;) {
-    const picked = await ui.choose('nia', ask, options.map((o) => ({ label: o.label, value: o.label })));
-    const opt = options.find((o) => o.label === picked);
+const decideRule = (ui, A, ask, replaces, options, after) => askUntilRight(ui, 'nia', ask, options, {
+  async right(opt) {
     const { result } = A.candidate(opt.spec, replaces);
-    if (opt.right) {
-      A.setRule(opt.spec, replaces);
-      await ui.say('nia', after, 'Next', box(A.describe(result)));
-      return;
-    }
+    A.setRule(opt.spec, replaces);
+    await ui.say('nia', after, 'Next', box(A.describe(result)));
+  },
+  async wrong(opt) {
+    const { result } = A.candidate(opt.spec, replaces);
     await ui.say('nia', opt.why, 'Try again', box(A.describe(result)));
-  }
-}
+  },
+});
 
 function makeChapters() {
   return [
