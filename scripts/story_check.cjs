@@ -12,7 +12,8 @@
 // free of topic words (checked below).
 //
 // Usage: SITE_URL=http://localhost:8000/ NODE_PATH=<dir with playwright> node scripts/story_check.cjs [--wrong]
-//   --wrong plays every wrong option of every question too (see below); ONLY=linux,docker limits the stories.
+//   --wrong plays every wrong option of every question too (see below); --dark plays in the dark scheme;
+//   ONLY=linux,docker limits the stories.
 const fs = require('fs');
 const path = require('path');
 const { chromium } = require('playwright');
@@ -36,6 +37,8 @@ const MIN = 44;
 // Terraform `moved` block and `state mv`) are covered the same way: the one `prefer` does not name is a "wrong"
 // pick that must still lead to the end.
 const WRONG = process.argv.includes('--wrong');
+// --dark: play every story in the dark colour scheme (Material's slate, chosen by prefers-color-scheme) at one phone size.
+const DARK = process.argv.includes('--dark');
 const norm = (t) => t.replace(/\s+/g, ' ').trim();
 
 // The question on the sheet if the sheet is one: the text above the options and the option labels. (Next, Got it
@@ -52,12 +55,22 @@ async function readChoice(page) {
 }
 
 async function play(browser, id, screen, drive, wrongIndex = -1) {
-  const ctx = await browser.newContext({ viewport: { width: screen.width, height: screen.height }, hasTouch: true, isMobile: true });
+  const ctx = await browser.newContext({ viewport: { width: screen.width, height: screen.height }, hasTouch: true, isMobile: true, colorScheme: DARK ? 'dark' : 'light' });
   const page = await ctx.newPage();
   const problems = [];
   page.on('pageerror', (e) => problems.push(`page error: ${e.message}`));
   await page.goto(`${SITE_URL}docs/stories/${id}/?fast=1`, { waitUntil: 'load' });
   await page.waitForSelector('.ks .ks-btn', { timeout: 15000 });
+  if (DARK) {
+    // The story must really be on the dark scheme: Material's attribute is set and the stage background is dark.
+    const dark = await page.evaluate(() => {
+      const m = /rgba?\((\d+), (\d+), (\d+)/.exec(getComputedStyle(document.querySelector('.ks')).backgroundColor);
+      const lum = m ? (0.2126 * m[1] + 0.7152 * m[2] + 0.0722 * m[3]) / 255 : 1;
+      return { scheme: document.body.getAttribute('data-md-color-scheme'), lum };
+    });
+    if (dark.scheme !== 'slate') problems.push(`the page is not on the dark scheme (data-md-color-scheme="${dark.scheme}")`);
+    else if (dark.lum > 0.35) problems.push(`the story stage stays light in dark mode (luminance ${dark.lum.toFixed(2)})`);
+  }
 
   const small = new Set();
   const audit = async () => {
@@ -189,10 +202,11 @@ function sharedIsTopicFree() {
 function unscopedRules(id) {
   const file = path.join(STORIES_DIR, id, 'story.css');
   const prefix = `.ks[data-story="${id}"]`;
+  const darkPrefix = `body[data-md-color-scheme="slate"] ${prefix}`;
   const css = fs.readFileSync(file, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/@keyframes[^{]+\{(?:[^{}]*\{[^}]*\})*[^}]*\}/g, '').replace(/@media[^{]*\{/g, '');
   const bad = [];
   for (const m of css.matchAll(/([^{}@]+)\{/g)) {
-    for (const sel of m[1].split(',')) if (sel.trim() && !sel.trim().startsWith(prefix)) bad.push(sel.trim().slice(0, 50));
+    for (const sel of m[1].split(',')) if (sel.trim() && !sel.trim().startsWith(prefix) && !sel.trim().startsWith(darkPrefix)) bad.push(sel.trim().slice(0, 50));
   }
   return bad.map((b) => `docs/stories/${id}/story.css: "${b}" is not scoped to ${prefix}`);
 }
@@ -227,9 +241,9 @@ function unscopedRules(id) {
       }
       continue;
     }
-    for (const screen of SCREENS) {
+    for (const screen of DARK ? SCREENS.slice(0, 1) : SCREENS) {
       const r = await play(browser, id, screen, drive).catch((e) => ({ problems: [e.message.split('\n')[0]], steps: 0 }));
-      console.log(`${r.problems.length ? 'FAIL' : 'ok  '} ${id} on ${screen.name}: ${r.steps} taps`);
+      console.log(`${r.problems.length ? 'FAIL' : 'ok  '} ${id} on ${screen.name}${DARK ? ' (dark)' : ''}: ${r.steps} taps`);
       r.problems.forEach((p) => console.log(`      ${p}`));
       if (r.problems.length) failed += 1;
     }
