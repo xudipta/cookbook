@@ -104,3 +104,4 @@ Short, tap-only stories that teach a topic with a metaphor first and the real co
 - `story_check.cjs --wrong` plays every wrong option of every story question (#169)
 - Browser checks split into a shared site build and parallel shards behind one `games-smoke` check, 8.7 minutes down to 3.4 (#170)
 - A recommended learning path: a Continue button and path strip on the home page, "Next" links at the end of each story, and the Learn page brought up to date (#171)
+- Stories follow dark mode: a generated dark palette, checked by axe in CI (#172)

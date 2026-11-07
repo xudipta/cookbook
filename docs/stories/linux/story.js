@@ -4,7 +4,8 @@
 // lift, services are the doors, permissions are the keys. The story runs on the practice game's real
 // simulated shell (docs/games/linux/sim.js): every card runs a real command and the box shows what the
 // server printed. Each chapter is a plain async script over it (see ../shared/story.js).
-import { h, createCounters, outputBox, mountStory as mount, practiceLinks, siteUrl } from '../shared/story.js';
+import { h, createCounters, outputBox as box, mountStory as mount, practiceLinks, siteUrl } from '../shared/story.js';
+import { decide, look, printedSince, stubCtx } from '../shared/helpers.js';
 import { createWorld, run, start, status, tick } from '../../games/linux/sim.js';
 
 const HUB = siteUrl('docs/games/');
@@ -12,7 +13,6 @@ const NOTE = (name) => siteUrl(`topics/linux/notes/${name}/`);
 
 const UNIT_WORD = { active: 'open', activating: 'restarting', failed: 'broken', inactive: 'closed' };
 
-const box = (text) => outputBox(text);
 
 // The building: the pager, the storeroom (disk), the lift (load) and a door for every service.
 function createBuilding(app, { data }) {
@@ -21,12 +21,8 @@ function createBuilding(app, { data }) {
   const counters = createCounters([{ label: 'Service health', cls: 'ks-hud-ok' }]);
   app.caption.before(pager, tiles, counters.el);
 
-  const A = { world: null, sc: null, level: null };
-  const ctx = { ticks: 0, fire() {}, resolve() {}, log() {}, step() {}, rng: () => 0.5, scenario: null };
-  ctx.step = () => {
-    ctx.ticks += 1;
-    tick(A.world, ctx);
-  };
+  const A = { world: null, sc: null, level: null, who: 'mo' };
+  const ctx = stubCtx(null, (c) => tick(A.world, c));
 
   const tile = (label, value, level) =>
     h('span', { class: 'nl-tile', role: 'listitem', 'data-level': level }, h('span', { class: 'nl-tile-label', text: label }), h('strong', { text: value }));
@@ -70,7 +66,7 @@ function createBuilding(app, { data }) {
       const w = A.world;
       const before = w.term.length;
       const result = run(w, ctx, cmd);
-      const out = w.term.slice(before).map((l) => l.text).join('\n');
+      const out = printedSince(w.term, before);
       if (result === true) ctx.step();
       paint();
       return out;
@@ -98,29 +94,6 @@ function createBuilding(app, { data }) {
     stop() {},
   });
   return A;
-}
-
-// One decision: the learner picks what to check or change. The right card runs the real command and shows
-// what the server printed; a wrong card is explained and the question is asked again.
-async function decide(ui, A, ask, options, after) {
-  for (;;) {
-    const picked = await ui.choose('mo', ask, options.map((o) => ({ label: o.label, value: o.label })));
-    const opt = options.find((o) => o.label === picked);
-    if (opt.right) {
-      const out = A.sh(opt.cmd);
-      await ui.say('mo', after, 'Next', box(out));
-      return out;
-    }
-    await ui.say('mo', opt.why, 'Try again');
-  }
-}
-
-// A look that is not a decision: one button, then the real output.
-async function look(ui, A, text, button, cmd, after) {
-  await ui.say('mo', text, button);
-  const out = A.sh(cmd);
-  await ui.say('mo', after, 'Next', box(out));
-  return out;
 }
 
 function makeChapters() {

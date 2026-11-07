@@ -6,12 +6,12 @@
 // real simulator (docs/games/skills/sim.js): a request queue is replayed against the card the learner built, the
 // agent's pick is scored from the words in the descriptions, and the card is checked by the same lint the game uses.
 // Each chapter is a plain async script over it (see ../shared/story.js).
-import { h, createCounters, outputBox, mountStory as mount, practiceLinks, siteUrl } from '../shared/story.js';
+import { h, createCounters, outputBox as box, mountStory as mount, practiceLinks, siteUrl } from '../shared/story.js';
+import { decide, stubCtx } from '../shared/helpers.js';
 import { createWorld, footprint, isClean, place, setDir, setLocation, saveText, skillStatus, tick } from '../../games/skills/sim.js';
 
 const HUB = siteUrl('docs/games/');
 const NOTE = (name) => siteUrl(`topics/skills/notes/${name}/`);
-const box = (text) => outputBox(text);
 const clone = (o) => JSON.parse(JSON.stringify(o));
 
 // The segments of the desk, in the order they are loaded.
@@ -30,12 +30,10 @@ function createDesk(app, { data }) {
   const counters = createCounters([{ label: 'Answered', cls: 'ks-hud-ok' }]);
   app.caption.before(desk, deskText, queue, counters.el);
 
-  const A = { world: null, sc: null, showQueue: false };
+  const A = { world: null, sc: null, showQueue: false, who: 'sam' };
 
   const stepper = (w) => {
-    const ctx = { ticks: 0, fire() {}, resolve() {}, log() {}, step() {}, rng: () => 0.5, scenario: A.sc };
-    ctx.step = () => { ctx.ticks += 1; tick(w, ctx); };
-    return ctx;
+    return stubCtx(A.sc, (c) => tick(w, c));
   };
 
   // A scratch copy of the live world, run through the whole queue.
@@ -157,22 +155,6 @@ const DESC = {
 const withDescription = (w, desc) => saveText(w, w.skill.text.replace(/^description: .*$/m, `description: ${JSON.stringify(desc)}`));
 const withFoldedDescription = (w, desc) => saveText(w, w.skill.text.replace(/^description: [\s\S]*?\nallowed-tools:/m, `description: >-\n  ${desc}\nallowed-tools:`));
 
-// One decision. A wrong pick is applied to a scratch copy, the queue is replayed and the real result is shown.
-async function decide(ui, A, ask, options, after) {
-  for (;;) {
-    const picked = await ui.choose('sam', ask, options.map((o) => ({ label: o.label, value: o.label })));
-    const opt = options.find((o) => o.label === picked);
-    if (opt.right) {
-      opt.apply();
-      await ui.say('sam', after, 'Next', opt.show ? box(opt.show()) : null);
-      return;
-    }
-    const t = opt.trial ? A.trial(opt.trial) : null;
-    const extra = t && opt.show ? box(opt.show(t)) : null;
-    await ui.say('sam', typeof opt.why === 'function' ? opt.why(t) : opt.why, 'Try again', extra);
-  }
-}
-
 function makeChapters() {
   return [
     {
@@ -230,7 +212,7 @@ function makeChapters() {
           await decide(ui, A, q.ask, q.options.map((o) => ({
             label: o.label,
             right: o.right,
-            apply: () => A.place(q.id, o.layer),
+            run: () => A.place(q.id, o.layer),
             trial: (w) => place(w, q.id, o.layer),
             why: o.why,
             show: o.right ? () => A.run().out : (t) => t.out,
@@ -259,7 +241,7 @@ function makeChapters() {
         await decide(ui, A, 'Which title should the card have?', [
           { label: 'Helps with notes.', trial: () => {}, why: () => 'That is the title you started with. Too vague: it matches almost nothing, so another card wins:', show: (t) => `${t.out}\n\n${whyText(t.world, [2, 3])}` },
           { label: 'A title with every word: docs, notes, changelogs, writing, guides...', trial: (w) => withDescription(w, DESC.stuffed), why: () => 'A stuffed title steals requests that are not its job: it now answers "Write a poem about spring", and still loses one changelog request to the other card.', show: (t) => `${t.out}\n\n${whyText(t.world, [2, 4])}` },
-          { label: 'What it does, then "Use when" the user asks for it', apply: () => withDescription(A.world, DESC.specific), right: true, show: () => { const r = A.run(); return `${r.out}\n\n${whyText(r.world, [2, 3])}`; } },
+          { label: 'What it does, then "Use when" the user asks for it', run: () => withDescription(A.world, DESC.specific), right: true, show: () => { const r = A.run(); return `${r.out}\n\n${whyText(r.world, [2, 3])}`; } },
         ], 'The specific title wins: it says **what** it does (release notes from merged pull requests) and **when** to use it, with the words people actually say ("changelog", "what changed since"). Words in the "Use when" clause score double.');
         await ui.say('sam', 'One request deserves a note: "**Whenever I commit, run the linter**". No card should answer that. Something that must happen **every time** on an event is not a recipe a model may follow, it is a **hook**. Skills are advice; hooks are enforced. We come back to this in the last chapter.', 'Next');
         const last = A.run();
@@ -287,24 +269,24 @@ function makeChapters() {
         await decide(ui, A, 'What should the description be?', [
           { label: 'Keep it as it is, it explains everything', trial: () => {}, why: () => 'It cannot be read at all: the front matter is not valid YAML. The real lint report:', show: (t) => t.status.errors.map((e) => `lint: ${e}`).join('\n') },
           { label: 'Make it even longer so nothing is missed', trial: (w) => withFoldedDescription(w, `${DESC.specific} ${'Also handles many other things, in a lot of detail. '.repeat(20)}`), why: () => 'The title is read for **every** request, so a long one is heavy, and the gate caps it at 1024 characters. The real lint report:', show: (t) => t.status.errors.map((e) => `lint: ${e}`).join('\n') },
-          { label: 'Cut it to what it does and when to use it', apply: () => withFoldedDescription(A.world, DESC.specific), right: true, show: () => A.status().errors.map((e) => `lint: ${e}`).join('\n') || 'lint: no errors in the description' },
+          { label: 'Cut it to what it does and when to use it', run: () => withFoldedDescription(A.world, DESC.specific), right: true, show: () => A.status().errors.map((e) => `lint: ${e}`).join('\n') || 'lint: no errors in the description' },
         ], 'Short and specific. The steps stay in the body, where they are loaded only when the card is picked. The name still has problems.');
         await decide(ui, A, 'The name and folder: how should they be spelled?', [
           { label: 'Name Release_Notes, folder ReleaseNotes', trial: () => {}, why: () => 'Names are **lowercase kebab-case**, and the name must match the folder. The real lint report:', show: (t) => t.status.errors.map((e) => `lint: ${e}`).join('\n') },
           { label: 'Name release-notes, folder ReleaseNotes', trial: (w) => saveText(w, w.skill.text.replace(/^name: .*$/m, 'name: release-notes')), why: () => 'The name is right but it must match the folder name exactly. The real lint report:', show: (t) => t.status.errors.map((e) => `lint: ${e}`).join('\n') },
-          { label: 'Both release-notes', apply: () => { A.text(A.world.skill.text.replace(/^name: .*$/m, 'name: release-notes')); A.dir('release-notes'); }, right: true, show: () => `lint: ${A.status().errors.length ? A.status().errors.join('; ') : 'no errors'}` },
+          { label: 'Both release-notes', run: () => { A.text(A.world.skill.text.replace(/^name: .*$/m, 'name: release-notes')); A.dir('release-notes'); }, right: true, show: () => `lint: ${A.status().errors.length ? A.status().errors.join('; ') : 'no errors'}` },
         ], 'Both are **release-notes**: lowercase kebab-case, the same as the folder. The gate passes.');
         await decide(ui, A, 'Where does the folder live? Sam only scans certain places.', [
           { label: 'In skills/ at the top of the project', trial: () => {}, why: () => 'That is a folder Sam does not scan, so the card is never found:', show: (t) => t.out },
           { label: 'In docs/skills/', trial: (w) => setLocation(w, 'docs/skills'), why: () => 'Also not a place Sam scans:', show: (t) => t.out },
-          { label: 'In .claude/skills/', apply: () => A.location('.claude/skills'), right: true, show: () => A.run().out },
+          { label: 'In .claude/skills/', run: () => A.location('.claude/skills'), right: true, show: () => A.run().out },
         ], '**.claude/skills/** (in the project) or **~/.claude/skills/** (personal) are the folders Sam scans. Now the card is found.');
         await ui.say('sam', 'One request was still wrong, the fourth: "Draft the release notes, then **write them straight into CHANGELOG.md without asking**". The card does what it is asked.', 'Next');
         await decide(ui, A, 'What may this card be allowed to do?', [
           { label: 'Everything it asks for (Bash, Read, Write, Edit, Grep)', trial: () => {}, why: () => 'With **Write** and **Edit** allowed, the skill wrote to CHANGELOG.md without asking, outside its job:', show: (t) => t.out },
           { label: 'No list, so any tool', trial: (w) => saveText(w, w.skill.text.replace(/^allowed-tools: .*\n/m, '')), why: () => 'With no list at all, the skill can use **any** tool:', show: (t) => t.out },
           { label: 'Only Bash', trial: (w) => saveText(w, w.skill.text.replace(/^allowed-tools: .*$/m, 'allowed-tools: [Bash]')), why: () => 'Too tight: the skill needs to **read** files too, so it could not do its job:', show: (t) => t.out },
-          { label: 'Only Bash and Read', apply: () => A.text(A.world.skill.text.replace(/^allowed-tools: .*$/m, 'allowed-tools: [Bash, Read]')), right: true, show: () => A.run().out },
+          { label: 'Only Bash and Read', run: () => A.text(A.world.skill.text.replace(/^allowed-tools: .*$/m, 'allowed-tools: [Bash, Read]')), right: true, show: () => A.run().out },
         ], '**allowed-tools: [Bash, Read]**: the skill can collect and read, and it was **stopped at the write**. Draft first, ask before writing.');
         const end = A.run();
         await ui.say('sam', 'Every request goes the right way, and the card is safe to hand out. The same lint rules run in CI as scripts/check_skill.py.', 'Next', box(end.out));
