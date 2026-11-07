@@ -256,15 +256,49 @@ def check_story(g: dict, where: str) -> list[str]:
     return errors
 
 
+def check_path(manifest: dict, games: list, rel: Path) -> list[str]:
+    """The recommended learning path (home page, Learn page, end of each story) is data: "path" is the order and
+    each game's "after" lists the topics worth doing first. Every topic is on the path once, "after" names real
+    topics that come earlier on the path, so there are no cycles and no unknown topics."""
+    errors: list[str] = []
+    ids = [g.get("id") for g in games if isinstance(g, dict)]
+    order = manifest.get("path")
+    if not isinstance(order, list) or not all(isinstance(x, str) for x in order):
+        return [f"{rel}: needs a top-level \"path\": a list of topic ids in the recommended order"]
+    for gid in order:
+        if gid not in ids:
+            errors.append(f"{rel}: path lists {gid!r}, which is not a topic in games")
+    for gid in ids:
+        if order.count(gid) != 1:
+            errors.append(f"{rel}: topic {gid!r} must appear exactly once in path (found {order.count(gid)})")
+    position = {gid: i for i, gid in enumerate(order)}
+    for g in games:
+        gid = g.get("id")
+        after = g.get("after", [])
+        if not isinstance(after, list) or not all(isinstance(x, str) for x in after):
+            errors.append(f"{rel}: {gid}: after must be a list of topic ids")
+            continue
+        for dep in after:
+            if dep not in ids:
+                errors.append(f"{rel}: {gid}: after names {dep!r}, which is not a topic")
+            elif dep == gid:
+                errors.append(f"{rel}: {gid}: after lists itself")
+            elif gid in position and dep in position and position[dep] > position[gid]:
+                errors.append(f"{rel}: {gid}: after {dep!r}, but {dep!r} comes later on the path (a cycle or a wrong order)")
+    return errors
+
+
 def check_manifest(game_dirs: list[Path]) -> list[str]:
     """docs/games/games.json drives the home page's board, so it must agree with the game directories."""
     path = GAMES_DIR / "games.json"
     rel = path.relative_to(REPO_ROOT)
     errors: list[str] = []
     try:
-        games = json.loads(path.read_text(encoding="utf-8"))["games"]
+        manifest = json.loads(path.read_text(encoding="utf-8"))
+        games = manifest["games"]
     except (OSError, ValueError, KeyError) as exc:
         return [f"{rel}: cannot read a top-level \"games\" list ({exc})"]
+    errors.extend(check_path(manifest, games, rel))
     seen: set[str] = set()
     for i, g in enumerate(games):
         gid = g.get("id") if isinstance(g, dict) else None
@@ -273,7 +307,7 @@ def check_manifest(game_dirs: list[Path]) -> list[str]:
             errors.append(f"{rel}: games[{i}] needs a unique string id")
             continue
         seen.add(gid)
-        for key in ("title", "topic", "code", "hue", "notes"):
+        for key in ("title", "topic", "short", "code", "hue", "notes"):
             if not isinstance(g.get(key), str) or not g[key]:
                 errors.append(f"{where}: needs a non-empty {key}")
         if isinstance(g.get("notes"), str) and not (REPO_ROOT / g["notes"]).is_dir():

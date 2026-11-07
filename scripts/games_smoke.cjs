@@ -85,6 +85,15 @@ async function checkHome(browser) {
   }
   const firstTile = await page.locator('.story-tile').first().getAttribute('class');
   if (!firstTile.includes('live')) problems.push('the live story is not the first story tile');
+  // The learning path: stories are listed in the recommended order, and the hero has one obvious next action.
+  const pathIds = JSON.parse(fs.readFileSync(path.join(GAMES_DIR, 'games.json'), 'utf8')).path;
+  const byId = (id) => manifest.find((g) => g.id === id);
+  const tileHrefs = await page.locator('.story-tile.live a.btn').evaluateAll((a) => a.map((x) => x.getAttribute('href')));
+  if (JSON.stringify(tileHrefs) !== JSON.stringify(pathIds.map((id) => byId(id).story.path))) problems.push(`the story tiles do not follow the path: ${tileHrefs.join(', ')}`);
+  if ((await page.locator('#path .path-step').count()) !== pathIds.length) problems.push('the path strip does not list every topic on the path');
+  const hero = async () => ({ href: await page.getAttribute('#continue', 'href'), text: (await page.innerText('#continue')).trim() });
+  const first = await hero();
+  if (first.href !== byId(pathIds[0]).story.path || !first.text.startsWith('Start with')) problems.push(`a new learner's one next action is "${first.text}" -> ${first.href}, not the first story on the path`);
   // Notes by topic: a card per topic, each linking its notes, with its story and practice game.
   const topics = await page.locator('.note-topic[data-topic]').count();
   if (topics !== manifest.length) problems.push(`notes section has ${topics} topic cards, games.json has ${manifest.length}`);
@@ -94,15 +103,44 @@ async function checkHome(browser) {
   if (noGameTeaser) problems.push('the old teaser game is still on the home page');
   // Story progress shows on the tile after a chapter is finished (the count comes from games.json).
   const chapters = JSON.parse(fs.readFileSync(path.join(GAMES_DIR, 'games.json'), 'utf8')).games.find((g) => g.id === 'kubernetes').story.chapters;
+  const k8sTile = '.story-tile.live:has(a[href="docs/stories/kubernetes/"])';
   await page.evaluate(() => localStorage.setItem('cookbook-story-progress:kubernetes', JSON.stringify({ chapters: { 0: true } })));
   await page.reload({ waitUntil: 'load' });
   await page.waitForSelector('.story-tile');
-  if (!(await page.locator('.story-tile.live').first().innerText()).includes(`1 of ${chapters} chapters`)) problems.push('the story tile does not show finished chapters');
+  if (!(await page.locator(k8sTile).innerText()).includes(`1 of ${chapters} chapters`)) problems.push('the story tile does not show finished chapters');
+  const mid = await hero();
+  if (mid.href !== 'docs/stories/kubernetes/' || !mid.text.startsWith('Continue:')) problems.push(`part-way through a story the one next action is "${mid.text}" -> ${mid.href}, not to continue it`);
+  // Finish the first story on the path: the next action is the second one.
+  const firstGame = byId(pathIds[0]);
+  const allChapters = Object.fromEntries(Array.from({ length: firstGame.story.chapters }, (_, i) => [i, true]));
+  await page.evaluate(([id, ch]) => { localStorage.removeItem('cookbook-story-progress:kubernetes'); localStorage.setItem(`cookbook-story-progress:${id}`, JSON.stringify({ chapters: ch })); }, [firstGame.id, allChapters]);
+  await page.reload({ waitUntil: 'load' });
+  await page.waitForSelector('.story-tile');
+  const after = await hero();
+  if (after.href !== byId(pathIds[1]).story.path || !after.text.startsWith('Next:')) problems.push(`after the first story the one next action is "${after.text}" -> ${after.href}, not the second story on the path`);
+  if ((await page.locator('#path .path-step[data-state="done"]').count()) !== 1) problems.push('the path strip does not tick the finished story');
+  // Every story finished: the next action is to practise.
+  await page.evaluate((games) => { for (const g of games) localStorage.setItem(`cookbook-story-progress:${g.id}`, JSON.stringify({ chapters: Object.fromEntries(Array.from({ length: g.story.chapters }, (_, i) => [i, true])) })); }, manifest);
+  await page.reload({ waitUntil: 'load' });
+  await page.waitForSelector('.story-tile');
+  const all = await hero();
+  if (all.href !== '#board') problems.push(`with every story finished the one next action is "${all.text}" -> ${all.href}, not the practice board`);
   await page.click('#reset-progress');
   await page.click('#reset-progress');
-  await page.waitForFunction((n) => document.querySelector('.story-tile.live').innerText.includes(`0 of ${n} chapters`), chapters);
+  await page.waitForFunction((n) => document.querySelector(`.story-tile.live:has(a[href="docs/stories/kubernetes/"])`).innerText.includes(`0 of ${n} chapters`), chapters);
   if (await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)) problems.push('home page scrolls horizontally');
   await page.close();
+  // Storage blocked (private mode, a policy): the page still renders and falls back to the first story on the path.
+  const blocked = await browser.newPage();
+  await blocked.addInitScript(() => {
+    Object.defineProperty(window, 'localStorage', { get() { throw new Error('storage blocked'); } });
+  });
+  blocked.on('pageerror', (e) => problems.push(`page error with storage blocked: ${e.message}`));
+  await blocked.goto(SITE_URL, { waitUntil: 'load' });
+  await blocked.waitForSelector('.story-tile', { timeout: 15000 }).catch(() => problems.push('the story board did not render with storage blocked'));
+  const fallback = await blocked.getAttribute('#continue', 'href');
+  if (fallback !== byId(pathIds[0]).story.path) problems.push(`with storage blocked the next action is ${fallback}, not the first story on the path`);
+  await blocked.close();
   return problems;
 }
 
