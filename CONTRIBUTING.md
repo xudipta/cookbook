@@ -209,12 +209,19 @@ touch screen and fails on sideways scrolling, controls under 44px, a next-step b
 violation in any phase, a story that cannot finish, or a topic word in the shared shell. Chapters finished are
 saved in this browser (`cookbook-story-progress:<id>`).
 
+Stories follow the site's light/dark toggle. You write the light palette only: `python3 scripts/story_dark.py`
+derives the dark one (the same hue with the lightness mirrored, a little less saturated; rules with a dark
+background of their own, such as the terminal boxes, stay as they are) and writes it between two marker comments
+at the end of each `story.css`, as `body[data-md-color-scheme="slate"] ...` rules. Run it after changing a colour;
+CI runs it with `--check` and fails on a stale block. Do not edit between the markers; a hand-tuned exception goes
+in the script's `OVERRIDES` table. Inline SVG art in a story script keeps its colours in both schemes.
+
 `node scripts/story_check.cjs --wrong` (also run in CI) plays every wrong option of every question: in run *r* the
 first time a question is asked the story takes its *r*-th wrong option (every option `drive.json`'s `prefer` does not
 accept) and answers the rest rightly. It fails if a wrong pick shows nothing, a question repeats more than four
 times, or the story no longer reaches its ending. A second valid way to do something (the Terraform `moved` block
 versus `state mv`) is just an option `prefer` does not name, so it is played the same way. `ONLY=linux,docker` limits
-the stories. Write `prefer` so it matches exactly the right option of each question; a question where nothing matches
+the stories. `--dark` plays every story in the dark scheme (axe contrast included). Write `prefer` so it matches exactly the right option of each question; a question where nothing matches
 is reported as a note.
 
 ## Adding a game

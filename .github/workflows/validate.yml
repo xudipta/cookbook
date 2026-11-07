@@ -93,6 +93,7 @@ jobs:
               - 'scripts/first_screen_limits.json'
               - 'scripts/compose_check.cjs'
               - 'scripts/story_check.cjs'
+              - 'scripts/story_dark.py'
               - 'scripts/mobile_baseline.json'
               - 'scripts/build_docs.sh'
               - 'mkdocs.yml'
@@ -512,6 +513,8 @@ jobs:
           node-version: '22'
       - name: Unit-test the game simulators
         run: node --test "docs/games/**/*.test.mjs"
+      - name: The stories' dark-mode CSS is up to date with their light colours
+        run: python3 scripts/story_dark.py --check
 
   # The browser checks used to be one serial job of about 7.5 minutes. The site is now built once (site-build),
   # shared as an artifact, and the browser scripts run in parallel shards (browser). `games-smoke` stays as the one
@@ -576,6 +579,8 @@ jobs:
               node scripts/compose_check.cjs
           - name: stories
             run: node scripts/story_check.cjs
+          - name: stories, dark mode
+            run: node scripts/story_check.cjs --dark
           # The wrong-option pass is the longest script, so it runs as two halves.
           - name: stories, wrong picks 1
             only: cicd,database,docker,github,kubernetes
