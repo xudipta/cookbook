@@ -10,7 +10,7 @@ the exact note section behind each idea, and every topic page shows a banner lin
 ## A path through the topics
 
 New to infrastructure? Follow the order below: each topic leans on the ones before it. It is a
-suggestion, not a lock, so jump straight to any topic you need. The [home page](../index.html) shows
+suggestion, not a lock, so jump straight to any topic you need. The home page shows
 the same path and a **Continue** button that remembers where you were, in this browser only.
 
 | Step | Topic | Notes | Story | Practice | Best after |
