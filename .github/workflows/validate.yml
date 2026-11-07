@@ -78,6 +78,8 @@ jobs:
               - 'scripts/site_urls.txt'
               - 'scripts/play_banners.py'
             games:
+              # Changing this workflow reruns the browser shards it defines.
+              - '.github/workflows/validate.yml'
               - 'docs/games/**'
               - 'docs/stories/**'
               - 'docs/site/**'
