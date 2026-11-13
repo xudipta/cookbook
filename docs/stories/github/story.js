@@ -6,6 +6,7 @@
 // output, the graph and the conflicts are the game's. Each chapter is a plain async script over it
 // (see ../shared/story.js).
 import { h, outputBox, mountStory as mount, practiceLinks, siteUrl } from '../shared/story.js';
+import { printedSince } from '../shared/helpers.js';
 import { branchInfo, createWorld, editFile, execute, goalStatus, graphRows, mainBuild, prCards, tick, workStatus } from '../../games/github/sim.js';
 
 const HUB = siteUrl('docs/games/');
@@ -164,7 +165,7 @@ function createCookbook(app, { levels }) {
       G.hist.push(line);
       execute(w, ctx, line);
       paint();
-      return w.term.slice(before).map((t) => t.text).join('\n').trim();
+      return printedSince(w.term, before).trim();
     },
     // Let time pass: the checks finish and the reviewer answers.
     wait() {
@@ -195,7 +196,7 @@ function createCookbook(app, { levels }) {
       for (const cmd of G.hist) go(cmd);
       const before = w.term.length;
       for (const cmd of cmds) go(cmd);
-      return [w.term.slice(before).map((t) => t.text).join('\n').trim(), ...lines.map((l) => `(${l})`)].join('\n');
+      return [printedSince(w.term, before).trim(), ...lines.map((l) => `(${l})`)].join('\n');
     },
     goals() { return goalStatus(G.world); },
     edit(path, text) {
